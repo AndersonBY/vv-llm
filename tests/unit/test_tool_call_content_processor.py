@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 
-from v_llm.chat_clients import ToolCallContentProcessor
+from vv_llm.chat_clients import ToolCallContentProcessor
 
 
 def test_extract_tool_calls_and_non_tool_content() -> None:

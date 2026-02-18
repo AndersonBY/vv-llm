@@ -3,8 +3,8 @@ import logging
 from typing import Any
 from abc import ABC, abstractmethod
 
-from v_llm.chat_clients import create_chat_client
-from v_llm.types import BackendType
+from vv_llm.chat_clients import create_chat_client
+from vv_llm.types import BackendType
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ class VectorVeinGenie(BaseGenie):
     Examples:
         >>> from vectorvein_genie import VectorVeinGenie
         >>> from chonkie import SlumberChunker
-        >>> from v_llm.types import BackendType
+        >>> from vv_llm.types import BackendType
         >>>
         >>> # 使用 OpenAI
         >>> genie = VectorVeinGenie(backend_type=BackendType.OpenAI, model="gpt-4o")

@@ -8,7 +8,7 @@ Usage:
 
 from __future__ import annotations
 
-from v_llm.types import SettingsDict
+from vv_llm.types import SettingsDict
 
 sample_settings: SettingsDict = {
     "VERSION": "2",

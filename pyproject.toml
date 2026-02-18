@@ -12,7 +12,7 @@ dependencies = [
 ]
 description = "Universal LLM interfaces for multi-provider chat and utilities"
 license = {text = "MIT"}
-name = "v-llm"
+name = "vv-llm"
 readme = "README.md"
 requires-python = ">=3.10"
 version = "0.3.73"
@@ -42,7 +42,7 @@ lint = "ruff check src/"
 test.cmd = "pytest tests/unit"
 test.env_file = ".env"
 test-live.cmd = "python tests/live/run_live_tests.py"
-test-live.env = {VLLM_RUN_LIVE_TESTS = "1"}
+test-live.env = {VV_LLM_RUN_LIVE_TESTS = "1"}
 type-check = "ty check src/ --output-format concise --exit-zero"
 
 [tool.ruff]

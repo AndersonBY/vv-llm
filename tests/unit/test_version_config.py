@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from v_llm.settings import Settings
-from v_llm.types.enums import BackendType
+from vv_llm.settings import Settings
+from vv_llm.types.enums import BackendType
 
 
 @pytest.mark.parametrize(

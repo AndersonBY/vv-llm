@@ -1,9 +1,9 @@
 # @Author: Bi Ying
 # @Date:   2024-07-27 11:51:28
-from v_llm.settings import settings
-from v_llm.types.enums import BackendType
-from v_llm.chat_clients import create_chat_client
-from v_llm.chat_clients.utils import format_messages
+from vv_llm.settings import settings
+from vv_llm.types.enums import BackendType
+from vv_llm.chat_clients import create_chat_client
+from vv_llm.chat_clients.utils import format_messages
 
 from live_common import load_live_settings, resolve_backend_model
 

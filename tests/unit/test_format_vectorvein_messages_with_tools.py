@@ -4,8 +4,8 @@ import json
 
 import pytest
 
-from v_llm.chat_clients.utils import format_messages
-from v_llm.types.enums import BackendType
+from vv_llm.chat_clients.utils import format_messages
+from vv_llm.types.enums import BackendType
 
 
 @pytest.fixture

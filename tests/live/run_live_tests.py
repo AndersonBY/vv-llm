@@ -8,15 +8,15 @@ from pathlib import Path
 
 
 def _enabled() -> bool:
-    return os.getenv("VLLM_RUN_LIVE_TESTS", "").strip().lower() in {"1", "true", "yes", "on"}
+    return os.getenv("VV_LLM_RUN_LIVE_TESTS", "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run live integration scripts under tests/live.")
     parser.add_argument("scripts", nargs="*", help="Specific live scripts to run (default: all test_*.py).")
-    parser.add_argument("--backend", help="Override backend for scripts that support VLLM_BACKEND.")
-    parser.add_argument("--model", help="Override model for scripts that support VLLM_MODEL.")
-    parser.add_argument("--preset", help="Override model preset for scripts that support VLLM_MODEL_PRESET.")
+    parser.add_argument("--backend", help="Override backend for scripts that support VV_LLM_BACKEND.")
+    parser.add_argument("--model", help="Override model for scripts that support VV_LLM_MODEL.")
+    parser.add_argument("--preset", help="Override model preset for scripts that support VV_LLM_MODEL_PRESET.")
     parser.add_argument("--allow-empty-keys", action="store_true", help="Allow running scripts even if no usable API keys are found.")
     parser.add_argument("--list", action="store_true", help="List available live scripts and exit.")
     return parser.parse_args(argv)
@@ -34,7 +34,7 @@ def main() -> int:
         return 0
 
     if not _enabled():
-        print("Live tests are disabled. Set VLLM_RUN_LIVE_TESTS=1 to run.")
+        print("Live tests are disabled. Set VV_LLM_RUN_LIVE_TESTS=1 to run.")
         return 1
 
     requested = args.scripts
@@ -60,16 +60,16 @@ def main() -> int:
 
     env = os.environ.copy()
     if args.backend:
-        env["VLLM_BACKEND"] = args.backend
+        env["VV_LLM_BACKEND"] = args.backend
     if args.model:
-        env["VLLM_MODEL"] = args.model
+        env["VV_LLM_MODEL"] = args.model
     if args.preset:
-        env["VLLM_MODEL_PRESET"] = args.preset
+        env["VV_LLM_MODEL_PRESET"] = args.preset
     if args.allow_empty_keys:
-        env["VLLM_ALLOW_EMPTY_KEYS"] = "1"
+        env["VV_LLM_ALLOW_EMPTY_KEYS"] = "1"
 
     if args.backend or args.model or args.preset:
-        print(f"[live] overrides: backend={env.get('VLLM_BACKEND', '(default)')} model={env.get('VLLM_MODEL', '(default)')} preset={env.get('VLLM_MODEL_PRESET', '(default)')}")
+        print(f"[live] overrides: backend={env.get('VV_LLM_BACKEND', '(default)')} model={env.get('VV_LLM_MODEL', '(default)')} preset={env.get('VV_LLM_MODEL_PRESET', '(default)')}")
 
     failed = []
     for script in scripts:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from v_llm.chat_clients.message_normalizer import process_thinking_content
+from vv_llm.chat_clients.message_normalizer import process_thinking_content
 
 
 @pytest.mark.parametrize(

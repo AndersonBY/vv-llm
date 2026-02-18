@@ -8,7 +8,7 @@ from typing import cast
 
 
 def _raise_optional_dependency_error(package_name: str, extra_name: str, exc: ModuleNotFoundError) -> None:
-    raise ModuleNotFoundError(f"Optional dependency '{package_name}' is required for this feature. Install with: pip install v-llm[{extra_name}]") from exc
+    raise ModuleNotFoundError(f"Optional dependency '{package_name}' is required for this feature. Install with: pip install vv-llm[{extra_name}]") from exc
 
 
 class AsyncRateLimiterBackend(ABC):

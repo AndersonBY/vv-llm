@@ -12,7 +12,7 @@ try:
     )
 except ImportError:
     print("dev_settings.py not found, using default sample settings with empty API keys.")
-    from v_llm.types import SettingsDict
+    from vv_llm.types import SettingsDict
 
     sample_settings: SettingsDict = {
         "VERSION": "2",

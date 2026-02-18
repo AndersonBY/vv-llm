@@ -1,9 +1,9 @@
-# v-llm
+# vv-llm
 
 面向多模型场景的统一 LLM 接口层。一套 API，16 种后端，同步 & 异步。
 
 ```
-pip install v-llm
+pip install vv-llm
 ```
 
 ## 支持的后端
@@ -17,7 +17,7 @@ OpenAI | Anthropic | DeepSeek | Gemini | Qwen | Groq | Mistral | Moonshot | Mini
 ### 加载配置
 
 ```python
-from v_llm.settings import settings
+from vv_llm.settings import settings
 
 settings.load({
     "VERSION": "2",
@@ -44,7 +44,7 @@ settings.load({
 ### 同步调用
 
 ```python
-from v_llm.chat_clients import create_chat_client, BackendType
+from vv_llm.chat_clients import create_chat_client, BackendType
 
 client = create_chat_client(BackendType.OpenAI, model="gpt-4o")
 resp = client.create_completion([
@@ -67,7 +67,7 @@ for chunk in client.create_stream([
 
 ```python
 import asyncio
-from v_llm.chat_clients import create_async_chat_client, BackendType
+from vv_llm.chat_clients import create_async_chat_client, BackendType
 
 async def main():
     client = create_async_chat_client(BackendType.OpenAI, model="gpt-4o")
@@ -96,7 +96,7 @@ asyncio.run(main())
 ## 工具函数
 
 ```python
-from v_llm.chat_clients import format_messages, get_token_counts, get_message_token_counts
+from vv_llm.chat_clients import format_messages, get_token_counts, get_message_token_counts
 ```
 
 | 函数 | 说明 |
@@ -108,17 +108,17 @@ from v_llm.chat_clients import format_messages, get_token_counts, get_message_to
 ## 可选依赖
 
 ```bash
-pip install 'v-llm[redis]'      # Redis 限流后端
-pip install 'v-llm[diskcache]'  # DiskCache 限流后端
-pip install 'v-llm[server]'     # FastAPI token server
-pip install 'v-llm[vertex]'     # Google Vertex AI
-pip install 'v-llm[bedrock]'    # AWS Bedrock
+pip install 'vv-llm[redis]'      # Redis 限流后端
+pip install 'vv-llm[diskcache]'  # DiskCache 限流后端
+pip install 'vv-llm[server]'     # FastAPI token server
+pip install 'vv-llm[vertex]'     # Google Vertex AI
+pip install 'vv-llm[bedrock]'    # AWS Bedrock
 ```
 
 ## 目录结构
 
 ```
-src/v_llm/
+src/vv_llm/
   chat_clients/    # 各后端 client + 工厂
   settings/        # 配置管理
   types/           # 类型定义与枚举

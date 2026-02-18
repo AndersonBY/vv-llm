@@ -3,12 +3,12 @@
 import time
 from pathlib import Path
 
-from v_llm.settings import settings
-from v_llm.types.enums import BackendType
-from v_llm.types.llm_parameters import VectorVeinMessage, ChatCompletionMessageParam
-from v_llm.chat_clients.utils import format_messages
-from v_llm.utilities.media_processing import ImageProcessor
-from v_llm.chat_clients import create_chat_client
+from vv_llm.settings import settings
+from vv_llm.types.enums import BackendType
+from vv_llm.types.llm_parameters import VectorVeinMessage, ChatCompletionMessageParam
+from vv_llm.chat_clients.utils import format_messages
+from vv_llm.utilities.media_processing import ImageProcessor
+from vv_llm.chat_clients import create_chat_client
 
 from live_common import load_live_settings, resolve_backend_model, resolve_bool
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         "glm-4.6v-flash": (BackendType.ZhiPuAI, "glm-4.6v-flash"),
     }
     backend, model = resolve_backend_model(BackendType.Gemini, "gemini-3-pro-image-preview", presets=presets)
-    use_vectorvein_messages = resolve_bool("VLLM_USE_VECTORVEIN_MESSAGES", False)
+    use_vectorvein_messages = resolve_bool("VV_LLM_USE_VECTORVEIN_MESSAGES", False)
 
     start_time = time.perf_counter()
     client = create_chat_client(backend, model=model, stream=False)

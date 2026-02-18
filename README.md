@@ -1,9 +1,9 @@
-# v-llm
+# vv-llm
 
 Universal LLM interface layer for Python. One API, 16 backends, sync & async.
 
 ```
-pip install v-llm
+pip install vv-llm
 ```
 
 ## Supported Backends
@@ -17,7 +17,7 @@ Also supports Azure OpenAI, Vertex AI, and AWS Bedrock deployments.
 ### Configure
 
 ```python
-from v_llm.settings import settings
+from vv_llm.settings import settings
 
 settings.load({
     "VERSION": "2",
@@ -44,7 +44,7 @@ settings.load({
 ### Sync
 
 ```python
-from v_llm.chat_clients import create_chat_client, BackendType
+from vv_llm.chat_clients import create_chat_client, BackendType
 
 client = create_chat_client(BackendType.OpenAI, model="gpt-4o")
 resp = client.create_completion([
@@ -67,7 +67,7 @@ for chunk in client.create_stream([
 
 ```python
 import asyncio
-from v_llm.chat_clients import create_async_chat_client, BackendType
+from vv_llm.chat_clients import create_async_chat_client, BackendType
 
 async def main():
     client = create_async_chat_client(BackendType.OpenAI, model="gpt-4o")
@@ -96,7 +96,7 @@ asyncio.run(main())
 ## Utilities
 
 ```python
-from v_llm.chat_clients import format_messages, get_token_counts, get_message_token_counts
+from vv_llm.chat_clients import format_messages, get_token_counts, get_message_token_counts
 ```
 
 | Function | Description |
@@ -108,17 +108,17 @@ from v_llm.chat_clients import format_messages, get_token_counts, get_message_to
 ## Optional Dependencies
 
 ```bash
-pip install 'v-llm[redis]'      # Redis rate limiting
-pip install 'v-llm[diskcache]'  # DiskCache rate limiting
-pip install 'v-llm[server]'     # FastAPI token server
-pip install 'v-llm[vertex]'     # Google Vertex AI
-pip install 'v-llm[bedrock]'    # AWS Bedrock
+pip install 'vv-llm[redis]'      # Redis rate limiting
+pip install 'vv-llm[diskcache]'  # DiskCache rate limiting
+pip install 'vv-llm[server]'     # FastAPI token server
+pip install 'vv-llm[vertex]'     # Google Vertex AI
+pip install 'vv-llm[bedrock]'    # AWS Bedrock
 ```
 
 ## Project Structure
 
 ```
-src/v_llm/
+src/vv_llm/
   chat_clients/    # Per-backend clients + factory
   settings/        # Configuration management
   types/           # Type definitions & enums

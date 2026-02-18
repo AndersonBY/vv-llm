@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from openai import AuthenticationError
 
-from v_llm.settings import Settings
+from vv_llm.settings import Settings
 
 from sample_settings import sample_settings
 

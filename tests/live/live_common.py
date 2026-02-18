@@ -5,7 +5,7 @@ import time
 from collections.abc import Callable, Mapping
 from typing import TypeVar
 
-from v_llm.types.enums import BackendType
+from vv_llm.types.enums import BackendType
 
 TRUTHY = {"1", "true", "yes", "on"}
 T = TypeVar("T")
@@ -35,9 +35,9 @@ def load_live_settings(settings_obj, require_credentials: bool = True) -> None:
     from sample_settings import sample_settings
 
     settings_obj.load(sample_settings)
-    allow_empty = _is_truthy(os.getenv("VLLM_ALLOW_EMPTY_KEYS"))
+    allow_empty = _is_truthy(os.getenv("VV_LLM_ALLOW_EMPTY_KEYS"))
     if require_credentials and not allow_empty and not _has_live_credentials(sample_settings):
-        raise RuntimeError("Live settings appear to have no usable API credentials. Create tests/dev_settings.py or set VLLM_ALLOW_EMPTY_KEYS=1 to bypass this check.")
+        raise RuntimeError("Live settings appear to have no usable API credentials. Create tests/dev_settings.py or set VV_LLM_ALLOW_EMPTY_KEYS=1 to bypass this check.")
 
 
 def resolve_backend_model(
@@ -49,18 +49,18 @@ def resolve_backend_model(
     backend = default_backend
     model = default_model
 
-    preset_name = os.getenv("VLLM_MODEL_PRESET", "").strip()
+    preset_name = os.getenv("VV_LLM_MODEL_PRESET", "").strip()
     if preset_name:
         if not presets or preset_name not in presets:
             available = ", ".join(sorted(presets)) if presets else "(none)"
-            raise ValueError(f"Unknown VLLM_MODEL_PRESET={preset_name!r}. Available presets: {available}")
+            raise ValueError(f"Unknown VV_LLM_MODEL_PRESET={preset_name!r}. Available presets: {available}")
         backend, model = presets[preset_name]
 
-    backend_raw = os.getenv("VLLM_BACKEND", "").strip().lower()
+    backend_raw = os.getenv("VV_LLM_BACKEND", "").strip().lower()
     if backend_raw:
         backend = BackendType(backend_raw)
 
-    model_raw = os.getenv("VLLM_MODEL", "").strip()
+    model_raw = os.getenv("VV_LLM_MODEL", "").strip()
     if model_raw:
         model = model_raw
 

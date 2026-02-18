@@ -3,14 +3,14 @@
 import asyncio
 import time
 
-from v_llm.settings import settings
-from v_llm.chat_clients import (
+from vv_llm.settings import settings
+from vv_llm.chat_clients import (
     BackendType,
     format_messages,
     create_chat_client,
     create_async_chat_client,
 )
-from v_llm.types.llm_parameters import NOT_GIVEN, ToolParam
+from vv_llm.types.llm_parameters import NOT_GIVEN, ToolParam
 from openai.types.chat import ChatCompletionMessageParam
 
 from live_common import load_live_settings, resolve_backend_model, resolve_bool
@@ -292,9 +292,9 @@ if __name__ == "__main__":
     }
     backend, model = resolve_backend_model(BackendType.Anthropic, "claude-sonnet-4-6", presets=presets)
 
-    stream = resolve_bool("VLLM_STREAM", True)
-    use_tool = resolve_bool("VLLM_USE_TOOL", True)
-    use_async = resolve_bool("VLLM_USE_ASYNC", False)
+    stream = resolve_bool("VV_LLM_STREAM", True)
+    use_tool = resolve_bool("VV_LLM_USE_TOOL", True)
+    use_async = resolve_bool("VV_LLM_USE_ASYNC", False)
 
     start_time = time.perf_counter()
     if use_async:

@@ -24,7 +24,7 @@ def _ensure_server_dependencies() -> None:
     if _SERVER_IMPORT_ERROR is not None:
         raise ModuleNotFoundError(
             "FastAPI server dependencies are not installed. "
-            "Install with: pip install v-llm[server]"
+            "Install with: pip install vv-llm[server]"
         ) from _SERVER_IMPORT_ERROR
 
 

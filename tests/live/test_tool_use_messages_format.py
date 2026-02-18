@@ -1,7 +1,7 @@
 # @Author: Bi Ying
 # @Date:   2024-07-27 11:51:28
-from v_llm.settings import settings
-from v_llm.chat_clients import (
+from vv_llm.settings import settings
+from vv_llm.chat_clients import (
     BackendType,
     format_messages,
     create_chat_client,

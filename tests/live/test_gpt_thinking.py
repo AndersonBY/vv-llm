@@ -3,14 +3,14 @@
 import asyncio
 import time
 
-from v_llm.settings import settings
-from v_llm.chat_clients import (
+from vv_llm.settings import settings
+from vv_llm.chat_clients import (
     BackendType,
     format_messages,
     create_chat_client,
     create_async_chat_client,
 )
-from v_llm.types.llm_parameters import NOT_GIVEN, ToolParam, ChatCompletionMessageParam
+from vv_llm.types.llm_parameters import NOT_GIVEN, ToolParam, ChatCompletionMessageParam
 
 from live_common import load_live_settings, resolve_bool, resolve_backend_model
 
@@ -225,9 +225,9 @@ if __name__ == "__main__":
     if backend != BackendType.OpenAI:
         raise ValueError("test_gpt_thinking only supports BackendType.OpenAI.")
 
-    stream = resolve_bool("VLLM_STREAM", False)
-    use_tool = resolve_bool("VLLM_USE_TOOL", False)
-    use_async = resolve_bool("VLLM_USE_ASYNC", False)
+    stream = resolve_bool("VV_LLM_STREAM", False)
+    use_tool = resolve_bool("VV_LLM_USE_TOOL", False)
+    use_async = resolve_bool("VV_LLM_USE_ASYNC", False)
     reasoning_effort = "high"
 
     start_time = time.perf_counter()

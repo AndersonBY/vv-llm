@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from v_llm.chat_clients import create_chat_client
-from v_llm.types import BackendType
+from vv_llm.chat_clients import create_chat_client
+from vv_llm.types import BackendType
 
 from live_common import resolve_backend_model, run_with_timer
 from sample_settings import sample_settings

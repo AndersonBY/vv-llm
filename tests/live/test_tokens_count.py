@@ -2,13 +2,13 @@
 # @Date:   2024-07-27 11:51:28
 from pathlib import Path
 
-from v_llm.settings import settings
-from v_llm.chat_clients import (
+from vv_llm.settings import settings
+from vv_llm.chat_clients import (
     BackendType,
     get_token_counts,
     get_message_token_counts,
 )
-from v_llm.utilities.media_processing import ImageProcessor
+from vv_llm.utilities.media_processing import ImageProcessor
 
 from live_common import load_live_settings, resolve_backend_model
 

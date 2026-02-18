@@ -8,7 +8,7 @@ from pathlib import Path
 from openai import OpenAI
 from PIL import Image
 
-from v_llm.settings import Settings
+from vv_llm.settings import Settings
 
 from live_common import resolve_bool, run_with_timer
 from sample_settings import sample_settings
@@ -28,8 +28,8 @@ def main() -> None:
     if not endpoint.api_key or not endpoint.api_base:
         raise RuntimeError("gemini-default endpoint is missing api_key/api_base in sample settings.")
 
-    model = os.environ.get("VLLM_MODEL", "").strip() or "gemini-3-pro-image-preview"
-    show_image = resolve_bool("VLLM_IMAGE_SHOW", False)
+    model = os.environ.get("VV_LLM_MODEL", "").strip() or "gemini-3-pro-image-preview"
+    show_image = resolve_bool("VV_LLM_IMAGE_SHOW", False)
     output_file = Path(__file__).with_name("generated_image_gen2.png")
 
     def _run():

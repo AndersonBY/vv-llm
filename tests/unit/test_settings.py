@@ -4,8 +4,8 @@ from copy import deepcopy
 
 import pytest
 
-from v_llm.settings import Settings, normalize_settings
-from v_llm.types.enums import BackendType
+from vv_llm.settings import Settings, normalize_settings
+from vv_llm.types.enums import BackendType
 
 
 def _v2_settings_dict() -> dict:
