@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pdm-python
+.pdm-build/
+pdm.lock
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+.env
+.env.*
+
+# Local/dev secret configs
+tests/dev_settings.py
+tests/dev_settings*.py
+tests/live/dev_settings.py
+tests/live/dev_settings*.py
+!tests/dev_settings.example.py
+!tests/live/dev_settings.example.py
+
+# Local run artifacts
+messages.json
+tests/live/generated_*.png
+tests/live/*.tmp
+tests/live/*.log
