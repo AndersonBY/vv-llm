@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up PDM
+      uses: pdm-project/setup-pdm@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: pdm install --dev
+
+    - name: Run tests
+      run: pdm run test
+
+    - name: Run linting
+      run: pdm run lint
+
+    - name: Build package
+      run: pdm build
+
+    - name: Generate release notes
+      id: changelog
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        if [ -n "$PREVIOUS_TAG" ]; then
+          git log --pretty=format:"- %s (%h)" ${PREVIOUS_TAG}..HEAD >> $GITHUB_OUTPUT
+        else
+          echo "- Initial release" >> $GITHUB_OUTPUT
+        fi
+        echo "" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: v${{ steps.changelog.outputs.version }}
+        body: ${{ steps.changelog.outputs.changelog }}
+        files: dist/*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        skip-existing: true
