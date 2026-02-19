@@ -47,10 +47,3 @@ sample_settings: SettingsDict = {
         "gemini": {"models": {"gemini-2.5-pro": {"id": "gemini-2.5-pro", "endpoints": ["gemini-default"]}}},
     },
 }
-
-VECTORVEIN_API_KEY = "YOUR_VECTORVEIN_API_KEY"
-VECTORVEIN_BASE_URL = "https://vectorvein.com/api/v1/open-api"
-VECTORVEIN_APP_ID = "YOUR_VECTORVEIN_APP_ID"
-VECTORVEIN_WORKFLOW_ID = "YOUR_VECTORVEIN_WORKFLOW_ID"
-VECTORVEIN_VPP_API_KEY = "YOUR_VECTORVEIN_VPP_API_KEY"
-VECTORVEIN_VAPP_ID = "YOUR_VECTORVEIN_VAPP_ID"

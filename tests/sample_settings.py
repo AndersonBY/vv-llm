@@ -1,15 +1,7 @@
 # @Author: Bi Ying
 # @Date:   2024-07-27 18:26:05
 try:
-    from tests.dev_settings import (
-        sample_settings,
-        VECTORVEIN_API_KEY,
-        VECTORVEIN_BASE_URL,
-        VECTORVEIN_APP_ID,
-        VECTORVEIN_WORKFLOW_ID,
-        VECTORVEIN_VPP_API_KEY,
-        VECTORVEIN_VAPP_ID,
-    )
+    from tests.dev_settings import sample_settings
 except ImportError:
     print("dev_settings.py not found, using default sample settings with empty API keys.")
     from vv_llm.types import SettingsDict
@@ -49,10 +41,3 @@ except ImportError:
             }
         },
     }
-
-    VECTORVEIN_API_KEY = "YOUR_API_KEY"
-    VECTORVEIN_BASE_URL = "https://vectorvein.com/api/v1/open-api"
-    VECTORVEIN_APP_ID = "YOUR_APP_ID"
-    VECTORVEIN_WORKFLOW_ID = "YOUR_WORKFLOW_ID"
-    VECTORVEIN_VPP_API_KEY = "YOUR_VPP_API_KEY"
-    VECTORVEIN_VAPP_ID = "YOUR_VAPP_ID"
