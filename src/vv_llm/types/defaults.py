@@ -11,8 +11,6 @@ ENDPOINT_CONCURRENT_REQUESTS: Final[int] = 20
 ENDPOINT_RPM: Final[int] = 60
 ENDPOINT_TPM: Final[int] = 300000
 
-MODEL_CONTEXT_LENGTH: Final[int] = 32768
-
 
 class ModelSettingDict(TypedDict):
     id: str
@@ -1401,6 +1399,14 @@ GEMINI_MODELS: Final[dict[str, ModelSettingDict]] = {
     },
     "gemini-3-flash": {
         "id": "gemini-3-flash",
+        "context_length": 1048576,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "gemini-3.1-pro-preview": {
+        "id": "gemini-3.1-pro-preview",
         "context_length": 1048576,
         "max_output_tokens": 65536,
         "function_call_available": True,
