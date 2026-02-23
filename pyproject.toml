@@ -15,7 +15,7 @@ license = {text = "MIT"}
 name = "vv-llm"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.3.74"
+version = "0.3.75"
 
 [project.optional-dependencies]
 bedrock = ["boto3 >= 1.28.57", "botocore >= 1.31.57"]
