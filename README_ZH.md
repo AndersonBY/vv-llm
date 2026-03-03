@@ -81,9 +81,98 @@ async def main():
 asyncio.run(main())
 ```
 
+### Embedding 与 Rerank
+
+```python
+from vv_llm.settings import settings
+
+settings.load({
+    "VERSION": "2",
+    "endpoints": [
+        {
+            "id": "siliconflow",
+            "api_base": "https://api.siliconflow.cn/v1",
+            "api_key": "sk-...",
+        }
+    ],
+    "backends": {},
+    "embedding_backends": {
+        "siliconflow": {
+            "models": {
+                "BAAI/bge-large-zh-v1.5": {
+                    "id": "BAAI/bge-large-zh-v1.5",
+                    "endpoints": ["siliconflow"],
+                    "protocol": "openai_embeddings",
+                }
+            }
+        }
+    },
+    "rerank_backends": {
+        "siliconflow": {
+            "models": {
+                "BAAI/bge-reranker-v2-m3": {
+                    "id": "BAAI/bge-reranker-v2-m3",
+                    "endpoints": ["siliconflow"],
+                    "protocol": "custom_json_http",
+                    "request_mapping": {
+                        "method": "POST",
+                        "path": "/rerank",
+                        "body_template": {
+                            "model": "${model_id}",
+                            "query": "${query}",
+                            "documents": "${documents}",
+                        },
+                    },
+                    "response_mapping": {
+                        "results_path": "$.results[*]",
+                        "field_map": {
+                            "index": "$.index",
+                            "relevance_score": "$.relevance_score",
+                        },
+                    },
+                }
+            }
+        }
+    },
+})
+```
+
+```python
+from vv_llm.embedding_clients import create_embedding_client
+from vv_llm.rerank_clients import create_rerank_client
+
+embedding_client = create_embedding_client("siliconflow", model="BAAI/bge-large-zh-v1.5")
+embedding_resp = embedding_client.create_embeddings(input="hello world")
+print(len(embedding_resp.data[0].embedding))
+
+rerank_client = create_rerank_client("siliconflow", model="BAAI/bge-reranker-v2-m3")
+rerank_resp = rerank_client.rerank(
+    query="Apple",
+    documents=["apple", "banana", "fruit", "vegetable"],
+)
+print(rerank_resp.results[0].index, rerank_resp.results[0].relevance_score)
+```
+
+```python
+import asyncio
+from vv_llm.embedding_clients import create_async_embedding_client
+from vv_llm.rerank_clients import create_async_rerank_client
+
+async def main():
+    embedding_client = create_async_embedding_client("siliconflow", model="BAAI/bge-large-zh-v1.5")
+    rerank_client = create_async_rerank_client("siliconflow", model="BAAI/bge-reranker-v2-m3")
+
+    emb = await embedding_client.create_embeddings(input=["a", "b"])
+    rr = await rerank_client.rerank(query="Apple", documents=["apple", "banana"])
+    print(len(emb.data), len(rr.results))
+
+asyncio.run(main())
+```
+
 ## 核心特性
 
 - **统一接口** — 所有后端共享相同的 `create_completion` / `create_stream` API
+- **Embedding 与 rerank** — 提供统一的同步/异步检索客户端与标准化输出
 - **类型安全的工厂** — `create_chat_client(BackendType.X)` 返回对应的客户端类型
 - **多端点管理** — 每个后端可配置多个端点，支持随机选择和故障转移
 - **工具调用** — 跨后端标准化的 tool/function calling
@@ -122,6 +211,9 @@ pip install 'vv-llm[bedrock]'    # AWS Bedrock
 ```
 src/vv_llm/
   chat_clients/    # 各后端 client + 工厂
+  embedding_clients/  # embedding client + 工厂
+  rerank_clients/     # rerank client + 工厂
+  retrieval_clients/  # retrieval 共享底层能力
   settings/        # 配置管理
   types/           # 类型定义与枚举
   utilities/       # 限流、重试、多媒体处理、token 统计

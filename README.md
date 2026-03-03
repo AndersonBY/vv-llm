@@ -81,9 +81,98 @@ async def main():
 asyncio.run(main())
 ```
 
+### Embedding & Rerank
+
+```python
+from vv_llm.settings import settings
+
+settings.load({
+    "VERSION": "2",
+    "endpoints": [
+        {
+            "id": "siliconflow",
+            "api_base": "https://api.siliconflow.cn/v1",
+            "api_key": "sk-...",
+        }
+    ],
+    "backends": {},
+    "embedding_backends": {
+        "siliconflow": {
+            "models": {
+                "BAAI/bge-large-zh-v1.5": {
+                    "id": "BAAI/bge-large-zh-v1.5",
+                    "endpoints": ["siliconflow"],
+                    "protocol": "openai_embeddings",
+                }
+            }
+        }
+    },
+    "rerank_backends": {
+        "siliconflow": {
+            "models": {
+                "BAAI/bge-reranker-v2-m3": {
+                    "id": "BAAI/bge-reranker-v2-m3",
+                    "endpoints": ["siliconflow"],
+                    "protocol": "custom_json_http",
+                    "request_mapping": {
+                        "method": "POST",
+                        "path": "/rerank",
+                        "body_template": {
+                            "model": "${model_id}",
+                            "query": "${query}",
+                            "documents": "${documents}",
+                        },
+                    },
+                    "response_mapping": {
+                        "results_path": "$.results[*]",
+                        "field_map": {
+                            "index": "$.index",
+                            "relevance_score": "$.relevance_score",
+                        },
+                    },
+                }
+            }
+        }
+    },
+})
+```
+
+```python
+from vv_llm.embedding_clients import create_embedding_client
+from vv_llm.rerank_clients import create_rerank_client
+
+embedding_client = create_embedding_client("siliconflow", model="BAAI/bge-large-zh-v1.5")
+embedding_resp = embedding_client.create_embeddings(input="hello world")
+print(len(embedding_resp.data[0].embedding))
+
+rerank_client = create_rerank_client("siliconflow", model="BAAI/bge-reranker-v2-m3")
+rerank_resp = rerank_client.rerank(
+    query="Apple",
+    documents=["apple", "banana", "fruit", "vegetable"],
+)
+print(rerank_resp.results[0].index, rerank_resp.results[0].relevance_score)
+```
+
+```python
+import asyncio
+from vv_llm.embedding_clients import create_async_embedding_client
+from vv_llm.rerank_clients import create_async_rerank_client
+
+async def main():
+    embedding_client = create_async_embedding_client("siliconflow", model="BAAI/bge-large-zh-v1.5")
+    rerank_client = create_async_rerank_client("siliconflow", model="BAAI/bge-reranker-v2-m3")
+
+    emb = await embedding_client.create_embeddings(input=["a", "b"])
+    rr = await rerank_client.rerank(query="Apple", documents=["apple", "banana"])
+    print(len(emb.data), len(rr.results))
+
+asyncio.run(main())
+```
+
 ## Features
 
 - **Unified interface** — same `create_completion` / `create_stream` API across all providers
+- **Embedding & rerank** — unified sync/async retrieval clients with normalized outputs
 - **Type-safe factory** — `create_chat_client(BackendType.X)` returns the correct client type
 - **Multi-endpoint** — configure multiple endpoints per backend with random selection and failover
 - **Tool calling** — normalized tool/function calling across providers
@@ -122,6 +211,9 @@ pip install 'vv-llm[bedrock]'    # AWS Bedrock
 ```
 src/vv_llm/
   chat_clients/    # Per-backend clients + factory
+  embedding_clients/  # Embedding clients + factory
+  rerank_clients/     # Rerank clients + factory
+  retrieval_clients/  # Shared retrieval client internals
   settings/        # Configuration management
   types/           # Type definitions & enums
   utilities/       # Rate limiting, retry, media processing, token counting

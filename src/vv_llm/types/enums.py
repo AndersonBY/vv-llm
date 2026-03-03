@@ -61,6 +61,36 @@ class BackendType(str, Enum):
         return f'"{self.value}"'
 
 
+class EmbeddingBackendType(str, Enum):
+    """Embedding backend enum definition."""
+
+    OpenAI = "openai"
+    Cohere = "cohere"
+    Jina = "jina"
+    Voyage = "voyage"
+    Local = "local"
+    Custom = "custom"
+
+    def __repr__(self):
+        """Get a string representation."""
+        return f'"{self.value}"'
+
+
+class RerankBackendType(str, Enum):
+    """Rerank backend enum definition."""
+
+    Cohere = "cohere"
+    Jina = "jina"
+    Voyage = "voyage"
+    OpenAI = "openai"
+    Local = "local"
+    Custom = "custom"
+
+    def __repr__(self):
+        """Get a string representation."""
+        return f'"{self.value}"'
+
+
 class LLMType(str, Enum):
     """LLMType enum class definition."""
 

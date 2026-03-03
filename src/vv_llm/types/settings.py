@@ -45,6 +45,26 @@ class EndpointOptionDict(TypedDict):
     concurrent_requests: NotRequired[int]
 
 
+class RequestMappingDict(TypedDict):
+    """TypedDict representing custom request mapping rules."""
+
+    method: NotRequired[str]
+    path: NotRequired[str]
+    headers: NotRequired[dict[str, str]]
+    body_template: NotRequired[dict | list | str]
+    query_template: NotRequired[dict | list | str]
+
+
+class ResponseMappingDict(TypedDict):
+    """TypedDict representing custom response mapping rules."""
+
+    model_path: NotRequired[str]
+    data_path: NotRequired[str]
+    results_path: NotRequired[str]
+    field_map: NotRequired[dict[str, str]]
+    usage_map: NotRequired[dict[str, str]]
+
+
 class ModelConfigDict(TypedDict):
     """TypedDict representing the model configuration structure."""
 
@@ -57,10 +77,29 @@ class ModelConfigDict(TypedDict):
     max_output_tokens: NotRequired[int | None]
 
 
+class RetrievalModelConfigDict(TypedDict):
+    """TypedDict representing retrieval model configuration."""
+
+    id: str
+    endpoints: list[str | EndpointOptionDict]
+    protocol: NotRequired[str | None]
+    dimensions: NotRequired[int | None]
+    default_top_n: NotRequired[int | None]
+    request_mapping: NotRequired[RequestMappingDict | None]
+    response_mapping: NotRequired[ResponseMappingDict | None]
+
+
 class BackendSettingsDict(TypedDict):
     """TypedDict representing the BackendSettings structure."""
 
     models: dict[str, ModelConfigDict]
+    default_endpoint: NotRequired[str | None]
+
+
+class RetrievalBackendSettingsDict(TypedDict):
+    """TypedDict representing retrieval backend settings."""
+
+    models: dict[str, RetrievalModelConfigDict]
     default_endpoint: NotRequired[str | None]
 
 
@@ -150,6 +189,8 @@ class SettingsV2Dict(TypedDict):
 
     # V2 format: all model backend configs in a single dictionary
     backends: NotRequired[BackendsDict]
+    embedding_backends: NotRequired[dict[str, RetrievalBackendSettingsDict]]
+    rerank_backends: NotRequired[dict[str, RetrievalBackendSettingsDict]]
 
 
 SettingsDict = SettingsV2Dict

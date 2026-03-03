@@ -7,9 +7,9 @@ from typing import Any, Literal, cast
 from pydantic import BaseModel, Field
 
 from ..types import defaults as defs
-from ..types.enums import BackendType
+from ..types.enums import BackendType, EmbeddingBackendType, RerankBackendType
 from ..types.settings import SettingsDict
-from ..types.llm_parameters import BackendSettings, EndpointSetting
+from ..types.llm_parameters import BackendSettings, EndpointSetting, RetrievalBackendSettings
 
 
 class RedisConfig(BaseModel):
@@ -67,6 +67,14 @@ class Settings(BaseModel):
 
     # V2 format: all model backend configs in a single dictionary
     backends: Backends | None = Field(default=None, description="All model backends in one place (V2 format).")
+    embedding_backends: dict[str, RetrievalBackendSettings] | None = Field(
+        default=None,
+        description="Embedding backend settings in V2 format.",
+    )
+    rerank_backends: dict[str, RetrievalBackendSettings] | None = Field(
+        default=None,
+        description="Rerank backend settings in V2 format.",
+    )
 
     # V1 format: each model backend config
     anthropic: BackendSettings | None = Field(default_factory=BackendSettings, description="Anthropic models settings.")
@@ -182,6 +190,22 @@ class Settings(BaseModel):
 
         # Compatible with VERSION 1 format
         return getattr(self, backend_name)
+
+    def get_embedding_backend(self, backend: EmbeddingBackendType | str) -> RetrievalBackendSettings:
+        backend_name = backend.value.lower() if isinstance(backend, EmbeddingBackendType) else str(backend).lower()
+        if self.embedding_backends is None:
+            raise ValueError("embedding_backends is not configured.")
+        if backend_name not in self.embedding_backends:
+            raise ValueError(f"Embedding backend {backend_name} not found.")
+        return self.embedding_backends[backend_name]
+
+    def get_rerank_backend(self, backend: RerankBackendType | str) -> RetrievalBackendSettings:
+        backend_name = backend.value.lower() if isinstance(backend, RerankBackendType) else str(backend).lower()
+        if self.rerank_backends is None:
+            raise ValueError("rerank_backends is not configured.")
+        if backend_name not in self.rerank_backends:
+            raise ValueError(f"Rerank backend {backend_name} not found.")
+        return self.rerank_backends[backend_name]
 
     def export(self):
         return cast(

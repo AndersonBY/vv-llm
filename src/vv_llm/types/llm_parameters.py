@@ -175,6 +175,46 @@ class BackendSettings(BaseModel):
         self.models = updated_models
 
 
+class RequestMapping(BaseModel):
+    method: str = Field(default="POST", description="HTTP method for custom mapped requests.")
+    path: str = Field(default="/", description="HTTP path for custom mapped requests.")
+    headers: dict[str, str] | None = Field(default=None, description="Additional headers template.")
+    body_template: dict | list | str | None = Field(default=None, description="Body template for mapped requests.")
+    query_template: dict | list | str | None = Field(default=None, description="Query template for mapped requests.")
+
+
+class ResponseMapping(BaseModel):
+    model_path: str | None = Field(default=None, description="JSONPath-like expression for model in the response.")
+    data_path: str | None = Field(default=None, description="JSONPath-like expression for embedding data list.")
+    results_path: str | None = Field(default=None, description="JSONPath-like expression for rerank results list.")
+    field_map: dict[str, str] = Field(default_factory=dict, description="Field mappings for list items.")
+    usage_map: dict[str, str] = Field(default_factory=dict, description="Field mappings for usage fields.")
+
+
+class RetrievalModelSetting(BaseModel):
+    id: str = Field(..., description="The id of the retrieval model.")
+    enabled: bool = Field(True, description="Whether the retrieval model is enabled.")
+    endpoints: list[str | EndpointOptionDict] = Field(default_factory=list, description="Available endpoints for the retrieval model.")
+    protocol: str | None = Field(default=None, description="Protocol adapter name used by this model.")
+    dimensions: int | None = Field(default=None, description="Optional embedding dimension override.")
+    default_top_n: int | None = Field(default=None, description="Optional default top_n for rerank.")
+    request_mapping: RequestMapping | None = Field(default=None, description="Custom request mapping settings.")
+    response_mapping: ResponseMapping | None = Field(default=None, description="Custom response mapping settings.")
+
+
+class RetrievalBackendSettings(BaseModel):
+    models: dict[str, RetrievalModelSetting] = Field(default_factory=dict)
+    default_endpoint: str | None = Field(default_factory=lambda: None, description="The default endpoint for retrieval models.")
+
+    def get_model_setting(self, model_name: str) -> RetrievalModelSetting:
+        if model_name in self.models:
+            model_setting = self.models[model_name]
+            if len(model_setting.endpoints) == 0 and self.default_endpoint is not None:
+                model_setting.endpoints = [self.default_endpoint]
+            return model_setting
+        raise ValueError(f"Model {model_name} not found in {self.models}")
+
+
 class Usage(BaseModel):
     completion_tokens: int
 
@@ -235,6 +275,10 @@ __all__ = [
     "EndpointSetting",
     "ModelSetting",
     "BackendSettings",
+    "RequestMapping",
+    "ResponseMapping",
+    "RetrievalModelSetting",
+    "RetrievalBackendSettings",
     "Usage",
     "ChatCompletionMessage",
     "ChatCompletionMessageParam",
