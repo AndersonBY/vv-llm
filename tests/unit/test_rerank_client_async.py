@@ -9,6 +9,11 @@ from vv_llm.rerank_clients import create_async_rerank_client
 from vv_llm.types.enums import RerankBackendType
 
 
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
+
+
 def _base_settings() -> dict:
     return {
         "VERSION": "2",
@@ -35,7 +40,7 @@ def _base_settings() -> dict:
     }
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_async_cohere_rerank_response_normalization() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.path == "/v1/v2/rerank"
