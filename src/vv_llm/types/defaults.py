@@ -608,7 +608,31 @@ QWEN_MODELS: Final[dict[str, ModelSettingDict]] = {
         "max_output_tokens": 65536,
         "function_call_available": True,
         "response_format_available": True,
-        "native_multimodal": False,
+        "native_multimodal": True,
+    },
+    "qwen3.5-122b-a10b": {
+        "id": "qwen3.5-122b-a10b",
+        "context_length": 262144,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "qwen3.5-27b": {
+        "id": "qwen3.5-27b",
+        "context_length": 262144,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "qwen3.5-35b-a3b": {
+        "id": "qwen3.5-35b-a3b",
+        "context_length": 262144,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
     },
 }
 
@@ -1150,6 +1174,38 @@ OPENAI_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": True,
         "native_multimodal": True,
     },
+    "gpt-5.3-chat": {
+        "id": "gpt-5.3-chat",
+        "context_length": 400000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "gpt-5.3-codex": {
+        "id": "gpt-5.3-codex",
+        "context_length": 400000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "gpt-5.4": {
+        "id": "gpt-5.4",
+        "context_length": 1050000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "gpt-5.4-pro": {
+        "id": "gpt-5.4-pro",
+        "context_length": 1050000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
 }
 
 # Anthropic models
@@ -1407,6 +1463,14 @@ GEMINI_MODELS: Final[dict[str, ModelSettingDict]] = {
     },
     "gemini-3.1-pro-preview": {
         "id": "gemini-3.1-pro-preview",
+        "context_length": 1048576,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "gemini-3.1-flash-lite-preview": {
+        "id": "gemini-3.1-flash-lite-preview",
         "context_length": 1048576,
         "max_output_tokens": 65536,
         "function_call_available": True,
