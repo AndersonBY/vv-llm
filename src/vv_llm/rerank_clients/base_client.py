@@ -6,12 +6,13 @@ import httpx
 
 from ..settings import normalize_settings
 from ..types.enums import RerankBackendType
-from ..types.llm_parameters import EndpointSetting, ResponseMapping
+from ..types.llm_parameters import EndpointSetting, RequestMapping, ResponseMapping
 from ..types.retrieval_parameters import RerankResponse, RerankResult, RerankUsage
 from ..types.settings import SettingsDict
 from ..utilities.gcp_token import get_token_with_cache
 from ..retrieval_clients.common import BaseAsyncRetrievalClient, BaseRetrievalClient
-from ..retrieval_clients.common import build_url, extract_json_path, render_template
+from ..retrieval_clients.common import async_request_json_with_retry, build_url, extract_json_path, render_template
+from ..retrieval_clients.common import request_json_with_retry
 
 if TYPE_CHECKING:
     from ..settings import Settings
@@ -20,9 +21,37 @@ DEFAULT_RERANK_PROTOCOLS: dict[str, str] = {
     RerankBackendType.Cohere.value: "cohere_rerank_v2",
     RerankBackendType.Jina.value: "jina_rerank_v1",
     RerankBackendType.Voyage.value: "voyage_rerank_v1",
+    RerankBackendType.Siliconflow.value: "siliconflow",
     RerankBackendType.OpenAI.value: "custom_json_http",
     RerankBackendType.Local.value: "custom_json_http",
     RerankBackendType.Custom.value: "custom_json_http",
+}
+
+DEFAULT_RERANK_REQUEST_MAPPINGS: dict[str, RequestMapping] = {
+    RerankBackendType.Siliconflow.value: RequestMapping(
+        method="POST",
+        path="/rerank",
+        body_template={
+            "model": "${model_id}",
+            "query": "${query}",
+            "documents": "${documents}",
+        },
+    ),
+}
+
+DEFAULT_RERANK_RESPONSE_MAPPINGS: dict[str, ResponseMapping] = {
+    RerankBackendType.Siliconflow.value: ResponseMapping(
+        results_path="$.results[*]",
+        field_map={
+            "index": "$.index",
+            "relevance_score": "$.relevance_score",
+            "document": "$.document.text",
+        },
+        usage_map={
+            "search_units": "$.meta.billed_units.search_units",
+            "total_tokens": "$.meta.tokens.input_tokens",
+        },
+    ),
 }
 
 
@@ -42,6 +71,25 @@ def _normalize_document(value: Any) -> str | dict | None:
     if isinstance(value, str):
         return value
     return str(value)
+
+
+def _default_request_mapping(backend_name: str) -> RequestMapping | None:
+    mapping = DEFAULT_RERANK_REQUEST_MAPPINGS.get(backend_name)
+    return mapping.model_copy(deep=True) if mapping is not None else None
+
+
+def _default_response_mapping(backend_name: str) -> ResponseMapping | None:
+    mapping = DEFAULT_RERANK_RESPONSE_MAPPINGS.get(backend_name)
+    return mapping.model_copy(deep=True) if mapping is not None else None
+
+
+def _parse_siliconflow_rerank(raw: dict[str, Any], model_id: str, documents: list[str | dict]) -> RerankResponse:
+    return _parse_custom_rerank(
+        raw,
+        model_id,
+        documents,
+        _default_response_mapping(RerankBackendType.Siliconflow.value),
+    )
 
 
 def _usage_from_mapping(raw: dict[str, Any], response_mapping: ResponseMapping | None) -> RerankUsage | None:
@@ -338,16 +386,15 @@ class RerankClient(BaseRetrievalClient):
         should_close = self.http_client is None
 
         try:
-            response = client.request(
-                method=method.upper(),
+            return request_json_with_retry(
+                client=client,
+                method=method,
                 url=build_url(endpoint.api_base, path),
                 headers=request_headers,
                 params=query,
-                json=body,
+                json_body=body,
                 timeout=timeout,
             )
-            response.raise_for_status()
-            return response.json()
         finally:
             if should_close:
                 client.close()
@@ -362,7 +409,7 @@ class RerankClient(BaseRetrievalClient):
         return_documents: bool,
         extra_body: dict[str, Any] | None,
     ) -> tuple[str, str, dict[str, str] | None, dict | list | str | None, dict | None]:
-        mapping = self.model_setting.request_mapping
+        mapping = self.model_setting.request_mapping or _default_request_mapping(self.backend_name)
         method = mapping.method if mapping else "POST"
         path = mapping.path if mapping else "/rerank"
 
@@ -483,6 +530,25 @@ class RerankClient(BaseRetrievalClient):
             )
             return _parse_voyage_rerank(raw, model_id, documents)
 
+        if protocol == "siliconflow":
+            body = {
+                "model": model_id,
+                "query": query,
+                "documents": documents,
+            }
+            if extra_body:
+                body.update(extra_body)
+            raw = self._request_json(
+                endpoint=endpoint,
+                method="POST",
+                path="/rerank",
+                headers=None,
+                body=body,
+                query=None,
+                timeout=timeout,
+            )
+            return _parse_siliconflow_rerank(raw, model_id, documents)
+
         if protocol == "custom_json_http":
             method, path, headers, body, req_query = self._build_custom_request(
                 model_id=model_id,
@@ -501,7 +567,12 @@ class RerankClient(BaseRetrievalClient):
                 query=req_query if isinstance(req_query, dict) else None,
                 timeout=timeout,
             )
-            return _parse_custom_rerank(raw, model_id, documents, self.model_setting.response_mapping)
+            return _parse_custom_rerank(
+                raw,
+                model_id,
+                documents,
+                self.model_setting.response_mapping or _default_response_mapping(self.backend_name),
+            )
 
         raise ValueError(f"Unsupported rerank protocol: {protocol}")
 
@@ -578,16 +649,15 @@ class AsyncRerankClient(BaseAsyncRetrievalClient):
         should_close = self.http_client is None
 
         try:
-            response = await client.request(
-                method=method.upper(),
+            return await async_request_json_with_retry(
+                client=client,
+                method=method,
                 url=build_url(endpoint.api_base, path),
                 headers=request_headers,
                 params=query,
-                json=body,
+                json_body=body,
                 timeout=timeout,
             )
-            response.raise_for_status()
-            return response.json()
         finally:
             if should_close:
                 await client.aclose()
@@ -602,7 +672,7 @@ class AsyncRerankClient(BaseAsyncRetrievalClient):
         return_documents: bool,
         extra_body: dict[str, Any] | None,
     ) -> tuple[str, str, dict[str, str] | None, dict | list | str | None, dict | None]:
-        mapping = self.model_setting.request_mapping
+        mapping = self.model_setting.request_mapping or _default_request_mapping(self.backend_name)
         method = mapping.method if mapping else "POST"
         path = mapping.path if mapping else "/rerank"
 
@@ -723,6 +793,25 @@ class AsyncRerankClient(BaseAsyncRetrievalClient):
             )
             return _parse_voyage_rerank(raw, model_id, documents)
 
+        if protocol == "siliconflow":
+            body = {
+                "model": model_id,
+                "query": query,
+                "documents": documents,
+            }
+            if extra_body:
+                body.update(extra_body)
+            raw = await self._request_json(
+                endpoint=endpoint,
+                method="POST",
+                path="/rerank",
+                headers=None,
+                body=body,
+                query=None,
+                timeout=timeout,
+            )
+            return _parse_siliconflow_rerank(raw, model_id, documents)
+
         if protocol == "custom_json_http":
             method, path, headers, body, req_query = self._build_custom_request(
                 model_id=model_id,
@@ -741,7 +830,12 @@ class AsyncRerankClient(BaseAsyncRetrievalClient):
                 query=req_query if isinstance(req_query, dict) else None,
                 timeout=timeout,
             )
-            return _parse_custom_rerank(raw, model_id, documents, self.model_setting.response_mapping)
+            return _parse_custom_rerank(
+                raw,
+                model_id,
+                documents,
+                self.model_setting.response_mapping or _default_response_mapping(self.backend_name),
+            )
 
         raise ValueError(f"Unsupported rerank protocol: {protocol}")
 

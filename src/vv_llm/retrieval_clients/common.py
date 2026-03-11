@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 import random
 import re
 import time
@@ -16,10 +18,128 @@ from ..utilities.rate_limiter import AsyncDiskCacheRateLimiter, AsyncMemoryRateL
 from ..utilities.rate_limiter import SyncDiskCacheRateLimiter, SyncMemoryRateLimiter, SyncRedisRateLimiter
 
 _PLACEHOLDER_RE = re.compile(r"\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
+_RETRIABLE_STATUS_CODES = frozenset({408, 429, 502, 503, 504})
+_RETRIABLE_REQUEST_EXCEPTIONS = (
+    httpx.ConnectError,
+    httpx.ConnectTimeout,
+    httpx.PoolTimeout,
+)
+_RETRIEVAL_HTTP_MAX_RETRIES = 2
+_RETRIEVAL_HTTP_BASE_BACKOFF_SECONDS = 0.5
+_RETRIEVAL_HTTP_MAX_BACKOFF_SECONDS = 3.0
 
 
 def _endpoint_option_enabled(endpoint_option: str | EndpointOptionDict) -> bool:
     return not (isinstance(endpoint_option, dict) and endpoint_option.get("enabled") is False)
+
+
+def _parse_retry_after_seconds(value: str | None) -> float | None:
+    if value is None:
+        return None
+
+    stripped = value.strip()
+    if not stripped:
+        return None
+
+    try:
+        return max(float(stripped), 0.0)
+    except ValueError:
+        pass
+
+    try:
+        retry_at = parsedate_to_datetime(stripped)
+    except (TypeError, ValueError, IndexError, OverflowError):
+        return None
+
+    if retry_at.tzinfo is None:
+        retry_at = retry_at.replace(tzinfo=timezone.utc)
+
+    return max((retry_at - datetime.now(timezone.utc)).total_seconds(), 0.0)
+
+
+def _compute_retry_delay_seconds(attempt: int, retry_after: str | None = None) -> float:
+    parsed_retry_after = _parse_retry_after_seconds(retry_after)
+    if parsed_retry_after is not None:
+        return min(parsed_retry_after, _RETRIEVAL_HTTP_MAX_BACKOFF_SECONDS)
+
+    base_delay = min(
+        _RETRIEVAL_HTTP_BASE_BACKOFF_SECONDS * (2**attempt),
+        _RETRIEVAL_HTTP_MAX_BACKOFF_SECONDS,
+    )
+    jitter = random.uniform(0.0, min(base_delay * 0.2, 0.5))
+    return min(base_delay + jitter, _RETRIEVAL_HTTP_MAX_BACKOFF_SECONDS)
+
+
+def request_json_with_retry(
+    *,
+    client: httpx.Client,
+    method: str,
+    url: str,
+    headers: dict[str, str],
+    params: dict | None,
+    json_body: dict | list | str | None,
+    timeout: float | httpx.Timeout | None,
+) -> dict[str, Any]:
+    for attempt in range(_RETRIEVAL_HTTP_MAX_RETRIES + 1):
+        try:
+            response = client.request(
+                method=method.upper(),
+                url=url,
+                headers=headers,
+                params=params,
+                json=json_body,
+                timeout=timeout,
+            )
+        except _RETRIABLE_REQUEST_EXCEPTIONS:
+            if attempt >= _RETRIEVAL_HTTP_MAX_RETRIES:
+                raise
+            time.sleep(_compute_retry_delay_seconds(attempt))
+            continue
+
+        if response.status_code in _RETRIABLE_STATUS_CODES and attempt < _RETRIEVAL_HTTP_MAX_RETRIES:
+            time.sleep(_compute_retry_delay_seconds(attempt, response.headers.get("Retry-After")))
+            continue
+
+        response.raise_for_status()
+        return response.json()
+
+    raise RuntimeError("Unreachable retry state for retrieval request.")
+
+
+async def async_request_json_with_retry(
+    *,
+    client: httpx.AsyncClient,
+    method: str,
+    url: str,
+    headers: dict[str, str],
+    params: dict | None,
+    json_body: dict | list | str | None,
+    timeout: float | httpx.Timeout | None,
+) -> dict[str, Any]:
+    for attempt in range(_RETRIEVAL_HTTP_MAX_RETRIES + 1):
+        try:
+            response = await client.request(
+                method=method.upper(),
+                url=url,
+                headers=headers,
+                params=params,
+                json=json_body,
+                timeout=timeout,
+            )
+        except _RETRIABLE_REQUEST_EXCEPTIONS:
+            if attempt >= _RETRIEVAL_HTTP_MAX_RETRIES:
+                raise
+            await asyncio.sleep(_compute_retry_delay_seconds(attempt))
+            continue
+
+        if response.status_code in _RETRIABLE_STATUS_CODES and attempt < _RETRIEVAL_HTTP_MAX_RETRIES:
+            await asyncio.sleep(_compute_retry_delay_seconds(attempt, response.headers.get("Retry-After")))
+            continue
+
+        response.raise_for_status()
+        return response.json()
+
+    raise RuntimeError("Unreachable retry state for retrieval request.")
 
 
 class BaseRetrievalClient:

@@ -32,6 +32,15 @@ def _base_settings() -> dict:
                     }
                 }
             },
+            "siliconflow": {
+                "models": {
+                    "BAAI/bge-reranker-v2-m3": {
+                        "id": "BAAI/bge-reranker-v2-m3",
+                        "endpoints": ["rerank-endpoint"],
+                        "protocol": "siliconflow",
+                    }
+                }
+            },
             "custom": {
                 "models": {
                     "custom-rerank": {
@@ -148,6 +157,51 @@ def test_custom_rerank_request_response_mapping() -> None:
     assert response.results[0].document == "doc-a"
     assert response.usage is not None
     assert response.usage.search_units == 7
+
+
+def test_siliconflow_rerank_protocol() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/v1/rerank"
+        payload = json.loads(request.content.decode("utf-8"))
+        assert payload == {
+            "model": "BAAI/bge-reranker-v2-m3",
+            "query": "apple",
+            "documents": ["banana", "apple"],
+        }
+
+        return httpx.Response(
+            status_code=200,
+            json={
+                "results": [
+                    {"index": 1, "relevance_score": 0.97, "document": {"text": "apple"}},
+                    {"index": 0, "relevance_score": 0.21, "document": {"text": "banana"}},
+                ],
+                "meta": {
+                    "billed_units": {"search_units": 3},
+                    "tokens": {"input_tokens": 18},
+                },
+            },
+        )
+
+    settings = _base_settings()
+    transport = httpx.MockTransport(handler)
+    http_client = httpx.Client(transport=transport)
+
+    client = create_rerank_client(
+        backend=RerankBackendType.Siliconflow,
+        model="BAAI/bge-reranker-v2-m3",
+        settings=settings,
+        http_client=http_client,
+    )
+    response = client.rerank(query="apple", documents=["banana", "apple"])
+
+    assert response.model == "BAAI/bge-reranker-v2-m3"
+    assert len(response.results) == 2
+    assert response.results[0].index == 1
+    assert response.results[0].document == "apple"
+    assert response.usage is not None
+    assert response.usage.search_units == 3
+    assert response.usage.total_tokens == 18
 
 
 def test_custom_rerank_mapping_missing_score_raises() -> None:

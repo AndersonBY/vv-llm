@@ -11,7 +11,8 @@ from ..types.retrieval_parameters import EmbeddingData, EmbeddingResponse, Embed
 from ..types.settings import SettingsDict
 from ..utilities.gcp_token import get_token_with_cache
 from ..retrieval_clients.common import BaseAsyncRetrievalClient, BaseRetrievalClient
-from ..retrieval_clients.common import build_url, extract_json_path, render_template
+from ..retrieval_clients.common import async_request_json_with_retry, build_url, extract_json_path, render_template
+from ..retrieval_clients.common import request_json_with_retry
 
 if TYPE_CHECKING:
     from ..settings import Settings
@@ -21,6 +22,7 @@ DEFAULT_EMBEDDING_PROTOCOLS: dict[str, str] = {
     EmbeddingBackendType.Cohere.value: "cohere_embed_v2",
     EmbeddingBackendType.Jina.value: "openai_embeddings",
     EmbeddingBackendType.Voyage.value: "voyage_embeddings_v1",
+    EmbeddingBackendType.Siliconflow.value: "siliconflow",
     EmbeddingBackendType.Local.value: "openai_embeddings",
     EmbeddingBackendType.Custom.value: "custom_json_http",
 }
@@ -98,6 +100,10 @@ def _parse_cohere_embeddings(raw: dict[str, Any], model_id: str, inputs: list[st
         usage=usage,
         raw_response=raw,
     )
+
+
+def _parse_siliconflow_embeddings(raw: dict[str, Any], model_id: str, inputs: list[str]) -> EmbeddingResponse:
+    return _parse_openai_style_embeddings(raw, model_id, inputs)
 
 
 def _usage_from_mapping(raw: dict[str, Any], response_mapping: ResponseMapping | None) -> EmbeddingUsage | None:
@@ -310,16 +316,15 @@ class EmbeddingClient(BaseRetrievalClient):
         should_close = self.http_client is None
 
         try:
-            response = client.request(
-                method=method.upper(),
+            return request_json_with_retry(
+                client=client,
+                method=method,
                 url=build_url(endpoint.api_base, path),
                 headers=request_headers,
                 params=query,
-                json=body,
+                json_body=body,
                 timeout=timeout,
             )
-            response.raise_for_status()
-            return response.json()
         finally:
             if should_close:
                 client.close()
@@ -382,6 +387,24 @@ class EmbeddingClient(BaseRetrievalClient):
             "extra_body": extra_body,
         }
         self._acquire_rate_limit(endpoint, request_body_for_rate)
+
+        if protocol == "siliconflow":
+            body: dict[str, Any] = {"model": model_id, "input": input}
+            if dimensions is not None:
+                body["dimensions"] = dimensions
+            if extra_body:
+                body.update(extra_body)
+
+            raw = self._request_json(
+                endpoint=endpoint,
+                method="POST",
+                path="/embeddings",
+                headers=None,
+                body=body,
+                query=None,
+                timeout=timeout,
+            )
+            return _parse_siliconflow_embeddings(raw, model_id, _ensure_list_input(input))
 
         if protocol == "openai_embeddings":
             if endpoint.is_azure or endpoint.endpoint_type == "openai_azure":
@@ -550,16 +573,15 @@ class AsyncEmbeddingClient(BaseAsyncRetrievalClient):
         should_close = self.http_client is None
 
         try:
-            response = await client.request(
-                method=method.upper(),
+            return await async_request_json_with_retry(
+                client=client,
+                method=method,
                 url=build_url(endpoint.api_base, path),
                 headers=request_headers,
                 params=query,
-                json=body,
+                json_body=body,
                 timeout=timeout,
             )
-            response.raise_for_status()
-            return response.json()
         finally:
             if should_close:
                 await client.aclose()
@@ -622,6 +644,24 @@ class AsyncEmbeddingClient(BaseAsyncRetrievalClient):
             "extra_body": extra_body,
         }
         await self._acquire_rate_limit(endpoint, request_body_for_rate)
+
+        if protocol == "siliconflow":
+            body: dict[str, Any] = {"model": model_id, "input": input}
+            if dimensions is not None:
+                body["dimensions"] = dimensions
+            if extra_body:
+                body.update(extra_body)
+
+            raw = await self._request_json(
+                endpoint=endpoint,
+                method="POST",
+                path="/embeddings",
+                headers=None,
+                body=body,
+                query=None,
+                timeout=timeout,
+            )
+            return _parse_siliconflow_embeddings(raw, model_id, _ensure_list_input(input))
 
         if protocol == "openai_embeddings":
             if endpoint.is_azure or endpoint.endpoint_type == "openai_azure":

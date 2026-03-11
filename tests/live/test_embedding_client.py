@@ -9,7 +9,7 @@ from vv_llm.settings import settings
 from live_common import load_live_settings, run_with_timer
 
 DEFAULT_BACKEND = os.getenv("VV_LLM_EMBEDDING_BACKEND", "siliconflow")
-DEFAULT_MODEL = os.getenv("VV_LLM_EMBEDDING_MODEL", "BAAI/bge-large-zh-v1.5")
+DEFAULT_MODEL = os.getenv("VV_LLM_EMBEDDING_MODEL", "Qwen/Qwen3-Embedding-4B")
 DEFAULT_TEXT = os.getenv(
     "VV_LLM_EMBEDDING_TEXT",
     "Silicon flow embedding online: fast, affordable, and high-quality embedding services. come try it out!",

@@ -68,6 +68,7 @@ class EmbeddingBackendType(str, Enum):
     Cohere = "cohere"
     Jina = "jina"
     Voyage = "voyage"
+    Siliconflow = "siliconflow"
     Local = "local"
     Custom = "custom"
 
@@ -82,6 +83,7 @@ class RerankBackendType(str, Enum):
     Cohere = "cohere"
     Jina = "jina"
     Voyage = "voyage"
+    Siliconflow = "siliconflow"
     OpenAI = "openai"
     Local = "local"
     Custom = "custom"
