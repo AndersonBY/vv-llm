@@ -33,6 +33,10 @@ gpt_4o_encoding = None
 logger = logging.getLogger(__name__)
 
 
+def _endpoint_choice_enabled(endpoint_choice: str | dict[str, Any]) -> bool:
+    return not (isinstance(endpoint_choice, dict) and endpoint_choice.get("enabled") is False)
+
+
 def get_gpt_35_encoding():
     global gpt_35_encoding
     if gpt_35_encoding is None:
@@ -112,6 +116,8 @@ def convert_type(value, value_type):
 def _get_first_enabled_endpoint(backend_setting, settings):
     """Get the first enabled endpoint from backend settings"""
     for endpoint_choice in backend_setting.endpoints:
+        if not _endpoint_choice_enabled(endpoint_choice):
+            continue
         if isinstance(endpoint_choice, dict):
             endpoint_id = endpoint_choice["endpoint_id"]
         else:
@@ -254,6 +260,8 @@ def get_token_counts(text: str | dict, model: str = "", use_token_server_first: 
         backend_setting = settings.get_backend(BackendType.Anthropic)
         try:
             for endpoint_choice in backend_setting.models[model].endpoints:
+                if not _endpoint_choice_enabled(endpoint_choice):
+                    continue
                 if isinstance(endpoint_choice, dict):
                     endpoint_id = endpoint_choice["endpoint_id"]
                 else:

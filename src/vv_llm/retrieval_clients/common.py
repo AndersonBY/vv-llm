@@ -18,6 +18,10 @@ from ..utilities.rate_limiter import SyncDiskCacheRateLimiter, SyncMemoryRateLim
 _PLACEHOLDER_RE = re.compile(r"\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
 
 
+def _endpoint_option_enabled(endpoint_option: str | EndpointOptionDict) -> bool:
+    return not (isinstance(endpoint_option, dict) and endpoint_option.get("enabled") is False)
+
+
 class BaseRetrievalClient:
     def __init__(
         self,
@@ -112,6 +116,8 @@ class BaseRetrievalClient:
     def _get_available_endpoints(self, model_endpoints: list[str | EndpointOptionDict]) -> list[str | EndpointOptionDict]:
         available_endpoints = []
         for endpoint_option in model_endpoints:
+            if not _endpoint_option_enabled(endpoint_option):
+                continue
             if isinstance(endpoint_option, str):
                 endpoint_id = endpoint_option
             else:
@@ -125,6 +131,14 @@ class BaseRetrievalClient:
             if endpoint.enabled:
                 available_endpoints.append(endpoint_option)
         return available_endpoints
+
+    def _model_endpoint_binding_enabled(self, endpoint_id: str) -> bool:
+        for endpoint_option in self.model_setting.endpoints:
+            if isinstance(endpoint_option, dict) and endpoint_option.get("endpoint_id") == endpoint_id:
+                return _endpoint_option_enabled(endpoint_option)
+            if endpoint_option == endpoint_id:
+                return True
+        return True
 
     def _set_model_id_by_endpoint_id(self, endpoint_id: str) -> str:
         self.model_id = self.model_setting.id
@@ -160,11 +174,15 @@ class BaseRetrievalClient:
                 self.endpoint = self.settings.get_endpoint(self.endpoint_id)
                 if not self.endpoint.enabled:
                     raise ValueError(f"Endpoint {self.endpoint_id} is disabled")
+                if not self._model_endpoint_binding_enabled(self.endpoint_id):
+                    raise ValueError(f"Endpoint {self.endpoint_id} is disabled for model {self.model}")
                 self._set_model_id_by_endpoint_id(self.endpoint_id)
         else:
             if not self.endpoint.enabled:
                 raise ValueError(f"Endpoint {self.endpoint.id} is disabled")
             self.endpoint_id = self.endpoint.id
+            if not self._model_endpoint_binding_enabled(self.endpoint_id):
+                raise ValueError(f"Endpoint {self.endpoint_id} is disabled for model {self.model}")
             self._set_model_id_by_endpoint_id(self.endpoint_id)
 
         return self.endpoint, self.model_id
@@ -264,6 +282,8 @@ class BaseAsyncRetrievalClient:
     def _get_available_endpoints(self, model_endpoints: list[str | EndpointOptionDict]) -> list[str | EndpointOptionDict]:
         available_endpoints = []
         for endpoint_option in model_endpoints:
+            if not _endpoint_option_enabled(endpoint_option):
+                continue
             if isinstance(endpoint_option, str):
                 endpoint_id = endpoint_option
             else:
@@ -277,6 +297,14 @@ class BaseAsyncRetrievalClient:
             if endpoint.enabled:
                 available_endpoints.append(endpoint_option)
         return available_endpoints
+
+    def _model_endpoint_binding_enabled(self, endpoint_id: str) -> bool:
+        for endpoint_option in self.model_setting.endpoints:
+            if isinstance(endpoint_option, dict) and endpoint_option.get("endpoint_id") == endpoint_id:
+                return _endpoint_option_enabled(endpoint_option)
+            if endpoint_option == endpoint_id:
+                return True
+        return True
 
     def _set_model_id_by_endpoint_id(self, endpoint_id: str) -> str:
         self.model_id = self.model_setting.id
@@ -312,11 +340,15 @@ class BaseAsyncRetrievalClient:
                 self.endpoint = self.settings.get_endpoint(self.endpoint_id)
                 if not self.endpoint.enabled:
                     raise ValueError(f"Endpoint {self.endpoint_id} is disabled")
+                if not self._model_endpoint_binding_enabled(self.endpoint_id):
+                    raise ValueError(f"Endpoint {self.endpoint_id} is disabled for model {self.model}")
                 self._set_model_id_by_endpoint_id(self.endpoint_id)
         else:
             if not self.endpoint.enabled:
                 raise ValueError(f"Endpoint {self.endpoint.id} is disabled")
             self.endpoint_id = self.endpoint.id
+            if not self._model_endpoint_binding_enabled(self.endpoint_id):
+                raise ValueError(f"Endpoint {self.endpoint_id} is disabled for model {self.model}")
             self._set_model_id_by_endpoint_id(self.endpoint_id)
 
         return self.endpoint, self.model_id

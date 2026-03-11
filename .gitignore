@@ -25,3 +25,5 @@ messages.json
 tests/live/generated_*.png
 tests/live/*.tmp
 tests/live/*.log
+
+uv.lock

@@ -40,6 +40,7 @@ class EndpointOptionDict(TypedDict):
 
     endpoint_id: str
     model_id: str
+    enabled: NotRequired[bool]
     rpm: NotRequired[int]
     tpm: NotRequired[int]
     concurrent_requests: NotRequired[int]
@@ -69,6 +70,7 @@ class ModelConfigDict(TypedDict):
     """TypedDict representing the model configuration structure."""
 
     id: str
+    enabled: NotRequired[bool]
     endpoints: list[str | EndpointOptionDict]
     function_call_available: NotRequired[bool]
     response_format_available: NotRequired[bool]
@@ -81,6 +83,7 @@ class RetrievalModelConfigDict(TypedDict):
     """TypedDict representing retrieval model configuration."""
 
     id: str
+    enabled: NotRequired[bool]
     endpoints: list[str | EndpointOptionDict]
     protocol: NotRequired[str | None]
     dimensions: NotRequired[int | None]
@@ -107,6 +110,7 @@ class EndpointSettingDict(TypedDict):
     """TypedDict representing the EndpointSetting structure."""
 
     id: str
+    enabled: NotRequired[bool]
     api_base: NotRequired[str | None]
     api_key: NotRequired[str]
     region: NotRequired[str]

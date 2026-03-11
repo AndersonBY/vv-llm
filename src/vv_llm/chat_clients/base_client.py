@@ -46,6 +46,10 @@ from ..utilities.rate_limiter import SyncMemoryRateLimiter, SyncRedisRateLimiter
 from ..utilities.rate_limiter import AsyncMemoryRateLimiter, AsyncRedisRateLimiter, AsyncDiskCacheRateLimiter
 
 
+def _endpoint_option_enabled(endpoint_option: str | dict[str, Any]) -> bool:
+    return not (isinstance(endpoint_option, dict) and endpoint_option.get("enabled") is False)
+
+
 class BaseChatClient(ABC):
     DEFAULT_MODEL: str
     BACKEND_NAME: BackendType
@@ -148,6 +152,8 @@ class BaseChatClient(ABC):
         """Get list of available (enabled) endpoints for the model"""
         available_endpoints = []
         for endpoint_option in model_endpoints:
+            if not _endpoint_option_enabled(endpoint_option):
+                continue
             if isinstance(endpoint_option, dict):
                 endpoint_id = endpoint_option["endpoint_id"]
                 try:
@@ -164,6 +170,14 @@ class BaseChatClient(ABC):
                 except ValueError:
                     continue
         return available_endpoints
+
+    def _model_endpoint_binding_enabled(self, endpoint_id: str) -> bool:
+        for endpoint_option in self.backend_settings.models[self.model].endpoints:
+            if isinstance(endpoint_option, dict) and endpoint_option.get("endpoint_id") == endpoint_id:
+                return _endpoint_option_enabled(endpoint_option)
+            if endpoint_option == endpoint_id:
+                return True
+        return True
 
     def set_model_id_by_endpoint_id(self, endpoint_id: str):
         for endpoint_option in self.backend_settings.models[self.model].endpoints:
@@ -193,11 +207,15 @@ class BaseChatClient(ABC):
                 self.endpoint = self.settings.get_endpoint(self.endpoint_id)
                 if not self.endpoint.enabled:
                     raise ValueError(f"Endpoint {self.endpoint_id} is disabled")
+                if not self._model_endpoint_binding_enabled(self.endpoint_id):
+                    raise ValueError(f"Endpoint {self.endpoint_id} is disabled for model {self.model}")
                 self.set_model_id_by_endpoint_id(self.endpoint_id)
         elif isinstance(self.endpoint, EndpointSetting):
             if not self.endpoint.enabled:
                 raise ValueError(f"Endpoint {self.endpoint.id} is disabled")
             self.endpoint_id = self.endpoint.id
+            if not self._model_endpoint_binding_enabled(self.endpoint_id):
+                raise ValueError(f"Endpoint {self.endpoint_id} is disabled for model {self.model}")
             self.set_model_id_by_endpoint_id(self.endpoint_id)
         else:
             raise ValueError("Invalid endpoint")
@@ -564,6 +582,8 @@ class BaseAsyncChatClient(ABC):
         """Get list of available (enabled) endpoints for the model"""
         available_endpoints = []
         for endpoint_option in model_endpoints:
+            if not _endpoint_option_enabled(endpoint_option):
+                continue
             if isinstance(endpoint_option, dict):
                 # For endpoint with specific config, check if the endpoint is enabled
                 endpoint_id = endpoint_option["endpoint_id"]
@@ -584,6 +604,14 @@ class BaseAsyncChatClient(ABC):
                     # Endpoint not found, skip it
                     continue
         return available_endpoints
+
+    def _model_endpoint_binding_enabled(self, endpoint_id: str) -> bool:
+        for endpoint_option in self.backend_settings.models[self.model].endpoints:
+            if isinstance(endpoint_option, dict) and endpoint_option.get("endpoint_id") == endpoint_id:
+                return _endpoint_option_enabled(endpoint_option)
+            if endpoint_option == endpoint_id:
+                return True
+        return True
 
     def set_model_id_by_endpoint_id(self, endpoint_id: str):
         for endpoint_option in self.backend_settings.models[self.model].endpoints:
@@ -615,12 +643,16 @@ class BaseAsyncChatClient(ABC):
                 # Check if the specified endpoint is enabled
                 if not self.endpoint.enabled:
                     raise ValueError(f"Endpoint {self.endpoint_id} is disabled")
+                if not self._model_endpoint_binding_enabled(self.endpoint_id):
+                    raise ValueError(f"Endpoint {self.endpoint_id} is disabled for model {self.model}")
                 self.set_model_id_by_endpoint_id(self.endpoint_id)
         elif isinstance(self.endpoint, EndpointSetting):
             # Check if the endpoint is enabled
             if not self.endpoint.enabled:
                 raise ValueError(f"Endpoint {self.endpoint.id} is disabled")
             self.endpoint_id = self.endpoint.id
+            if not self._model_endpoint_binding_enabled(self.endpoint_id):
+                raise ValueError(f"Endpoint {self.endpoint_id} is disabled for model {self.model}")
             self.set_model_id_by_endpoint_id(self.endpoint_id)
         else:
             raise ValueError("Invalid endpoint")
