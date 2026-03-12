@@ -182,6 +182,7 @@ class AnthropicChatClient(BaseChatClient):
         top_logprobs: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         user: str | OpenAINotGiven = OPENAI_NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
@@ -223,6 +224,7 @@ class AnthropicChatClient(BaseChatClient):
         top_logprobs: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         user: str | OpenAINotGiven = OPENAI_NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
@@ -264,6 +266,7 @@ class AnthropicChatClient(BaseChatClient):
         top_logprobs: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         user: str | OpenAINotGiven = OPENAI_NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
@@ -304,6 +307,7 @@ class AnthropicChatClient(BaseChatClient):
         top_logprobs: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         user: str | OpenAINotGiven = OPENAI_NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
@@ -320,6 +324,12 @@ class AnthropicChatClient(BaseChatClient):
             self.model_id = self.model_setting.id
 
         self.endpoint, self.model_id = self._set_endpoint()
+        extra_headers = self._resolve_request_headers(
+            extra_headers=extra_headers,
+            header_context=header_context,
+            model=model,
+            user=user,
+        )
 
         if self.endpoint.endpoint_type and self.endpoint.endpoint_type.startswith("openai"):
             _tools = OPENAI_NOT_GIVEN if tools is NOT_GIVEN else tools
@@ -374,6 +384,7 @@ class AnthropicChatClient(BaseChatClient):
                         top_logprobs=top_logprobs,
                         user=user,
                         extra_headers=extra_headers,
+                        header_context=header_context,
                         extra_query=extra_query,
                         extra_body=extra_body,
                         timeout=timeout,
@@ -425,6 +436,7 @@ class AnthropicChatClient(BaseChatClient):
                     top_logprobs=top_logprobs,
                     user=user,
                     extra_headers=extra_headers,
+                    header_context=header_context,
                     extra_query=extra_query,
                     extra_body=extra_body,
                     timeout=timeout,
@@ -491,6 +503,7 @@ class AnthropicChatClient(BaseChatClient):
                     tool_choice=tool_choice_param,
                     top_p=_top_p,
                     thinking=_thinking,
+                    extra_headers=extra_headers,
                 )
             except AnthropicAPIStatusError as e:
                 raise APIStatusError(message=e.message, response=e.response, body=e.body) from e
@@ -518,6 +531,7 @@ class AnthropicChatClient(BaseChatClient):
                     tool_choice=tool_choice_param,
                     top_p=_top_p,
                     thinking=_thinking,
+                    extra_headers=extra_headers,
                 )
             except AnthropicAPIStatusError as e:
                 raise APIStatusError(message=e.message, response=e.response, body=e.body) from e
@@ -658,6 +672,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         top_logprobs: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         user: str | OpenAINotGiven = OPENAI_NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
@@ -699,6 +714,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         top_logprobs: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         user: str | OpenAINotGiven = OPENAI_NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
@@ -740,6 +756,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         top_logprobs: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         user: str | OpenAINotGiven = OPENAI_NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
@@ -780,6 +797,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         top_logprobs: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         user: str | OpenAINotGiven = OPENAI_NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
@@ -796,6 +814,12 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
             self.model_id = self.model_setting.id
 
         self.endpoint, self.model_id = self._set_endpoint()
+        extra_headers = self._resolve_request_headers(
+            extra_headers=extra_headers,
+            header_context=header_context,
+            model=model,
+            user=user,
+        )
 
         if self.endpoint.endpoint_type and self.endpoint.endpoint_type.startswith("openai"):
             _tools = OPENAI_NOT_GIVEN if tools is NOT_GIVEN else tools
@@ -850,6 +874,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                         top_logprobs=top_logprobs,
                         user=user,
                         extra_headers=extra_headers,
+                        header_context=header_context,
                         extra_query=extra_query,
                         extra_body=extra_body,
                         timeout=timeout,
@@ -902,6 +927,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                     top_logprobs=top_logprobs,
                     user=user,
                     extra_headers=extra_headers,
+                    header_context=header_context,
                     extra_query=extra_query,
                     extra_body=extra_body,
                     timeout=timeout,
@@ -968,6 +994,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                     tool_choice=tool_choice_param,
                     top_p=_top_p,
                     thinking=_thinking,
+                    extra_headers=extra_headers,
                 )
             except AnthropicAPIStatusError as e:
                 raise APIStatusError(message=e.message, response=e.response, body=e.body) from e
@@ -995,6 +1022,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                     tool_choice=tool_choice_param,
                     top_p=_top_p,
                     thinking=_thinking,
+                    extra_headers=extra_headers,
                 )
             except AnthropicAPIStatusError as e:
                 raise APIStatusError(message=e.message, response=e.response, body=e.body) from e

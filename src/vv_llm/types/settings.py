@@ -134,6 +134,7 @@ class EndpointSettingDict(TypedDict):
     tpm: NotRequired[int]
     concurrent_requests: NotRequired[int]
     proxy: NotRequired[str]
+    headers: NotRequired[dict[str, str]]
 
 
 class BackendsDict(TypedDict):

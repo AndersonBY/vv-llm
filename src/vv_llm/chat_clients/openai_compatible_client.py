@@ -158,6 +158,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
         top_logprobs: int | OpenAINotGiven | None = NOT_GIVEN,
         user: str | OpenAINotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
@@ -199,6 +200,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
         top_logprobs: int | OpenAINotGiven | None = NOT_GIVEN,
         user: str | OpenAINotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
@@ -240,6 +242,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
         top_logprobs: int | OpenAINotGiven | None = NOT_GIVEN,
         user: str | OpenAINotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
@@ -280,6 +283,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
         top_logprobs: int | OpenAINotGiven | None = NOT_GIVEN,
         user: str | OpenAINotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
@@ -303,6 +307,12 @@ class OpenAICompatibleChatClient(BaseChatClient):
         self.model_setting = self.backend_settings.models[self.model]
         if self.model_id is None:
             self.model_id = self.model_setting.id
+        extra_headers = self._resolve_request_headers(
+            extra_headers=extra_headers,
+            header_context=header_context,
+            model=model,
+            user=user,
+        )
 
         is_gemini3 = is_gemini_3_model(self.model, self.backend_name)
 
@@ -871,6 +881,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
         top_logprobs: int | OpenAINotGiven | None = NOT_GIVEN,
         user: str | OpenAINotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
@@ -912,6 +923,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
         top_logprobs: int | OpenAINotGiven | None = NOT_GIVEN,
         user: str | OpenAINotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
@@ -953,6 +965,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
         top_logprobs: int | OpenAINotGiven | None = NOT_GIVEN,
         user: str | OpenAINotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
@@ -993,6 +1006,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
         top_logprobs: int | OpenAINotGiven | None = NOT_GIVEN,
         user: str | OpenAINotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
@@ -1016,6 +1030,12 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
         self.model_setting = self.backend_settings.models[self.model]
         if self.model_id is None:
             self.model_id = self.model_setting.id
+        extra_headers = self._resolve_request_headers(
+            extra_headers=extra_headers,
+            header_context=header_context,
+            model=model,
+            user=user,
+        )
 
         is_gemini3 = is_gemini_3_model(self.model, self.backend_name)
 

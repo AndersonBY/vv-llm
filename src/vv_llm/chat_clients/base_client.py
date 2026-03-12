@@ -44,6 +44,42 @@ from ..types.llm_parameters import (
 )
 from ..utilities.rate_limiter import SyncMemoryRateLimiter, SyncRedisRateLimiter, SyncDiskCacheRateLimiter
 from ..utilities.rate_limiter import AsyncMemoryRateLimiter, AsyncRedisRateLimiter, AsyncDiskCacheRateLimiter
+from ..retrieval_clients.common import render_template
+
+
+def _stringify_headers(headers: Any) -> dict[str, str]:
+    if not isinstance(headers, dict):
+        return {}
+    normalized: dict[str, str] = {}
+    for key, value in headers.items():
+        header_name = str(key or "").strip()
+        if not header_name or value is None:
+            continue
+        normalized[header_name] = str(value)
+    return normalized
+
+
+def _build_header_context(
+    *,
+    backend_name: BackendType,
+    endpoint: EndpointSetting | None,
+    model: str,
+    model_id: str,
+    user: Any,
+    header_context: dict[str, Any] | None,
+) -> dict[str, Any]:
+    context: dict[str, Any] = {
+        "backend": backend_name.value,
+        "model": str(model or ""),
+        "model_id": str(model_id or model or ""),
+        "endpoint_id": str(getattr(endpoint, "id", "") or ""),
+        "api_base": str(getattr(endpoint, "api_base", "") or ""),
+    }
+    if user is not NOT_GIVEN and user is not None:
+        context["user"] = user
+    if header_context:
+        context.update(header_context)
+    return context
 
 
 def _endpoint_option_enabled(endpoint_option: str | dict[str, Any]) -> bool:
@@ -221,6 +257,34 @@ class BaseChatClient(ABC):
             raise ValueError("Invalid endpoint")
 
         return self.endpoint, self.model_id
+
+    def _resolve_request_headers(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
+        model: str | None = None,
+        user: Any = NOT_GIVEN,
+    ) -> Headers | None:
+        resolved = _stringify_headers(extra_headers)
+        endpoint_headers = getattr(getattr(self, "endpoint", None), "headers", None)
+        if endpoint_headers:
+            rendered = render_template(
+                endpoint_headers,
+                _build_header_context(
+                    backend_name=self.backend_name,
+                    endpoint=getattr(self, "endpoint", None),
+                    model=str(model or self.model or ""),
+                    model_id=str(getattr(self, "model_id", "") or model or self.model or ""),
+                    user=user,
+                    header_context=header_context,
+                ),
+            )
+            merged = _stringify_headers(rendered)
+            if resolved:
+                merged.update(resolved)
+            resolved = merged
+        return resolved or None
 
     @cached_property
     @abstractmethod
@@ -429,6 +493,7 @@ class BaseChatClient(ABC):
         top_logprobs: int | OpenAINotGiven | None = NOT_GIVEN,
         user: str | OpenAINotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
@@ -465,6 +530,7 @@ class BaseChatClient(ABC):
             top_logprobs=top_logprobs,
             user=user,
             extra_headers=extra_headers,
+            header_context=header_context,
             extra_query=extra_query,
             extra_body=extra_body,
             timeout=timeout,
@@ -658,6 +724,34 @@ class BaseAsyncChatClient(ABC):
             raise ValueError("Invalid endpoint")
 
         return self.endpoint, self.model_id
+
+    def _resolve_request_headers(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
+        model: str | None = None,
+        user: Any = NOT_GIVEN,
+    ) -> Headers | None:
+        resolved = _stringify_headers(extra_headers)
+        endpoint_headers = getattr(getattr(self, "endpoint", None), "headers", None)
+        if endpoint_headers:
+            rendered = render_template(
+                endpoint_headers,
+                _build_header_context(
+                    backend_name=self.backend_name,
+                    endpoint=getattr(self, "endpoint", None),
+                    model=str(model or self.model or ""),
+                    model_id=str(getattr(self, "model_id", "") or model or self.model or ""),
+                    user=user,
+                    header_context=header_context,
+                ),
+            )
+            merged = _stringify_headers(rendered)
+            if resolved:
+                merged.update(resolved)
+            resolved = merged
+        return resolved or None
 
     @cached_property
     @abstractmethod
@@ -866,6 +960,7 @@ class BaseAsyncChatClient(ABC):
         top_logprobs: int | OpenAINotGiven | None = NOT_GIVEN,
         user: str | OpenAINotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
+        header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
@@ -902,6 +997,7 @@ class BaseAsyncChatClient(ABC):
             top_logprobs=top_logprobs,
             user=user,
             extra_headers=extra_headers,
+            header_context=header_context,
             extra_query=extra_query,
             extra_body=extra_body,
             timeout=timeout,

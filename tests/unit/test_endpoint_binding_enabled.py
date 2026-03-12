@@ -102,6 +102,50 @@ def test_chat_client_random_endpoint_skips_disabled_binding() -> None:
     assert model_id == "gpt-test-b"
 
 
+def test_chat_client_resolves_endpoint_header_templates() -> None:
+    settings = Settings.load_from_dict(
+        {
+            "VERSION": "2",
+            "endpoints": [
+                {
+                    "id": "openai-enabled",
+                    "api_base": "https://api.openai.com/v1",
+                    "api_key": "sk-2",
+                    "enabled": True,
+                    "headers": {
+                        "X-Endpoint": "${endpoint_id}",
+                        "X-Session": "${session_id}",
+                    },
+                },
+            ],
+            "backends": {
+                "openai": {
+                    "models": {
+                        "gpt-test": {
+                            "id": "gpt-test",
+                            "endpoints": ["openai-enabled"],
+                        }
+                    }
+                }
+            },
+        }
+    )
+    client = DummyChatClient(model="gpt-test", endpoint_id="openai-enabled", settings=settings)
+    client._set_endpoint()
+
+    headers = client._resolve_request_headers(
+        extra_headers={"X-Call": "1", "X-Endpoint": "override"},
+        header_context={"session_id": "sid-123"},
+        model="gpt-test",
+    )
+
+    assert headers == {
+        "X-Endpoint": "override",
+        "X-Session": "sid-123",
+        "X-Call": "1",
+    }
+
+
 def test_retrieval_client_rejects_explicit_disabled_binding() -> None:
     settings = Settings.load_from_dict(RETRIEVAL_SETTINGS_PAYLOAD)
     backend = settings.get_embedding_backend(EmbeddingBackendType.OpenAI)

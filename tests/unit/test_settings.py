@@ -16,6 +16,9 @@ def _v2_settings_dict() -> dict:
                 "id": "openai-test",
                 "api_base": "https://api.openai.com/v1",
                 "api_key": "sk-test-key",
+                "headers": {
+                    "X-Endpoint": "openai-test",
+                },
             }
         ],
         "backends": {
@@ -45,6 +48,7 @@ def test_load_accepts_dict_and_settings_object() -> None:
 
     settings.load(payload)
     assert settings.get_endpoint("openai-test").api_key == "sk-test-key"
+    assert settings.get_endpoint("openai-test").headers == {"X-Endpoint": "openai-test"}
 
     copied = Settings.load_from_dict(deepcopy(payload))
     settings.load(copied)

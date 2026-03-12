@@ -89,6 +89,7 @@ class EndpointSetting(BaseModel):
         default=defs.ENDPOINT_CONCURRENT_REQUESTS,
     )
     proxy: str | None = Field(None, description="The proxy URL for the endpoint.")
+    headers: dict[str, str] | None = Field(default=None, description="Additional endpoint request headers template.")
     access_token: str | None = Field(None, description="Cached GCP access token for Vertex endpoints.")
     access_token_expires_at: float | None = Field(None, description="Expiry timestamp (Unix time) of the cached access token.")
 
