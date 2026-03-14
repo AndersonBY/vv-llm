@@ -144,6 +144,7 @@ class AnthropicChatClient(BaseChatClient):
                     endpoint_id=self.endpoint_id,
                     http_client=self.http_client,
                     backend_name=self.BACKEND_NAME,
+                    settings=self.settings,
                 ).raw_client
             return self._cached_raw_client
 
@@ -351,6 +352,7 @@ class AnthropicChatClient(BaseChatClient):
                             endpoint_id=self.endpoint_id,
                             http_client=self.http_client,
                             backend_name=self.BACKEND_NAME,
+                            settings=self.settings,
                         ),
                     )
                     response = openai_client.create_completion(
@@ -404,6 +406,7 @@ class AnthropicChatClient(BaseChatClient):
                         endpoint_id=self.endpoint_id,
                         http_client=self.http_client,
                         backend_name=self.BACKEND_NAME,
+                        settings=self.settings,
                     ),
                 )
                 return openai_client.create_completion(
@@ -634,6 +637,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                     endpoint_id=self.endpoint_id,
                     http_client=self.http_client,
                     backend_name=self.BACKEND_NAME,
+                    settings=self.settings,
                 ).raw_client
             return self._cached_raw_client
 
@@ -841,6 +845,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                             endpoint_id=self.endpoint_id,
                             http_client=self.http_client,
                             backend_name=self.BACKEND_NAME,
+                            settings=self.settings,
                         ),
                     )
                     response = await client.create_completion(
@@ -895,6 +900,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                         endpoint_id=self.endpoint_id,
                         http_client=self.http_client,
                         backend_name=self.BACKEND_NAME,
+                        settings=self.settings,
                     ),
                 )
                 return await client.create_completion(
