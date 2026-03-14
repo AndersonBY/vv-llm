@@ -323,27 +323,13 @@ class OpenAICompatibleChatClient(BaseChatClient):
             messages = cutoff_messages(
                 messages,
                 max_count=self.model_setting.context_length,
-                backend=self.BACKEND_NAME,
+                backend=self.backend_name,
                 model=self.model,
             )
 
         if tools:
             if self.model_setting.function_call_available:
-                _tools = tools
-                if self.BACKEND_NAME.value == BackendType.MiniMax.value:  # MiniMax 就非要搞特殊
-                    _tools = []
-                    for tool in tools:
-                        _tools.append(
-                            {
-                                "type": "function",
-                                "function": {
-                                    "name": tool["function"]["name"],
-                                    "description": tool["function"].get("description", ""),
-                                    "parameters": json.dumps(tool["function"].get("parameters", {})),
-                                },
-                            }
-                        )
-                tools_params = {"tools": _tools, "tool_choice": tool_choice}
+                tools_params = {"tools": tools, "tool_choice": tool_choice}
             else:
                 tools_str = json.dumps(tools, ensure_ascii=False, indent=None)
                 additional_system_prompt = generate_tool_use_system_prompt(tools=tools_str)
@@ -1046,27 +1032,13 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
             messages = cutoff_messages(
                 messages,
                 max_count=self.model_setting.context_length,
-                backend=self.BACKEND_NAME,
+                backend=self.backend_name,
                 model=self.model,
             )
 
         if tools:
             if self.model_setting.function_call_available:
-                _tools = tools
-                if self.BACKEND_NAME.value == BackendType.MiniMax.value:
-                    _tools = []
-                    for tool in tools:
-                        _tools.append(
-                            {
-                                "type": "function",
-                                "function": {
-                                    "name": tool["function"]["name"],
-                                    "description": tool["function"].get("description", ""),
-                                    "parameters": json.dumps(tool["function"].get("parameters", {})),
-                                },
-                            }
-                        )
-                tools_params = {"tools": _tools, "tool_choice": tool_choice}
+                tools_params = {"tools": tools, "tool_choice": tool_choice}
             else:
                 tools_str = json.dumps(tools, ensure_ascii=False, indent=None)
                 additional_system_prompt = generate_tool_use_system_prompt(tools=tools_str)
