@@ -14,14 +14,17 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0
 
-    - name: Set up PDM
-      uses: pdm-project/setup-pdm@v4
+    - name: Set up Python
+      uses: actions/setup-python@v6
       with:
         python-version: '3.12'
+
+    - name: Install PDM
+      run: python -m pip install --upgrade pip pdm
 
     - name: Install dependencies
       run: pdm install --dev
@@ -37,32 +40,46 @@ jobs:
 
     - name: Generate release notes
       id: changelog
+      shell: bash
       run: |
         VERSION=${GITHUB_REF#refs/tags/v}
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-
         PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
 
-        echo "changelog<<EOF" >> $GITHUB_OUTPUT
-        if [ -n "$PREVIOUS_TAG" ]; then
-          git log --pretty=format:"- %s (%h)" ${PREVIOUS_TAG}..HEAD >> $GITHUB_OUTPUT
-        else
-          echo "- Initial release" >> $GITHUB_OUTPUT
-        fi
-        echo "" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+        {
+          echo "version=$VERSION"
+          echo "changelog<<EOF"
+          if [ -n "$PREVIOUS_TAG" ]; then
+            git log --pretty=format:"- %s (%h)" "${PREVIOUS_TAG}..HEAD"
+          else
+            echo "- Initial release"
+          fi
+          echo ""
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Write release notes
+      shell: bash
+      run: |
+        cat <<'EOF' > RELEASE_NOTES.md
+        ${{ steps.changelog.outputs.changelog }}
+        EOF
 
     - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ github.ref_name }}
-        name: v${{ steps.changelog.outputs.version }}
-        body: ${{ steps.changelog.outputs.changelog }}
-        files: dist/*
-        draft: false
-        prerelease: false
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      shell: bash
+      run: |
+        if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+          gh release upload "${GITHUB_REF_NAME}" dist/* --clobber
+          gh release edit "${GITHUB_REF_NAME}" \
+            --title "v${{ steps.changelog.outputs.version }}" \
+            --notes-file RELEASE_NOTES.md
+        else
+          gh release create "${GITHUB_REF_NAME}" dist/* \
+            --verify-tag \
+            --title "v${{ steps.changelog.outputs.version }}" \
+            --notes-file RELEASE_NOTES.md
+        fi
 
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
