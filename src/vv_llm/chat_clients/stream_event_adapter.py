@@ -179,10 +179,13 @@ def adapt_anthropic_stream_event(chunk: Any, stream_state: dict[str, Any]) -> Ch
 
     if isinstance(chunk, RawMessageStartEvent):
         cache_read_tokens = getattr(chunk.message.usage, "cache_read_input_tokens", 0) or 0
-        prompt_tokens = chunk.message.usage.input_tokens + cache_read_tokens
+        cache_creation_tokens = getattr(chunk.message.usage, "cache_creation_input_tokens", 0) or 0
+        prompt_tokens = chunk.message.usage.input_tokens + cache_read_tokens + cache_creation_tokens
         usage_data: dict[str, Any] = {"prompt_tokens": prompt_tokens}
         if cache_read_tokens:
             usage_data["prompt_tokens_details"] = {"cached_tokens": cache_read_tokens}
+        if cache_creation_tokens:
+            usage_data["cache_creation_tokens"] = cache_creation_tokens
         stream_state["usage"] = usage_data
         return None
 
@@ -278,6 +281,8 @@ def adapt_anthropic_stream_event(chunk: Any, stream_state: dict[str, Any]) -> Ch
         }
         if "prompt_tokens_details" in stream_state["usage"]:
             usage_kwargs["prompt_tokens_details"] = PromptTokensDetails(cached_tokens=stream_state["usage"]["prompt_tokens_details"].get("cached_tokens", 0))
+        if "cache_creation_tokens" in stream_state["usage"]:
+            usage_kwargs["cache_creation_tokens"] = stream_state["usage"]["cache_creation_tokens"]
         return ChatCompletionDeltaMessage(usage=Usage(**usage_kwargs))
 
     if isinstance(chunk, RawMessageStopEvent | RawContentBlockStopEvent):
@@ -287,17 +292,21 @@ def adapt_anthropic_stream_event(chunk: Any, stream_state: dict[str, Any]) -> Ch
 
 
 def build_anthropic_completion_message(content_blocks: list[Any], usage: Any) -> ChatCompletionMessage:
+    cache_read_tokens = getattr(usage, "cache_read_input_tokens", 0) or 0
+    cache_creation_tokens = getattr(usage, "cache_creation_input_tokens", 0) or 0
+    prompt_tokens = usage.input_tokens + cache_read_tokens + cache_creation_tokens
     result: dict[str, Any] = {
         "content": "",
         "reasoning_content": "",
         "raw_content": [content_block.model_dump() for content_block in content_blocks],
         "usage": {
-            "prompt_tokens": usage.input_tokens + usage.cache_read_input_tokens if usage.cache_read_input_tokens else usage.input_tokens,
+            "prompt_tokens": prompt_tokens,
             "completion_tokens": usage.output_tokens,
-            "total_tokens": usage.input_tokens + usage.output_tokens,
+            "total_tokens": prompt_tokens + usage.output_tokens,
             "prompt_tokens_details": {
-                "cached_tokens": usage.cache_read_input_tokens,
+                "cached_tokens": cache_read_tokens,
             },
+            "cache_creation_tokens": cache_creation_tokens,
         },
     }
     tool_calls = []

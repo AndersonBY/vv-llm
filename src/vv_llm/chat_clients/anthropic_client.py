@@ -50,6 +50,23 @@ if TYPE_CHECKING:
     from ..types.settings import SettingsDict
 
 
+def _build_anthropic_request_options(
+    *,
+    extra_headers: Headers | None,
+    extra_query: Query | None,
+    extra_body: Body | None,
+    timeout: float | httpx.Timeout | None | OpenAINotGiven,
+) -> dict[str, Any]:
+    request_options: dict[str, Any] = {
+        "extra_headers": extra_headers,
+        "extra_query": extra_query,
+        "extra_body": extra_body,
+    }
+    if not isinstance(timeout, OpenAINotGiven):
+        request_options["timeout"] = timeout
+    return request_options
+
+
 class AnthropicChatClient(BaseChatClient):
     DEFAULT_MODEL: str = defs.ANTHROPIC_DEFAULT_MODEL
     BACKEND_NAME: BackendType = BackendType.Anthropic
@@ -492,6 +509,12 @@ class AnthropicChatClient(BaseChatClient):
                 max_tokens = self.model_setting.context_length - token_counts
 
         self._acquire_rate_limit(self.endpoint, self.model, messages)
+        request_options = _build_anthropic_request_options(
+            extra_headers=extra_headers,
+            extra_query=extra_query,
+            extra_body=extra_body,
+            timeout=timeout,
+        )
 
         if self.stream:
             try:
@@ -506,7 +529,7 @@ class AnthropicChatClient(BaseChatClient):
                     tool_choice=tool_choice_param,
                     top_p=_top_p,
                     thinking=_thinking,
-                    extra_headers=extra_headers,
+                    **request_options,
                 )
             except AnthropicAPIStatusError as e:
                 raise APIStatusError(message=e.message, response=e.response, body=e.body) from e
@@ -534,7 +557,7 @@ class AnthropicChatClient(BaseChatClient):
                     tool_choice=tool_choice_param,
                     top_p=_top_p,
                     thinking=_thinking,
-                    extra_headers=extra_headers,
+                    **request_options,
                 )
             except AnthropicAPIStatusError as e:
                 raise APIStatusError(message=e.message, response=e.response, body=e.body) from e
@@ -986,6 +1009,12 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                 max_tokens = self.model_setting.context_length - token_counts
 
         await self._acquire_rate_limit(self.endpoint, self.model, messages)
+        request_options = _build_anthropic_request_options(
+            extra_headers=extra_headers,
+            extra_query=extra_query,
+            extra_body=extra_body,
+            timeout=timeout,
+        )
 
         if self.stream:
             try:
@@ -1000,7 +1029,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                     tool_choice=tool_choice_param,
                     top_p=_top_p,
                     thinking=_thinking,
-                    extra_headers=extra_headers,
+                    **request_options,
                 )
             except AnthropicAPIStatusError as e:
                 raise APIStatusError(message=e.message, response=e.response, body=e.body) from e
@@ -1028,7 +1057,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                     tool_choice=tool_choice_param,
                     top_p=_top_p,
                     thinking=_thinking,
-                    extra_headers=extra_headers,
+                    **request_options,
                 )
             except AnthropicAPIStatusError as e:
                 raise APIStatusError(message=e.message, response=e.response, body=e.body) from e

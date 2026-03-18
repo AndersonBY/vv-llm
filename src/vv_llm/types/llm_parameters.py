@@ -223,6 +223,9 @@ class Usage(BaseModel):
 
     total_tokens: int
 
+    cache_creation_tokens: int | None = None
+    """Prompt tokens written into a provider-side cache, when reported."""
+
     completion_tokens_details: CompletionTokensDetails | None = None
     """Breakdown of tokens used in a completion."""
 
