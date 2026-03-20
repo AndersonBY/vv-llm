@@ -56,6 +56,7 @@ class Backends(BaseModel):
     baichuan: BackendSettings = Field(default_factory=BackendSettings, description="Baichuan models settings.")
     stepfun: BackendSettings = Field(default_factory=BackendSettings, description="StepFun models settings.")
     xai: BackendSettings = Field(default_factory=BackendSettings, description="XAI models settings.")
+    xiaomi: BackendSettings = Field(default_factory=BackendSettings, description="Xiaomi models settings.")
     ernie: BackendSettings = Field(default_factory=BackendSettings, description="Baidu Ernie models settings.")
 
 
@@ -92,6 +93,7 @@ class Settings(BaseModel):
     baichuan: BackendSettings | None = Field(default_factory=BackendSettings, description="Baichuan models settings.")
     stepfun: BackendSettings | None = Field(default_factory=BackendSettings, description="StepFun models settings.")
     xai: BackendSettings | None = Field(default_factory=BackendSettings, description="XAI models settings.")
+    xiaomi: BackendSettings | None = Field(default_factory=BackendSettings, description="Xiaomi models settings.")
     ernie: BackendSettings | None = Field(default_factory=BackendSettings, description="Baidu Ernie models settings.")
 
     def __init__(self, **data):
@@ -111,6 +113,7 @@ class Settings(BaseModel):
             "baichuan": defs.BAICHUAN_MODELS,
             "stepfun": defs.STEPFUN_MODELS,
             "xai": defs.XAI_MODELS,
+            "xiaomi": defs.XIAOMI_MODELS,
             "ernie": defs.ERNIE_MODELS,
         }
 
@@ -227,6 +230,7 @@ class Settings(BaseModel):
                     "baichuan",
                     "stepfun",
                     "xai",
+                    "xiaomi",
                     "ernie",
                 },
             ),
@@ -265,6 +269,7 @@ class Settings(BaseModel):
             "baichuan",
             "stepfun",
             "xai",
+            "xiaomi",
             "ernie",
         ]
 

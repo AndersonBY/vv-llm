@@ -7,6 +7,7 @@ from .base_client import BaseChatClient, BaseAsyncChatClient
 
 from .yi_client import YiChatClient, AsyncYiChatClient
 from .xai_client import XAIChatClient, AsyncXAIChatClient
+from .xiaomi_client import XiaomiChatClient, AsyncXiaomiChatClient
 from .groq_client import GroqChatClient, AsyncGroqChatClient
 from .qwen_client import QwenChatClient, AsyncQwenChatClient
 from .local_client import LocalChatClient, AsyncLocalChatClient
@@ -51,6 +52,7 @@ SYNC_BACKEND_MAP: dict[BackendType, SyncClientFactory] = {
     BackendType.Baichuan: BaichuanChatClient,
     BackendType.StepFun: StepFunChatClient,
     BackendType.XAI: XAIChatClient,
+    BackendType.Xiaomi: XiaomiChatClient,
     BackendType.Ernie: ErnieChatClient,
 }
 
@@ -70,6 +72,7 @@ ASYNC_BACKEND_MAP: dict[BackendType, AsyncClientFactory] = {
     BackendType.Baichuan: AsyncBaichuanChatClient,
     BackendType.StepFun: AsyncStepFunChatClient,
     BackendType.XAI: AsyncXAIChatClient,
+    BackendType.Xiaomi: AsyncXiaomiChatClient,
     BackendType.Ernie: AsyncErnieChatClient,
 }
 
@@ -297,6 +300,21 @@ def create_chat_client(
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> XAIChatClient: ...
+
+
+@overload
+def create_chat_client(
+    backend: Literal[BackendType.Xiaomi],
+    model: str | None = None,
+    stream: bool = False,
+    temperature: float | None | NotGiven = NOT_GIVEN,
+    context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
+    random_endpoint: bool = True,
+    endpoint_id: str = "",
+    http_client: httpx.Client | None = None,
+    settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
+    **kwargs,
+) -> XiaomiChatClient: ...
 
 
 @overload
@@ -583,6 +601,21 @@ def create_async_chat_client(
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncXAIChatClient: ...
+
+
+@overload
+def create_async_chat_client(
+    backend: Literal[BackendType.Xiaomi],
+    model: str | None = None,
+    stream: bool = False,
+    temperature: float | None | NotGiven = NOT_GIVEN,
+    context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
+    random_endpoint: bool = True,
+    endpoint_id: str = "",
+    http_client: httpx.AsyncClient | None = None,
+    settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
+    **kwargs,
+) -> AsyncXiaomiChatClient: ...
 
 
 @overload

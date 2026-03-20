@@ -155,6 +155,7 @@ class BackendsDict(TypedDict):
     baichuan: NotRequired[BackendSettingsDict]
     stepfun: NotRequired[BackendSettingsDict]
     xai: NotRequired[BackendSettingsDict]
+    xiaomi: NotRequired[BackendSettingsDict]
     ernie: NotRequired[BackendSettingsDict]
 
 
@@ -181,6 +182,7 @@ class SettingsV1Dict(TypedDict):
     baichuan: NotRequired[BackendSettingsDict]
     stepfun: NotRequired[BackendSettingsDict]
     xai: NotRequired[BackendSettingsDict]
+    xiaomi: NotRequired[BackendSettingsDict]
     ernie: NotRequired[BackendSettingsDict]
 
 

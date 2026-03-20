@@ -33,6 +33,8 @@ from .defaults import (
     STEPFUN_MODELS,
     XAI_DEFAULT_MODEL,
     XAI_MODELS,
+    XIAOMI_DEFAULT_MODEL,
+    XIAOMI_MODELS,
 )
 from .enums import BackendType, EmbeddingBackendType, RerankBackendType, LLMType, ContextLengthControlType
 from .exception import APIStatusError, APIConnectionError
@@ -128,6 +130,8 @@ __all__ = [
     "STEPFUN_MODELS",
     "XAI_DEFAULT_MODEL",
     "XAI_MODELS",
+    "XIAOMI_DEFAULT_MODEL",
+    "XIAOMI_MODELS",
     "BackendType",
     "EmbeddingBackendType",
     "RerankBackendType",

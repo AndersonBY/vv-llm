@@ -53,6 +53,9 @@ class BackendType(str, Enum):
     # XAI
     XAI = "xai"
 
+    # Xiaomi
+    Xiaomi = "xiaomi"
+
     # Baidu Ernie
     Ernie = "ernie"
 

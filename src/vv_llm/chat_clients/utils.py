@@ -668,7 +668,7 @@ def format_workflow_messages(message: VectorVeinWorkflowMessage, content: str, b
     tool_cache_control = preserved_tool_call.get("cache_control") if isinstance(preserved_tool_call, dict) else None
 
     # 工具调用消息
-    if backend in (BackendType.OpenAI, BackendType.ZhiPuAI, BackendType.Mistral, BackendType.Yi, BackendType.Gemini, BackendType.DeepSeek):
+    if backend in (BackendType.OpenAI, BackendType.ZhiPuAI, BackendType.Mistral, BackendType.Yi, BackendType.Gemini, BackendType.DeepSeek, BackendType.Xiaomi):
         tool_call_entry = {
             "id": tool_call_id,
             "type": "function",
@@ -716,7 +716,7 @@ def format_workflow_messages(message: VectorVeinWorkflowMessage, content: str, b
     formatted_messages.append(tool_call_message)
 
     # 工具调用结果消息
-    if backend in (BackendType.OpenAI, BackendType.ZhiPuAI, BackendType.Mistral, BackendType.Yi, BackendType.Gemini, BackendType.DeepSeek):
+    if backend in (BackendType.OpenAI, BackendType.ZhiPuAI, BackendType.Mistral, BackendType.Yi, BackendType.Gemini, BackendType.DeepSeek, BackendType.Xiaomi):
         tool_call_result_message = {
             "role": "tool",
             "tool_call_id": tool_call_id,

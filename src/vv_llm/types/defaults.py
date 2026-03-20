@@ -24,63 +24,6 @@ class ModelSettingDict(TypedDict):
 # Moonshot models
 MOONSHOT_DEFAULT_MODEL: Final[str] = "kimi-k2.5"
 MOONSHOT_MODELS: Final[dict[str, ModelSettingDict]] = {
-    "moonshot-v1-8k": {
-        "id": "moonshot-v1-8k",
-        "context_length": 8192,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "moonshot-v1-32k": {
-        "id": "moonshot-v1-32k",
-        "context_length": 32768,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "moonshot-v1-128k": {
-        "id": "moonshot-v1-128k",
-        "context_length": 131072,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "moonshot-v1-8k-vision-preview": {
-        "id": "moonshot-v1-8k-vision-preview",
-        "context_length": 8192,
-        "max_output_tokens": 4096,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": True,
-    },
-    "moonshot-v1-32k-vision-preview": {
-        "id": "moonshot-v1-32k-vision-preview",
-        "context_length": 32768,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": True,
-    },
-    "moonshot-v1-128k-vision-preview": {
-        "id": "moonshot-v1-128k-vision-preview",
-        "context_length": 131072,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": True,
-    },
-    "kimi-latest": {
-        "id": "kimi-latest",
-        "context_length": 131072,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": True,
-    },
-    "kimi-thinking-preview": {
-        "id": "kimi-thinking-preview",
-        "context_length": 131072,
-        "function_call_available": False,
-        "response_format_available": False,
-        "native_multimodal": True,
-    },
     "kimi-k2-0711-preview": {
         "id": "kimi-k2-0711-preview",
         "context_length": 131072,
@@ -155,38 +98,6 @@ BAICHUAN_MODELS: Final[dict[str, ModelSettingDict]] = {
         "max_output_tokens": 2048,
         "function_call_available": True,
         "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "Baichuan3-Turbo": {
-        "id": "Baichuan3-Turbo",
-        "context_length": 32768,
-        "max_output_tokens": 2048,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "Baichuan3-Turbo-128k": {
-        "id": "Baichuan3-Turbo-128k",
-        "context_length": 128000,
-        "max_output_tokens": 2048,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "Baichuan2-Turbo": {
-        "id": "Baichuan2-Turbo",
-        "context_length": 32768,
-        "max_output_tokens": 2048,
-        "function_call_available": True,
-        "response_format_available": False,
-        "native_multimodal": False,
-    },
-    "Baichuan2-53B": {
-        "id": "Baichuan2-53B",
-        "context_length": 32768,
-        "max_output_tokens": 2048,
-        "function_call_available": False,
-        "response_format_available": False,
         "native_multimodal": False,
     },
 }
@@ -660,142 +571,6 @@ YI_MODELS: Final[dict[str, ModelSettingDict]] = {
 # ZhiPuAI models
 ZHIPUAI_DEFAULT_MODEL: Final[str] = "glm-5"
 ZHIPUAI_MODELS: Final[dict[str, ModelSettingDict]] = {
-    "glm-4": {
-        "id": "glm-4",
-        "context_length": 128000,
-        "function_call_available": True,
-        "response_format_available": False,
-        "max_output_tokens": 4095,
-        "native_multimodal": False,
-    },
-    "glm-4-plus": {
-        "id": "glm-4-plus",
-        "context_length": 128000,
-        "function_call_available": True,
-        "response_format_available": False,
-        "max_output_tokens": 4095,
-        "native_multimodal": False,
-    },
-    "glm-4-0520": {
-        "id": "glm-4-0520",
-        "context_length": 128000,
-        "function_call_available": True,
-        "response_format_available": False,
-        "max_output_tokens": 4095,
-        "native_multimodal": False,
-    },
-    "glm-4-air": {
-        "id": "glm-4-air",
-        "context_length": 128000,
-        "function_call_available": True,
-        "response_format_available": False,
-        "max_output_tokens": 4095,
-        "native_multimodal": False,
-    },
-    "glm-4-airx": {
-        "id": "glm-4-airx",
-        "context_length": 128000,
-        "function_call_available": True,
-        "response_format_available": False,
-        "max_output_tokens": 4095,
-        "native_multimodal": False,
-    },
-    "glm-4-flash": {
-        "id": "glm-4-flash",
-        "context_length": 128000,
-        "function_call_available": True,
-        "response_format_available": False,
-        "max_output_tokens": 4095,
-        "native_multimodal": False,
-    },
-    "glm-4-long": {
-        "id": "glm-4-long",
-        "context_length": 1000000,
-        "function_call_available": True,
-        "response_format_available": False,
-        "max_output_tokens": 4095,
-        "native_multimodal": False,
-    },
-    "glm-4v": {
-        "id": "glm-4v",
-        "context_length": 2000,
-        "function_call_available": False,
-        "response_format_available": False,
-        "max_output_tokens": 1024,
-        "native_multimodal": True,
-    },
-    "glm-4v-plus": {
-        "id": "glm-4v-plus",
-        "context_length": 2000,
-        "function_call_available": False,
-        "response_format_available": False,
-        "max_output_tokens": 1024,
-        "native_multimodal": True,
-    },
-    "glm-4v-flash": {
-        "id": "glm-4v-flash",
-        "context_length": 2000,
-        "function_call_available": False,
-        "response_format_available": False,
-        "max_output_tokens": 1024,
-        "native_multimodal": True,
-    },
-    "glm-zero-preview": {
-        "id": "glm-zero-preview",
-        "context_length": 16000,
-        "function_call_available": False,
-        "response_format_available": False,
-        "max_output_tokens": 12000,
-        "native_multimodal": False,
-    },
-    "glm-4-alltools": {
-        "id": "glm-4-alltools",
-        "context_length": 128000,
-        "function_call_available": False,
-        "response_format_available": False,
-        "max_output_tokens": 20480,
-        "native_multimodal": False,
-    },
-    "glm-z1-air": {
-        "id": "glm-z1-air",
-        "context_length": 32000,
-        "function_call_available": False,
-        "response_format_available": False,
-        "max_output_tokens": 32000,
-        "native_multimodal": False,
-    },
-    "glm-z1-airx": {
-        "id": "glm-z1-airx",
-        "context_length": 32000,
-        "function_call_available": False,
-        "response_format_available": False,
-        "max_output_tokens": 30000,
-        "native_multimodal": False,
-    },
-    "glm-z1-flash": {
-        "id": "glm-z1-flash",
-        "context_length": 32000,
-        "function_call_available": False,
-        "response_format_available": False,
-        "max_output_tokens": 32000,
-        "native_multimodal": False,
-    },
-    "glm-4.1v-thinking-flashx": {
-        "id": "glm-4.1v-thinking-flashx",
-        "context_length": 64000,
-        "function_call_available": False,
-        "response_format_available": False,
-        "max_output_tokens": 16384,
-        "native_multimodal": True,
-    },
-    "glm-4.1v-thinking-flash": {
-        "id": "glm-4.1v-thinking-flash",
-        "context_length": 64000,
-        "function_call_available": False,
-        "response_format_available": False,
-        "max_output_tokens": 16384,
-        "native_multimodal": True,
-    },
     "glm-4.5": {
         "id": "glm-4.5",
         "context_length": 128000,
@@ -1219,30 +994,6 @@ OPENAI_MODELS: Final[dict[str, ModelSettingDict]] = {
 # Anthropic models
 ANTHROPIC_DEFAULT_MODEL: Final[str] = "claude-opus-4-6"
 ANTHROPIC_MODELS: Final[dict[str, ModelSettingDict]] = {
-    "claude-3-opus-20240229": {
-        "id": "claude-3-opus-20240229",
-        "context_length": 200000,
-        "max_output_tokens": 4096,
-        "function_call_available": True,
-        "response_format_available": False,
-        "native_multimodal": True,
-    },
-    "claude-3-sonnet-20240229": {
-        "id": "claude-3-sonnet-20240229",
-        "context_length": 200000,
-        "max_output_tokens": 4096,
-        "function_call_available": True,
-        "native_multimodal": True,
-        "response_format_available": False,
-    },
-    "claude-3-haiku-20240307": {
-        "id": "claude-3-haiku-20240307",
-        "context_length": 200000,
-        "max_output_tokens": 4096,
-        "function_call_available": True,
-        "response_format_available": False,
-        "native_multimodal": True,
-    },
     "claude-3-5-haiku-20241022": {
         "id": "claude-3-5-haiku-20241022",
         "context_length": 200000,
@@ -1334,32 +1085,8 @@ ANTHROPIC_MODELS: Final[dict[str, ModelSettingDict]] = {
 }
 
 # Minimax models
-MINIMAX_DEFAULT_MODEL: Final[str] = "MiniMax-M2.5"
+MINIMAX_DEFAULT_MODEL: Final[str] = "MiniMax-M2.7"
 MINIMAX_MODELS: Final[dict[str, ModelSettingDict]] = {
-    "MiniMax-M1": {
-        "id": "MiniMax-M1",
-        "context_length": 1000192,
-        "max_output_tokens": 40000,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "MiniMax-M2": {
-        "id": "MiniMax-M2",
-        "context_length": 204800,
-        "max_output_tokens": 10240,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "MiniMax-M2-Stable": {
-        "id": "MiniMax-M2-Stable",
-        "context_length": 204800,
-        "max_output_tokens": 10240,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
     "MiniMax-M2.1": {
         "id": "MiniMax-M2.1",
         "context_length": 204800,
@@ -1583,62 +1310,6 @@ ERNIE_MODELS: Final[dict[str, ModelSettingDict]] = {
 
 STEPFUN_DEFAULT_MODEL: Final[str] = "step-3.5-flash"
 STEPFUN_MODELS: Final[dict[str, ModelSettingDict]] = {
-    "step-1-8k": {
-        "id": "step-1-8k",
-        "context_length": 8192,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "step-1-32k": {
-        "id": "step-1-32k",
-        "context_length": 32000,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "step-1-128k": {
-        "id": "step-1-128k",
-        "context_length": 128000,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "step-1-256k": {
-        "id": "step-1-256k",
-        "context_length": 256000,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "step-2-16k": {
-        "id": "step-2-16k",
-        "context_length": 16384,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "step-1-flash": {
-        "id": "step-1-flash",
-        "context_length": 8192,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "step-1v-8k": {
-        "id": "step-1v-8k",
-        "context_length": 8192,
-        "function_call_available": False,
-        "response_format_available": False,
-        "native_multimodal": True,
-    },
-    "step-1v-32k": {
-        "id": "step-1v-32k",
-        "context_length": 32768,
-        "function_call_available": False,
-        "response_format_available": False,
-        "native_multimodal": True,
-    },
     "step-2-mini": {
         "id": "step-2-mini",
         "context_length": 32768,
@@ -1663,60 +1334,76 @@ STEPFUN_MODELS: Final[dict[str, ModelSettingDict]] = {
 }
 
 
-XAI_DEFAULT_MODEL: Final[str] = "grok-4"
+XAI_DEFAULT_MODEL: Final[str] = "grok-4.20-0309-reasoning"
 XAI_MODELS: Final[dict[str, ModelSettingDict]] = {
-    "grok-beta": {
-        "id": "grok-beta",
-        "context_length": 131072,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "grok-2-latest": {
-        "id": "grok-2-latest",
-        "context_length": 131072,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "grok-2-vision-latest": {
-        "id": "grok-2-vision-latest",
-        "context_length": 32768,
+    "grok-4.20-0309-reasoning": {
+        "id": "grok-4.20-0309-reasoning",
+        "context_length": 2000000,
         "function_call_available": True,
         "response_format_available": True,
         "native_multimodal": True,
     },
-    "grok-3-beta": {
-        "id": "grok-beta",
-        "context_length": 131072,
+    "grok-4.20-0309-non-reasoning": {
+        "id": "grok-4.20-0309-non-reasoning",
+        "context_length": 2000000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "grok-4.20-multi-agent-0309": {
+        "id": "grok-4.20-multi-agent-0309",
+        "context_length": 2000000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "grok-4-1-fast-reasoning": {
+        "id": "grok-4-1-fast-reasoning",
+        "context_length": 2000000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "grok-4-1-fast-non-reasoning": {
+        "id": "grok-4-1-fast-non-reasoning",
+        "context_length": 2000000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+}
+
+
+XIAOMI_DEFAULT_MODEL: Final[str] = "mimo-v2-pro"
+XIAOMI_MODELS: Final[dict[str, ModelSettingDict]] = {
+    "mimo-v2-pro": {
+        "id": "mimo-v2-pro",
+        "context_length": 1000000,
+        "max_output_tokens": 128000,
         "function_call_available": True,
         "response_format_available": True,
         "native_multimodal": False,
     },
-    "grok-3-fast-beta": {
-        "id": "grok-beta",
-        "context_length": 131072,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "grok-3-mini-beta": {
-        "id": "grok-beta",
-        "context_length": 131072,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "grok-3-mini-fast-beta": {
-        "id": "grok-beta",
-        "context_length": 131072,
-        "function_call_available": True,
-        "response_format_available": True,
-        "native_multimodal": False,
-    },
-    "grok-4": {
-        "id": "grok-4",
+    "mimo-v2-omni": {
+        "id": "mimo-v2-omni",
         "context_length": 256000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "mimo-v2-tts": {
+        "id": "mimo-v2-tts",
+        "context_length": 8000,
+        "max_output_tokens": 8000,
+        "function_call_available": False,
+        "response_format_available": False,
+        "native_multimodal": False,
+    },
+    "mimo-v2-flash": {
+        "id": "mimo-v2-flash",
+        "context_length": 256000,
+        "max_output_tokens": 64000,
         "function_call_available": True,
         "response_format_available": True,
         "native_multimodal": False,
