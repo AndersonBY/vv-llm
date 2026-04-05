@@ -545,6 +545,38 @@ QWEN_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": True,
         "native_multimodal": True,
     },
+    "qwen3.5-9b": {
+        "id": "qwen3.5-9b",
+        "context_length": 262144,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "qwen3.5-4b": {
+        "id": "qwen3.5-4b",
+        "context_length": 262144,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "qwen3.5-2b": {
+        "id": "qwen3.5-2b",
+        "context_length": 262144,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "qwen3.5-0.8b": {
+        "id": "qwen3.5-0.8b",
+        "context_length": 262144,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
 }
 
 # Yi models
