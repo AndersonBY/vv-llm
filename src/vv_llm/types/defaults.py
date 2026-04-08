@@ -723,6 +723,14 @@ ZHIPUAI_MODELS: Final[dict[str, ModelSettingDict]] = {
         "max_output_tokens": 128000,
         "native_multimodal": True,
     },
+    "glm-5.1": {
+        "id": "glm-5.1",
+        "context_length": 200000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "max_output_tokens": 128000,
+        "native_multimodal": False,
+    },
 }
 
 # Mistral models
