@@ -29,7 +29,9 @@ from .message_normalizer import (
     extract_reasoning_tagged_content,
     get_thinking_tags,
     is_gemini_3_model,
+    process_reasoning_content,
     process_thinking_content,
+    strip_reasoning_tags,
 )
 from .stream_event_adapter import adapt_response_api_stream_event
 from .tool_call_parser import tool_schema_for_response_api
@@ -537,7 +539,8 @@ class OpenAICompatibleChatClient(BaseChatClient):
                         is_thought_chunk = is_gemini3 and isinstance(delta_extra_content, dict) and delta_extra_content.get("google", {}).get("thought") is True
 
                         delta_content = message.get("content", "")
-                        delta_reasoning = message.get("reasoning_content", "")
+                        delta_reasoning_raw = cast(str | None, message.get("reasoning_content")) or ""
+                        _, delta_reasoning, in_reasoning = process_reasoning_content(delta_reasoning_raw, in_reasoning, start_tag, end_tag)
                         has_reasoning_output = False
                         if delta_reasoning:
                             accumulated_reasoning.append(delta_reasoning)
@@ -549,10 +552,14 @@ class OpenAICompatibleChatClient(BaseChatClient):
                         if delta_content:
                             if is_thought_chunk:
                                 # Gemini-3 thought content via extra_content, treat as reasoning directly
-                                accumulated_reasoning.append(delta_content)
-                                message["reasoning_content"] = delta_content
+                                _, current_reasoning_content, in_reasoning = process_reasoning_content(delta_content, in_reasoning, start_tag, end_tag)
+                                if current_reasoning_content:
+                                    accumulated_reasoning.append(current_reasoning_content)
+                                    message["reasoning_content"] = current_reasoning_content
+                                    has_reasoning_output = True
+                                else:
+                                    message["reasoning_content"] = ""
                                 message["content"] = ""
-                                has_reasoning_output = True
                             else:
                                 buffer += delta_content
 
@@ -592,7 +599,8 @@ class OpenAICompatibleChatClient(BaseChatClient):
                         is_thought_chunk = is_gemini3 and isinstance(delta_extra_content, dict) and delta_extra_content.get("google", {}).get("thought") is True
 
                         delta_content = message.get("content", "")
-                        delta_reasoning = message.get("reasoning_content", "")
+                        delta_reasoning_raw = cast(str | None, message.get("reasoning_content")) or ""
+                        _, delta_reasoning, in_reasoning = process_reasoning_content(delta_reasoning_raw, in_reasoning, start_tag, end_tag)
                         has_reasoning_output = False
                         yielded = False
                         if delta_reasoning:
@@ -607,8 +615,13 @@ class OpenAICompatibleChatClient(BaseChatClient):
                         if delta_content:
                             if is_thought_chunk:
                                 # Gemini-3 thought content via extra_content, treat as reasoning directly
-                                accumulated_reasoning.append(delta_content)
-                                message["reasoning_content"] = delta_content
+                                _, current_reasoning_content, in_reasoning = process_reasoning_content(delta_content, in_reasoning, start_tag, end_tag)
+                                if current_reasoning_content:
+                                    accumulated_reasoning.append(current_reasoning_content)
+                                    message["reasoning_content"] = current_reasoning_content
+                                    has_reasoning_output = True
+                                else:
+                                    message["reasoning_content"] = ""
                                 message["content"] = ""
                                 yield ChatCompletionDeltaMessage(**message, usage=usage)
                             else:
@@ -728,6 +741,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
             reasoning_content = getattr(message_obj, "reasoning_content", None)
             if reasoning_content is None:
                 reasoning_content = getattr(message_obj, "reasoning", None)
+            reasoning_content = strip_reasoning_tags(reasoning_content, start_tag, end_tag)
             result = {
                 "content": message_obj.content,
                 "reasoning_content": reasoning_content,
@@ -1248,7 +1262,8 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                         is_thought_chunk = is_gemini3 and isinstance(delta_extra_content, dict) and delta_extra_content.get("google", {}).get("thought") is True
 
                         delta_content = message.get("content", "")
-                        delta_reasoning = message.get("reasoning_content", "")
+                        delta_reasoning_raw = cast(str | None, message.get("reasoning_content")) or ""
+                        _, delta_reasoning, in_reasoning = process_reasoning_content(delta_reasoning_raw, in_reasoning, start_tag, end_tag)
                         has_reasoning_output = False
                         if delta_reasoning:
                             accumulated_reasoning.append(delta_reasoning)
@@ -1260,10 +1275,14 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                         if delta_content:
                             if is_thought_chunk:
                                 # Gemini-3 thought content via extra_content, treat as reasoning directly
-                                accumulated_reasoning.append(delta_content)
-                                message["reasoning_content"] = delta_content
+                                _, current_reasoning_content, in_reasoning = process_reasoning_content(delta_content, in_reasoning, start_tag, end_tag)
+                                if current_reasoning_content:
+                                    accumulated_reasoning.append(current_reasoning_content)
+                                    message["reasoning_content"] = current_reasoning_content
+                                    has_reasoning_output = True
+                                else:
+                                    message["reasoning_content"] = ""
                                 message["content"] = ""
-                                has_reasoning_output = True
                             else:
                                 buffer += delta_content
 
@@ -1303,7 +1322,8 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                         is_thought_chunk = is_gemini3 and isinstance(delta_extra_content, dict) and delta_extra_content.get("google", {}).get("thought") is True
 
                         delta_content = message.get("content", "")
-                        delta_reasoning = message.get("reasoning_content", "")
+                        delta_reasoning_raw = cast(str | None, message.get("reasoning_content")) or ""
+                        _, delta_reasoning, in_reasoning = process_reasoning_content(delta_reasoning_raw, in_reasoning, start_tag, end_tag)
                         has_reasoning_output = False
                         yielded = False
                         if delta_reasoning:
@@ -1318,8 +1338,13 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                         if delta_content:
                             if is_thought_chunk:
                                 # Gemini-3 thought content via extra_content, treat as reasoning directly
-                                accumulated_reasoning.append(delta_content)
-                                message["reasoning_content"] = delta_content
+                                _, current_reasoning_content, in_reasoning = process_reasoning_content(delta_content, in_reasoning, start_tag, end_tag)
+                                if current_reasoning_content:
+                                    accumulated_reasoning.append(current_reasoning_content)
+                                    message["reasoning_content"] = current_reasoning_content
+                                    has_reasoning_output = True
+                                else:
+                                    message["reasoning_content"] = ""
                                 message["content"] = ""
                                 yield ChatCompletionDeltaMessage(**message, usage=usage)
                             else:
@@ -1439,6 +1464,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
             reasoning_content = getattr(message_obj, "reasoning_content", None)
             if reasoning_content is None:
                 reasoning_content = getattr(message_obj, "reasoning", None)
+            reasoning_content = strip_reasoning_tags(reasoning_content, start_tag, end_tag)
             result = {
                 "content": message_obj.content,
                 "reasoning_content": reasoning_content,

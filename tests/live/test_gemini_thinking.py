@@ -140,16 +140,16 @@ def test_sync(model, stream: bool = False, use_tool: bool = False):
             max_tokens=2000,
             extra_body={
                 "extra_body": {
-                    "google": {
-                        "thinking_config": {
-                            "thinkingBudget": 1024,
-                            # Thinking off:
-                            # "thinkingBudget": 0
-                            # Turn on dynamic thinking:
-                            # "thinkingBudget": -1,
-                            "include_thoughts": True,
+                        "google": {
+                            "thinking_config": {
+                                "thinking_budget": 1024,
+                                # Thinking off:
+                                # "thinking_budget": 0
+                                # Turn on dynamic thinking:
+                                # "thinking_budget": -1,
+                                "include_thoughts": True,
+                            }
                         }
-                    }
                 }
             },
         )
@@ -162,16 +162,16 @@ def test_sync(model, stream: bool = False, use_tool: bool = False):
             max_tokens=2000,
             extra_body={
                 "extra_body": {
-                    "google": {
-                        "thinking_config": {
-                            "thinkingBudget": 1024,
-                            # Thinking off:
-                            # "thinkingBudget": 0
-                            # Turn on dynamic thinking:
-                            # "thinkingBudget": -1,
-                            "include_thoughts": True,
+                        "google": {
+                            "thinking_config": {
+                                "thinking_budget": 1024,
+                                # Thinking off:
+                                # "thinking_budget": 0
+                                # Turn on dynamic thinking:
+                                # "thinking_budget": -1,
+                                "include_thoughts": True,
+                            }
                         }
-                    }
                 }
             },
         )
@@ -203,16 +203,16 @@ async def test_async(model, stream: bool = False, use_tool: bool = False):
             max_tokens=2000,
             extra_body={
                 "extra_body": {
-                    "google": {
-                        "thinking_config": {
-                            "thinkingBudget": 1024,
-                            # Thinking off:
-                            # "thinkingBudget": 0
-                            # Turn on dynamic thinking:
-                            # "thinkingBudget": -1,
-                            "include_thoughts": True,
+                        "google": {
+                            "thinking_config": {
+                                "thinking_budget": 1024,
+                                # Thinking off:
+                                # "thinking_budget": 0
+                                # Turn on dynamic thinking:
+                                # "thinking_budget": -1,
+                                "include_thoughts": True,
+                            }
                         }
-                    }
                 }
             },
         )
@@ -225,16 +225,16 @@ async def test_async(model, stream: bool = False, use_tool: bool = False):
             max_tokens=2000,
             extra_body={
                 "extra_body": {
-                    "google": {
-                        "thinking_config": {
-                            "thinkingBudget": 1024,
-                            # Thinking off:
-                            # "thinkingBudget": 0
-                            # Turn on dynamic thinking:
-                            # "thinkingBudget": -1,
-                            "include_thoughts": True,
+                        "google": {
+                            "thinking_config": {
+                                "thinking_budget": 1024,
+                                # Thinking off:
+                                # "thinking_budget": 0
+                                # Turn on dynamic thinking:
+                                # "thinking_budget": -1,
+                                "include_thoughts": True,
+                            }
                         }
-                    }
                 }
             },
         )

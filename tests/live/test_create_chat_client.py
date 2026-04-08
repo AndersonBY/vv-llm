@@ -13,7 +13,7 @@ from vv_llm.chat_clients import (
 from vv_llm.types.llm_parameters import NOT_GIVEN, ToolParam
 from openai.types.chat import ChatCompletionMessageParam
 
-from live_common import load_live_settings, resolve_backend_model, resolve_bool
+from live_common import load_live_settings, print_stream_chunk, resolve_backend_model, resolve_bool
 
 load_live_settings(settings)
 
@@ -172,7 +172,7 @@ def test_sync(backend, model, stream: bool = False, use_tool: bool = False):
             "extra_body": {
                 "google": {
                     "thinking_config": {
-                        "thinkingBudget": -1,
+                        "thinking_budget": -1,
                         "include_thoughts": True,
                     }
                 }
@@ -180,10 +180,12 @@ def test_sync(backend, model, stream: bool = False, use_tool: bool = False):
         }
     elif model.startswith("gemini-3"):
         extra_body = {
-            "google": {
-                "thinking_config": {
-                    "thinkingLevel": "high",
-                    "include_thoughts": True,
+            "extra_body": {
+                "google": {
+                    "thinking_config": {
+                        "thinking_level": "high",
+                        "include_thoughts": True,
+                    }
                 }
             }
         }
@@ -225,18 +227,11 @@ def test_sync(backend, model, stream: bool = False, use_tool: bool = False):
         )
         start_content = False
         for chunk in response:
-            if chunk.reasoning_content:
-                print(chunk.reasoning_content, end="")
-            else:
-                if not start_content:
-                    start_content = True
-                    print("\n=== Content Start ===\n")
-                print(chunk.content, end="")
-            if use_tool:
-                print(chunk.tool_calls)
-            if chunk.usage:
-                print(f"Usage: {chunk.usage}")
-                print("=" * 20)
+            start_content = print_stream_chunk(
+                chunk,
+                use_tool=use_tool,
+                start_content=start_content,
+            )
 
 
 async def test_async(backend, model, stream: bool = False, use_tool: bool = False):
@@ -267,9 +262,13 @@ async def test_async(backend, model, stream: bool = False, use_tool: bool = Fals
             timeout=30,
             # temperature=1,
         )
+        start_content = False
         async for chunk in response:
-            print(chunk)
-            print("=" * 20)
+            start_content = print_stream_chunk(
+                chunk,
+                use_tool=use_tool,
+                start_content=start_content,
+            )
 
 
 if __name__ == "__main__":

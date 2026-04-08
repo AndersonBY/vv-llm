@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Iterable, Generator, AsyncGenerator
 from functools import cached_property
-from typing import Any, overload, Literal
+from typing import Any, overload, Literal, cast
 
 import httpx
 from openai import OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI
@@ -30,7 +30,7 @@ from anthropic.types.thinking_config_param import ThinkingConfigParam
 
 from ..settings import Settings, normalize_settings
 from ..types import defaults as defs
-from ..types.settings import SettingsDict
+from ..types.settings import EndpointOptionDict, SettingsDict
 from ..types.enums import ContextLengthControlType, BackendType
 from ..types.llm_parameters import (
     NotGiven,
@@ -82,7 +82,7 @@ def _build_header_context(
     return context
 
 
-def _endpoint_option_enabled(endpoint_option: str | dict[str, Any]) -> bool:
+def _endpoint_option_enabled(endpoint_option: str | EndpointOptionDict | dict[str, Any]) -> bool:
     return not (isinstance(endpoint_option, dict) and endpoint_option.get("enabled") is False)
 
 
@@ -498,7 +498,10 @@ class BaseChatClient(ABC):
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> Generator[ChatCompletionDeltaMessage, Any, None]:
-        return self.create_completion(
+        create_completion = cast(Any, self.create_completion)
+        return cast(
+            Generator[ChatCompletionDeltaMessage, Any, None],
+            create_completion(
             messages=messages,
             model=model,
             stream=True,
@@ -534,6 +537,7 @@ class BaseChatClient(ABC):
             extra_query=extra_query,
             extra_body=extra_body,
             timeout=timeout,
+            ),
         )
 
     def model_list(self):
@@ -965,7 +969,10 @@ class BaseAsyncChatClient(ABC):
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> AsyncGenerator[ChatCompletionDeltaMessage, Any]:
-        return await self.create_completion(
+        create_completion = cast(Any, self.create_completion)
+        return cast(
+            AsyncGenerator[ChatCompletionDeltaMessage, Any],
+            await create_completion(
             messages=messages,
             model=model,
             stream=True,
@@ -1001,6 +1008,7 @@ class BaseAsyncChatClient(ABC):
             extra_query=extra_query,
             extra_body=extra_body,
             timeout=timeout,
+            ),
         )
 
     async def model_list(self):

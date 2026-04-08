@@ -26,6 +26,7 @@ from ..types.llm_parameters import (
     VectorVeinMessage,
     VectorVeinWorkflowMessage,
 )
+from ..types.settings import EndpointOptionDict
 
 
 gpt_35_encoding = None
@@ -33,7 +34,7 @@ gpt_4o_encoding = None
 logger = logging.getLogger(__name__)
 
 
-def _endpoint_choice_enabled(endpoint_choice: str | dict[str, Any]) -> bool:
+def _endpoint_choice_enabled(endpoint_choice: str | EndpointOptionDict | dict[str, Any]) -> bool:
     return not (isinstance(endpoint_choice, dict) and endpoint_choice.get("enabled") is False)
 
 

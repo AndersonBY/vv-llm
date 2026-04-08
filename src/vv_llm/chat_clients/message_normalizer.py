@@ -53,6 +53,40 @@ def process_thinking_content(buffer: str, in_reasoning: bool, start_tag: str, en
     return buffer, current_output_content, current_reasoning_content, in_reasoning
 
 
+def process_reasoning_content(buffer: str, in_reasoning: bool, start_tag: str, end_tag: str) -> tuple[str, str, bool]:
+    """Normalize streamed reasoning deltas and keep thought-tag state in sync."""
+    current_reasoning_content = ""
+
+    while buffer:
+        if not in_reasoning:
+            start_pos = buffer.find(start_tag)
+            end_pos = buffer.find(end_tag)
+
+            if start_pos != -1 and (end_pos == -1 or start_pos < end_pos):
+                if start_pos > 0:
+                    current_reasoning_content += buffer[:start_pos]
+                buffer = buffer[start_pos + len(start_tag) :]
+                in_reasoning = True
+            elif end_pos != -1:
+                if end_pos > 0:
+                    current_reasoning_content += buffer[:end_pos]
+                buffer = buffer[end_pos + len(end_tag) :]
+            else:
+                current_reasoning_content += buffer
+                buffer = ""
+        else:
+            end_pos = buffer.find(end_tag)
+            if end_pos != -1:
+                current_reasoning_content += buffer[:end_pos]
+                buffer = buffer[end_pos + len(end_tag) :]
+                in_reasoning = False
+            else:
+                current_reasoning_content += buffer
+                buffer = ""
+
+    return buffer, current_reasoning_content, in_reasoning
+
+
 def extract_reasoning_tagged_content(content: str) -> tuple[str, str | None]:
     """Extract reasoning content wrapped by think tags from a full response."""
     for start_tag, end_tag in (("<think>", "</think>"), ("<thought>", "</thought>")):
@@ -63,6 +97,13 @@ def extract_reasoning_tagged_content(content: str) -> tuple[str, str | None]:
             cleaned_content = re.sub(think_pattern, "", content, flags=re.DOTALL)
             return cleaned_content, reasoning
     return content, None
+
+
+def strip_reasoning_tags(content: str | None, start_tag: str, end_tag: str) -> str | None:
+    """Remove backend-specific reasoning tags from reasoning text blocks."""
+    if content is None:
+        return None
+    return content.replace(start_tag, "").replace(end_tag, "")
 
 
 def format_messages_alternate(messages: list) -> list:

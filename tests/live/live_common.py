@@ -82,3 +82,21 @@ def run_with_timer(label: str, fn: Callable[[], T]) -> T:
     finally:
         elapsed = time.perf_counter() - start
         print(f"[live] {label} finished in {elapsed:.2f}s")
+
+
+def print_stream_chunk(chunk, *, use_tool: bool, start_content: bool, print_fn=print) -> bool:
+    if chunk.reasoning_content:
+        print_fn(chunk.reasoning_content, end="")
+    elif chunk.content:
+        if not start_content:
+            start_content = True
+            print_fn("\n=== Content Start ===\n")
+        print_fn(chunk.content, end="")
+
+    if use_tool and chunk.tool_calls:
+        print_fn(chunk.tool_calls)
+    if chunk.usage:
+        print_fn(f"Usage: {chunk.usage}")
+        print_fn("=" * 20)
+
+    return start_content
