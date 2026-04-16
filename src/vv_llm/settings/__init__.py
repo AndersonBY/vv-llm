@@ -60,6 +60,24 @@ class Backends(BaseModel):
     ernie: BackendSettings = Field(default_factory=BackendSettings, description="Baidu Ernie models settings.")
 
 
+def _normalize_endpoint_transport_flags(endpoint: dict[str, Any]) -> None:
+    endpoint_type = str(endpoint.get("endpoint_type", "") or "").strip().lower()
+    if endpoint_type in ("", "default"):
+        if endpoint.get("is_azure"):
+            endpoint_type = "openai_azure"
+        elif endpoint.get("is_vertex"):
+            endpoint_type = "anthropic_vertex"
+        elif endpoint.get("is_bedrock"):
+            endpoint_type = "anthropic_bedrock"
+
+    if endpoint_type:
+        endpoint["endpoint_type"] = endpoint_type
+
+    endpoint["is_azure"] = endpoint_type == "openai_azure"
+    endpoint["is_vertex"] = endpoint_type == "anthropic_vertex"
+    endpoint["is_bedrock"] = endpoint_type == "anthropic_bedrock"
+
+
 class Settings(BaseModel):
     VERSION: str | None = Field(default="2", description="Configuration version. If provided, will use the corresponding format.")
     endpoints: list[EndpointSetting] = Field(default_factory=list, description="Available endpoints for the LLM service.")
@@ -151,12 +169,7 @@ class Settings(BaseModel):
                 backends[model_type] = BackendSettings(models=cast(dict[str, Any], default_models))
 
         for endpoint in data.get("endpoints", []):
-            if endpoint.get("is_azure"):
-                endpoint["endpoint_type"] = "openai_azure"
-            if endpoint.get("is_vertex"):
-                endpoint["endpoint_type"] = "anthropic_vertex"
-            if endpoint.get("is_bedrock"):
-                endpoint["endpoint_type"] = "anthropic_bedrock"
+            _normalize_endpoint_transport_flags(endpoint)
             if not endpoint.get("api_base"):
                 continue
             api_base = endpoint["api_base"]

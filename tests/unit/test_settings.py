@@ -70,3 +70,66 @@ def test_get_endpoint_raises_for_missing_id() -> None:
 
     with pytest.raises(ValueError, match="missing-id"):
         settings.get_endpoint("missing-id")
+
+
+def test_explicit_endpoint_type_overrides_legacy_azure_flag() -> None:
+    settings = Settings.load_from_dict(
+        {
+            "VERSION": "2",
+            "endpoints": [
+                {
+                    "id": "packy-zhipu",
+                    "api_base": "https://www.packyapi.com/v1",
+                    "api_key": "sk-test-key",
+                    "endpoint_type": "openai",
+                    "is_azure": True,
+                }
+            ],
+            "backends": {
+                "openai": {
+                    "models": {
+                        "gpt-test": {
+                            "id": "gpt-test",
+                            "endpoints": ["packy-zhipu"],
+                        }
+                    }
+                }
+            },
+        }
+    )
+
+    endpoint = settings.get_endpoint("packy-zhipu")
+
+    assert endpoint.endpoint_type == "openai"
+    assert endpoint.is_azure is False
+
+
+def test_legacy_azure_flag_still_maps_when_endpoint_type_missing() -> None:
+    settings = Settings.load_from_dict(
+        {
+            "VERSION": "2",
+            "endpoints": [
+                {
+                    "id": "legacy-azure",
+                    "api_base": "https://example.openai.azure.com",
+                    "api_key": "sk-test-key",
+                    "is_azure": True,
+                }
+            ],
+            "backends": {
+                "openai": {
+                    "models": {
+                        "gpt-test": {
+                            "id": "gpt-test",
+                            "endpoints": ["legacy-azure"],
+                        }
+                    }
+                }
+            },
+        }
+    )
+
+    endpoint = settings.get_endpoint("legacy-azure")
+
+    assert endpoint.endpoint_type == "openai_azure"
+    assert endpoint.is_azure is True
