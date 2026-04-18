@@ -75,5 +75,5 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = ["tests"]
+pythonpath = ["src", "tests"]
 testpaths = ["tests/unit"]
