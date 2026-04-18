@@ -577,6 +577,30 @@ QWEN_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": True,
         "native_multimodal": True,
     },
+    "qwen3.6-plus": {
+        "id": "qwen3.6-plus",
+        "context_length": 1_000_000,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "qwen3.6-flash": {
+        "id": "qwen3.6-flash",
+        "context_length": 1_000_000,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "qwen3.6-35b-a3b": {
+        "id": "qwen3.6-35b-a3b",
+        "context_length": 262_144,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
 }
 
 # Yi models
@@ -1126,6 +1150,14 @@ ANTHROPIC_MODELS: Final[dict[str, ModelSettingDict]] = {
         "id": "claude-sonnet-4-6",
         "context_length": 200000,
         "max_output_tokens": 64000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+    "claude-opus-4-7": {
+        "id": "claude-opus-4-7",
+        "context_length": 200000,
+        "max_output_tokens": 128000,
         "function_call_available": True,
         "response_format_available": False,
         "native_multimodal": True,
