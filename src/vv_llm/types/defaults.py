@@ -66,6 +66,13 @@ MOONSHOT_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": True,
         "native_multimodal": True,
     },
+    "kimi-k2.6": {
+        "id": "kimi-k2.6",
+        "context_length": 256000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
 }
 
 # Deepseek models
