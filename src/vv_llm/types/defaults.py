@@ -1084,6 +1084,14 @@ OPENAI_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": True,
         "native_multimodal": True,
     },
+    "gpt-5.5": {
+        "id": "gpt-5.5",
+        "context_length": 1050000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
 }
 
 # Anthropic models
