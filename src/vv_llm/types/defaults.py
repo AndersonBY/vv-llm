@@ -1339,6 +1339,14 @@ GEMINI_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": True,
         "native_multimodal": True,
     },
+    "gemini-3.1-flash-lite": {
+        "id": "gemini-3.1-flash-lite",
+        "context_length": 1048576,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
 }
 
 # 百度文心一言 ERNIE 模型
