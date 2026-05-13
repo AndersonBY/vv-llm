@@ -624,6 +624,14 @@ QWEN_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": True,
         "native_multimodal": True,
     },
+    "qwen3.6-27b": {
+        "id": "qwen3.6-27b",
+        "context_length": 262_144,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
 }
 
 # Yi models
