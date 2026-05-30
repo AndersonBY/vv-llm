@@ -6,6 +6,7 @@ import json
 import httpx
 import pytest
 
+import vv_llm.rerank_clients.base_client as rerank_base
 from vv_llm.rerank_clients import create_rerank_client
 from vv_llm.types.enums import RerankBackendType
 
@@ -202,6 +203,35 @@ def test_siliconflow_rerank_protocol() -> None:
     assert response.usage is not None
     assert response.usage.search_units == 3
     assert response.usage.total_tokens == 18
+
+
+def test_rerank_client_treats_empty_endpoint_proxy_as_direct_connection(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_request_json_with_retry(**kwargs):
+        assert kwargs["url"] == "https://example.com/v1/v2/rerank"
+        assert kwargs["json_body"] == {
+            "model": "rerank-v3.5",
+            "query": "q",
+            "documents": ["doc1", "doc2"],
+            "top_n": 2,
+            "return_documents": True,
+        }
+        return {
+            "results": [{"index": 1, "relevance_score": 0.92, "document": {"text": "doc2"}}],
+            "meta": {"billed_units": {"search_units": 1}},
+        }
+
+    settings = _base_settings()
+    settings["endpoints"][0]["proxy"] = ""
+    monkeypatch.setattr(rerank_base, "request_json_with_retry", fake_request_json_with_retry)
+
+    client = create_rerank_client(
+        backend=RerankBackendType.Cohere,
+        model="rerank-v3.5",
+        settings=settings,
+    )
+    response = client.rerank(query="q", documents=["doc1", "doc2"], return_documents=True)
+
+    assert response.results[0].document == "doc2"
 
 
 def test_custom_rerank_mapping_missing_score_raises() -> None:

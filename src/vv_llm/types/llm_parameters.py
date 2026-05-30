@@ -5,7 +5,7 @@ from typing import Literal
 from typing_extensions import TypedDict, NotRequired
 
 import httpx
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from anthropic._types import NotGiven as AnthropicNotGiven
 from anthropic._types import NOT_GIVEN as ANTHROPIC_NOT_GIVEN
@@ -92,6 +92,14 @@ class EndpointSetting(BaseModel):
     headers: dict[str, str] | None = Field(default=None, description="Additional endpoint request headers template.")
     access_token: str | None = Field(None, description="Cached GCP access token for Vertex endpoints.")
     access_token_expires_at: float | None = Field(None, description="Expiry timestamp (Unix time) of the cached access token.")
+
+    @field_validator("proxy", mode="before")
+    @classmethod
+    def _normalize_blank_proxy(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
 
     def model_list(self):
         http_client = httpx.Client(proxy=self.proxy) if self.proxy is not None else None

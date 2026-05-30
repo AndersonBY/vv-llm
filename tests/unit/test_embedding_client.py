@@ -6,6 +6,7 @@ import json
 import httpx
 import pytest
 
+import vv_llm.embedding_clients.base_client as embedding_base
 import vv_llm.retrieval_clients.common as retrieval_common
 from vv_llm.embedding_clients import create_embedding_client
 from vv_llm.types.enums import EmbeddingBackendType
@@ -189,6 +190,29 @@ def test_siliconflow_embedding_protocol() -> None:
     assert response.data[0].embedding == [0.1, 0.2]
     assert response.usage is not None
     assert response.usage.total_tokens == 6
+
+
+def test_embedding_client_treats_empty_endpoint_proxy_as_direct_connection(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_request_json_with_retry(**kwargs):
+        assert kwargs["url"] == "https://example.com/v1/embeddings"
+        assert kwargs["json_body"] == {"model": "text-embedding-3-small", "input": "hello"}
+        return {
+            "model": "text-embedding-3-small",
+            "data": [{"index": 0, "embedding": [0.1, 0.2]}],
+        }
+
+    settings = _base_settings()
+    settings["endpoints"][0]["proxy"] = ""
+    monkeypatch.setattr(embedding_base, "request_json_with_retry", fake_request_json_with_retry)
+
+    client = create_embedding_client(
+        backend=EmbeddingBackendType.OpenAI,
+        model="text-embedding-3-small",
+        settings=settings,
+    )
+    response = client.create_embeddings(input="hello")
+
+    assert response.data[0].embedding == [0.1, 0.2]
 
 
 def test_embedding_retries_connect_timeout(monkeypatch: pytest.MonkeyPatch) -> None:

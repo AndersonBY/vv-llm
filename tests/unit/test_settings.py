@@ -6,6 +6,7 @@ import pytest
 
 from vv_llm.settings import Settings, normalize_settings
 from vv_llm.types.enums import BackendType
+from vv_llm.types.llm_parameters import EndpointSetting
 
 
 def _v2_settings_dict() -> dict:
@@ -133,3 +134,9 @@ def test_legacy_azure_flag_still_maps_when_endpoint_type_missing() -> None:
 
     assert endpoint.endpoint_type == "openai_azure"
     assert endpoint.is_azure is True
+
+
+def test_blank_endpoint_proxy_is_normalized_to_none() -> None:
+    assert EndpointSetting(id="empty-proxy", proxy="").proxy is None
+    assert EndpointSetting(id="blank-proxy", proxy="   ").proxy is None
+    assert EndpointSetting(id="configured-proxy", proxy="http://127.0.0.1:7890").proxy == "http://127.0.0.1:7890"
