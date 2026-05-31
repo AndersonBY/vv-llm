@@ -632,6 +632,14 @@ QWEN_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": True,
         "native_multimodal": True,
     },
+    "qwen3.7-max": {
+        "id": "qwen3.7-max",
+        "context_length": 1_000_000,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": False,
+    },
 }
 
 # Yi models
@@ -1195,6 +1203,14 @@ ANTHROPIC_MODELS: Final[dict[str, ModelSettingDict]] = {
     },
     "claude-opus-4-7": {
         "id": "claude-opus-4-7",
+        "context_length": 200000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+    "claude-opus-4-8": {
+        "id": "claude-opus-4-8",
         "context_length": 200000,
         "max_output_tokens": 128000,
         "function_call_available": True,
