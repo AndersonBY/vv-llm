@@ -1270,6 +1270,14 @@ MINIMAX_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": True,
         "native_multimodal": False,
     },
+    "MiniMax-M3": {
+        "id": "MiniMax-M3",
+        "context_length": 1_000_000,
+        "max_output_tokens": 10240,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
     "MiniMax-M2.7-highspeed": {
         "id": "MiniMax-M2.7-highspeed",
         "context_length": 204800,
