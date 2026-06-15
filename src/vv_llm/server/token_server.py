@@ -22,10 +22,7 @@ except ModuleNotFoundError as import_error:  # pragma: no cover - import guard
 
 def _ensure_server_dependencies() -> None:
     if _SERVER_IMPORT_ERROR is not None:
-        raise ModuleNotFoundError(
-            "FastAPI server dependencies are not installed. "
-            "Install with: pip install vv-llm[server]"
-        ) from _SERVER_IMPORT_ERROR
+        raise ModuleNotFoundError("FastAPI server dependencies are not installed. Install with: pip install vv-llm[server]") from _SERVER_IMPORT_ERROR
 
 
 def _create_fastapi_app() -> Any:

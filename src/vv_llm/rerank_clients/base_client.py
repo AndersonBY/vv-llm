@@ -102,17 +102,13 @@ def _usage_from_mapping(raw: dict[str, Any], response_mapping: ResponseMapping |
     if search_units_path:
         search_units = extract_json_path(raw, search_units_path)
         if search_units is None:
-            raise ValueError(
-                f"Rerank response_mapping.usage_map.search_units path '{search_units_path}' not found in response."
-            )
+            raise ValueError(f"Rerank response_mapping.usage_map.search_units path '{search_units_path}' not found in response.")
 
     total_tokens = None
     if total_tokens_path:
         total_tokens = extract_json_path(raw, total_tokens_path)
         if total_tokens is None:
-            raise ValueError(
-                f"Rerank response_mapping.usage_map.total_tokens path '{total_tokens_path}' not found in response."
-            )
+            raise ValueError(f"Rerank response_mapping.usage_map.total_tokens path '{total_tokens_path}' not found in response.")
 
     if search_units is None and total_tokens is None:
         return None
@@ -120,16 +116,12 @@ def _usage_from_mapping(raw: dict[str, Any], response_mapping: ResponseMapping |
     try:
         parsed_search_units = int(search_units) if search_units is not None else None
     except (TypeError, ValueError) as exc:
-        raise ValueError(
-            "Rerank response_mapping.usage_map.search_units must resolve to an integer-compatible value."
-        ) from exc
+        raise ValueError("Rerank response_mapping.usage_map.search_units must resolve to an integer-compatible value.") from exc
 
     try:
         parsed_total_tokens = int(total_tokens) if total_tokens is not None else None
     except (TypeError, ValueError) as exc:
-        raise ValueError(
-            "Rerank response_mapping.usage_map.total_tokens must resolve to an integer-compatible value."
-        ) from exc
+        raise ValueError("Rerank response_mapping.usage_map.total_tokens must resolve to an integer-compatible value.") from exc
 
     return RerankUsage(
         search_units=parsed_search_units,
@@ -166,31 +158,23 @@ def _parse_result_list(
 
         index_field_path = field_map.get("index")
         if index_field_path and mapped_index is None:
-            raise ValueError(
-                f"Rerank response_mapping.field_map.index path '{index_field_path}' not found for item[{idx}]."
-            )
+            raise ValueError(f"Rerank response_mapping.field_map.index path '{index_field_path}' not found for item[{idx}].")
 
         try:
             result_index = int(mapped_index) if mapped_index is not None else int(item.get("index", idx))
         except (TypeError, ValueError) as exc:
-            raise ValueError(
-                f"Rerank item[{idx}] index must be integer-compatible, got: {mapped_index!r}."
-            ) from exc
+            raise ValueError(f"Rerank item[{idx}] index must be integer-compatible, got: {mapped_index!r}.") from exc
 
         score = mapped_score
         score_field_path = field_map.get("relevance_score")
         if score_field_path and score is None:
-            raise ValueError(
-                f"Rerank response_mapping.field_map.relevance_score path '{score_field_path}' not found for item[{idx}]."
-            )
+            raise ValueError(f"Rerank response_mapping.field_map.relevance_score path '{score_field_path}' not found for item[{idx}].")
         if score is None:
             score = item.get("relevance_score", item.get("score", 0.0))
         try:
             score_value = float(score)
         except (TypeError, ValueError) as exc:
-            raise ValueError(
-                f"Rerank item[{idx}] relevance_score must be numeric-compatible, got: {score!r}."
-            ) from exc
+            raise ValueError(f"Rerank item[{idx}] relevance_score must be numeric-compatible, got: {score!r}.") from exc
 
         document = mapped_document
         if document is None:
@@ -293,9 +277,7 @@ def _parse_custom_rerank(
     if response_mapping and response_mapping.model_path:
         mapped_model = extract_json_path(raw, response_mapping.model_path)
         if mapped_model is None:
-            raise ValueError(
-                f"Rerank response_mapping.model_path '{response_mapping.model_path}' not found in response."
-            )
+            raise ValueError(f"Rerank response_mapping.model_path '{response_mapping.model_path}' not found in response.")
         model = str(mapped_model)
 
     field_map = response_mapping.field_map if response_mapping is not None else {}
@@ -303,9 +285,7 @@ def _parse_custom_rerank(
 
     results = _parse_result_list(items=items, default_documents=documents, field_map=field_map)
     if not results:
-        raise ValueError(
-            f"Rerank response produced no results after applying mapping. results_path='{results_path}'."
-        )
+        raise ValueError(f"Rerank response produced no results after applying mapping. results_path='{results_path}'.")
 
     return RerankResponse(
         model=model,

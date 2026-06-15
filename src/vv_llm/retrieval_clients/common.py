@@ -271,9 +271,7 @@ class BaseRetrievalClient:
     def _set_endpoint(self) -> tuple[EndpointSetting, str]:
         if self.endpoint is None:
             if self.random_endpoint:
-                available_endpoints = self._get_available_endpoints(
-                    cast(list[str | EndpointOptionDict], self.model_setting.endpoints)
-                )
+                available_endpoints = self._get_available_endpoints(cast(list[str | EndpointOptionDict], self.model_setting.endpoints))
                 if not available_endpoints:
                     raise ValueError(f"No enabled endpoints available for model {self.model}")
 
@@ -437,9 +435,7 @@ class BaseAsyncRetrievalClient:
     def _set_endpoint(self) -> tuple[EndpointSetting, str]:
         if self.endpoint is None:
             if self.random_endpoint:
-                available_endpoints = self._get_available_endpoints(
-                    cast(list[str | EndpointOptionDict], self.model_setting.endpoints)
-                )
+                available_endpoints = self._get_available_endpoints(cast(list[str | EndpointOptionDict], self.model_setting.endpoints))
                 if not available_endpoints:
                     raise ValueError(f"No enabled endpoints available for model {self.model}")
 

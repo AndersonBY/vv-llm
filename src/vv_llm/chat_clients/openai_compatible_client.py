@@ -499,9 +499,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                             if getattr(chunk.usage, "prompt_tokens_details", None):  # noqa: B009
                                 chunk.usage.prompt_tokens_details.cached_tokens = chunk.usage.cached_tokens
                             else:
-                                chunk.usage.prompt_tokens_details = PromptTokensDetails(
-                                    cached_tokens=chunk.usage.cached_tokens
-                                )
+                                chunk.usage.prompt_tokens_details = PromptTokensDetails(cached_tokens=chunk.usage.cached_tokens)
                         usage = Usage(
                             completion_tokens=chunk.usage.completion_tokens or 0,
                             prompt_tokens=chunk.usage.prompt_tokens or 0,
@@ -733,9 +731,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                 if getattr(response.usage, "prompt_tokens_details", None):  # noqa: B009
                     response.usage.prompt_tokens_details.cached_tokens = response.usage.cached_tokens
                 else:
-                    response.usage.prompt_tokens_details = PromptTokensDetails(
-                        cached_tokens=response.usage.cached_tokens
-                    )
+                    response.usage.prompt_tokens_details = PromptTokensDetails(cached_tokens=response.usage.cached_tokens)
 
             message_obj = response.choices[0].message
             reasoning_content = getattr(message_obj, "reasoning_content", None)
@@ -1222,9 +1218,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                             if getattr(chunk.usage, "prompt_tokens_details", None):  # noqa: B009
                                 chunk.usage.prompt_tokens_details.cached_tokens = chunk.usage.cached_tokens
                             else:
-                                chunk.usage.prompt_tokens_details = PromptTokensDetails(
-                                    cached_tokens=chunk.usage.cached_tokens
-                                )
+                                chunk.usage.prompt_tokens_details = PromptTokensDetails(cached_tokens=chunk.usage.cached_tokens)
                         usage = Usage(
                             completion_tokens=chunk.usage.completion_tokens or 0,
                             prompt_tokens=chunk.usage.prompt_tokens or 0,
@@ -1456,9 +1450,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                 if getattr(response.usage, "prompt_tokens_details", None):  # noqa: B009
                     response.usage.prompt_tokens_details.cached_tokens = response.usage.cached_tokens
                 else:
-                    response.usage.prompt_tokens_details = PromptTokensDetails(
-                        cached_tokens=response.usage.cached_tokens
-                    )
+                    response.usage.prompt_tokens_details = PromptTokensDetails(cached_tokens=response.usage.cached_tokens)
 
             message_obj = response.choices[0].message
             reasoning_content = getattr(message_obj, "reasoning_content", None)

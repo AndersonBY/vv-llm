@@ -116,17 +116,13 @@ def _usage_from_mapping(raw: dict[str, Any], response_mapping: ResponseMapping |
     if prompt_path:
         prompt_tokens = extract_json_path(raw, prompt_path)
         if prompt_tokens is None:
-            raise ValueError(
-                f"Embedding response_mapping.usage_map.prompt_tokens path '{prompt_path}' not found in response."
-            )
+            raise ValueError(f"Embedding response_mapping.usage_map.prompt_tokens path '{prompt_path}' not found in response.")
 
     total_tokens = None
     if total_path:
         total_tokens = extract_json_path(raw, total_path)
         if total_tokens is None:
-            raise ValueError(
-                f"Embedding response_mapping.usage_map.total_tokens path '{total_path}' not found in response."
-            )
+            raise ValueError(f"Embedding response_mapping.usage_map.total_tokens path '{total_path}' not found in response.")
 
     if prompt_tokens is None and total_tokens is None:
         return None
@@ -134,16 +130,12 @@ def _usage_from_mapping(raw: dict[str, Any], response_mapping: ResponseMapping |
     try:
         parsed_prompt_tokens = int(prompt_tokens) if prompt_tokens is not None else None
     except (TypeError, ValueError) as exc:
-        raise ValueError(
-            "Embedding response_mapping.usage_map.prompt_tokens must resolve to an integer-compatible value."
-        ) from exc
+        raise ValueError("Embedding response_mapping.usage_map.prompt_tokens must resolve to an integer-compatible value.") from exc
 
     try:
         parsed_total_tokens = int(total_tokens) if total_tokens is not None else None
     except (TypeError, ValueError) as exc:
-        raise ValueError(
-            "Embedding response_mapping.usage_map.total_tokens must resolve to an integer-compatible value."
-        ) from exc
+        raise ValueError("Embedding response_mapping.usage_map.total_tokens must resolve to an integer-compatible value.") from exc
 
     return EmbeddingUsage(
         prompt_tokens=parsed_prompt_tokens,
@@ -180,9 +172,7 @@ def _parse_custom_embeddings(raw: dict[str, Any], model_id: str, inputs: list[st
 
         embedding_field_path = field_map.get("embedding")
         if embedding_field_path and mapped_embedding is None:
-            raise ValueError(
-                f"Embedding response_mapping.field_map.embedding path '{embedding_field_path}' not found for item[{idx}]."
-            )
+            raise ValueError(f"Embedding response_mapping.field_map.embedding path '{embedding_field_path}' not found for item[{idx}].")
 
         if mapped_embedding is None:
             if isinstance(item, dict):
@@ -191,29 +181,21 @@ def _parse_custom_embeddings(raw: dict[str, Any], model_id: str, inputs: list[st
                 mapped_embedding = item
 
         if mapped_embedding is None:
-            raise ValueError(
-                f"Embedding item[{idx}] has no embedding vector. Provide field_map.embedding or ensure item contains 'embedding'."
-            )
+            raise ValueError(f"Embedding item[{idx}] has no embedding vector. Provide field_map.embedding or ensure item contains 'embedding'.")
 
         index_field_path = field_map.get("index")
         if index_field_path and mapped_index is None:
-            raise ValueError(
-                f"Embedding response_mapping.field_map.index path '{index_field_path}' not found for item[{idx}]."
-            )
+            raise ValueError(f"Embedding response_mapping.field_map.index path '{index_field_path}' not found for item[{idx}].")
 
         try:
             parsed_index = int(mapped_index) if mapped_index is not None else idx
         except (TypeError, ValueError) as exc:
-            raise ValueError(
-                f"Embedding item[{idx}] index must be integer-compatible, got: {mapped_index!r}."
-            ) from exc
+            raise ValueError(f"Embedding item[{idx}] index must be integer-compatible, got: {mapped_index!r}.") from exc
 
         try:
             parsed_embedding = _to_float_vector(mapped_embedding)
         except (TypeError, ValueError) as exc:
-            raise ValueError(
-                f"Embedding item[{idx}] vector must be a list/tuple of numeric values."
-            ) from exc
+            raise ValueError(f"Embedding item[{idx}] vector must be a list/tuple of numeric values.") from exc
 
         response_data.append(
             EmbeddingData(
@@ -227,15 +209,11 @@ def _parse_custom_embeddings(raw: dict[str, Any], model_id: str, inputs: list[st
     if response_mapping and response_mapping.model_path:
         mapped_model = extract_json_path(raw, response_mapping.model_path)
         if mapped_model is None:
-            raise ValueError(
-                f"Embedding response_mapping.model_path '{response_mapping.model_path}' not found in response."
-            )
+            raise ValueError(f"Embedding response_mapping.model_path '{response_mapping.model_path}' not found in response.")
         model = str(mapped_model)
 
     if not response_data:
-        raise ValueError(
-            f"Embedding response produced no vectors after applying mapping. data_path='{data_path}'."
-        )
+        raise ValueError(f"Embedding response produced no vectors after applying mapping. data_path='{data_path}'.")
 
     return EmbeddingResponse(
         model=model,
