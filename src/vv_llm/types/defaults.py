@@ -22,7 +22,7 @@ class ModelSettingDict(TypedDict):
 
 
 # Moonshot models
-MOONSHOT_DEFAULT_MODEL: Final[str] = "kimi-k2.5"
+MOONSHOT_DEFAULT_MODEL: Final[str] = "kimi-k2.6"
 MOONSHOT_MODELS: Final[dict[str, ModelSettingDict]] = {
     "kimi-k2-0711-preview": {
         "id": "kimi-k2-0711-preview",
@@ -73,10 +73,17 @@ MOONSHOT_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": True,
         "native_multimodal": True,
     },
+    "kimi-k2.7-code": {
+        "id": "kimi-k2.7-code",
+        "context_length": 256000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
 }
 
 # Deepseek models
-DEEPSEEK_DEFAULT_MODEL: Final[str] = "deepseek-chat"
+DEEPSEEK_DEFAULT_MODEL: Final[str] = "deepseek-v4-pro"
 DEEPSEEK_MODELS: Final[dict[str, ModelSettingDict]] = {
     "deepseek-chat": {
         "id": "deepseek-chat",
@@ -664,7 +671,7 @@ YI_MODELS: Final[dict[str, ModelSettingDict]] = {
 }
 
 # ZhiPuAI models
-ZHIPUAI_DEFAULT_MODEL: Final[str] = "glm-5"
+ZHIPUAI_DEFAULT_MODEL: Final[str] = "glm-5.2"
 ZHIPUAI_MODELS: Final[dict[str, ModelSettingDict]] = {
     "glm-4.5": {
         "id": "glm-4.5",
@@ -794,6 +801,14 @@ ZHIPUAI_MODELS: Final[dict[str, ModelSettingDict]] = {
         "max_output_tokens": 128000,
         "native_multimodal": False,
     },
+    "glm-5.2": {
+        "id": "glm-5.2",
+        "context_length": 1000000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "max_output_tokens": 128000,
+        "native_multimodal": False,
+    },
 }
 
 # Mistral models
@@ -858,7 +873,7 @@ MISTRAL_MODELS: Final[dict[str, ModelSettingDict]] = {
 }
 
 # OpenAI models
-OPENAI_DEFAULT_MODEL: Final[str] = "gpt-5.2"
+OPENAI_DEFAULT_MODEL: Final[str] = "gpt-5.5"
 OPENAI_MODELS: Final[dict[str, ModelSettingDict]] = {
     "gpt-35-turbo": {
         "id": "gpt-35-turbo",
@@ -1111,7 +1126,7 @@ OPENAI_MODELS: Final[dict[str, ModelSettingDict]] = {
 }
 
 # Anthropic models
-ANTHROPIC_DEFAULT_MODEL: Final[str] = "claude-opus-4-6"
+ANTHROPIC_DEFAULT_MODEL: Final[str] = "claude-opus-4-8"
 ANTHROPIC_MODELS: Final[dict[str, ModelSettingDict]] = {
     "claude-3-5-haiku-20241022": {
         "id": "claude-3-5-haiku-20241022",
@@ -1187,7 +1202,7 @@ ANTHROPIC_MODELS: Final[dict[str, ModelSettingDict]] = {
     },
     "claude-opus-4-6": {
         "id": "claude-opus-4-6",
-        "context_length": 200000,
+        "context_length": 1000000,
         "max_output_tokens": 128000,
         "function_call_available": True,
         "response_format_available": False,
@@ -1195,7 +1210,7 @@ ANTHROPIC_MODELS: Final[dict[str, ModelSettingDict]] = {
     },
     "claude-sonnet-4-6": {
         "id": "claude-sonnet-4-6",
-        "context_length": 200000,
+        "context_length": 1000000,
         "max_output_tokens": 64000,
         "function_call_available": True,
         "response_format_available": False,
@@ -1203,7 +1218,7 @@ ANTHROPIC_MODELS: Final[dict[str, ModelSettingDict]] = {
     },
     "claude-opus-4-7": {
         "id": "claude-opus-4-7",
-        "context_length": 200000,
+        "context_length": 1000000,
         "max_output_tokens": 128000,
         "function_call_available": True,
         "response_format_available": False,
@@ -1211,7 +1226,15 @@ ANTHROPIC_MODELS: Final[dict[str, ModelSettingDict]] = {
     },
     "claude-opus-4-8": {
         "id": "claude-opus-4-8",
-        "context_length": 200000,
+        "context_length": 1000000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+    "claude-fable-5": {
+        "id": "claude-fable-5",
+        "context_length": 1000000,
         "max_output_tokens": 128000,
         "function_call_available": True,
         "response_format_available": False,
@@ -1220,7 +1243,7 @@ ANTHROPIC_MODELS: Final[dict[str, ModelSettingDict]] = {
 }
 
 # Minimax models
-MINIMAX_DEFAULT_MODEL: Final[str] = "MiniMax-M2.7"
+MINIMAX_DEFAULT_MODEL: Final[str] = "MiniMax-M3"
 MINIMAX_MODELS: Final[dict[str, ModelSettingDict]] = {
     "MiniMax-M2.1": {
         "id": "MiniMax-M2.1",
@@ -1289,7 +1312,7 @@ MINIMAX_MODELS: Final[dict[str, ModelSettingDict]] = {
 }
 
 # Gemini models
-GEMINI_DEFAULT_MODEL: Final[str] = "gemini-3-flash"
+GEMINI_DEFAULT_MODEL: Final[str] = "gemini-3.5-flash"
 GEMINI_MODELS: Final[dict[str, ModelSettingDict]] = {
     "gemini-2.5-pro": {
         "id": "gemini-2.5-pro",
