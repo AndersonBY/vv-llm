@@ -1,4 +1,31 @@
+import importlib
+
 from vv_llm.types.defaults import MINIMAX_MODELS
+
+
+def test_defaults_are_split_by_backend_modules():
+    defaults_module = importlib.import_module("vv_llm.types.defaults")
+    assert hasattr(defaults_module, "__path__")
+
+    for backend_name in (
+        "anthropic",
+        "baichuan",
+        "deepseek",
+        "ernie",
+        "gemini",
+        "groq",
+        "minimax",
+        "mistral",
+        "moonshot",
+        "openai",
+        "qwen",
+        "stepfun",
+        "xai",
+        "xiaomi",
+        "yi",
+        "zhipuai",
+    ):
+        importlib.import_module(f"vv_llm.types.defaults.{backend_name}")
 
 
 def test_minimax_m3_defaults_match_m2_7_except_context_and_multimodal():

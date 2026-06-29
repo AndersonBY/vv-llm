@@ -1,0 +1,121 @@
+from typing import Final
+
+from .base import ModelSettingDict
+
+
+# Anthropic models
+ANTHROPIC_DEFAULT_MODEL: Final[str] = "claude-opus-4-8"
+ANTHROPIC_MODELS: Final[dict[str, ModelSettingDict]] = {
+    "claude-3-5-haiku-20241022": {
+        "id": "claude-3-5-haiku-20241022",
+        "context_length": 200000,
+        "max_output_tokens": 8192,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": False,
+    },
+    "claude-3-5-sonnet-20240620": {
+        "id": "claude-3-5-sonnet-20240620",
+        "context_length": 200000,
+        "max_output_tokens": 8192,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+    "claude-3-5-sonnet-20241022": {
+        "id": "claude-3-5-sonnet-20241022",
+        "context_length": 200000,
+        "max_output_tokens": 8192,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+    "claude-3-7-sonnet-20250219": {
+        "id": "claude-3-7-sonnet-20250219",
+        "context_length": 200000,
+        "max_output_tokens": 64000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+    "claude-sonnet-4-20250514": {
+        "id": "claude-sonnet-4-20250514",
+        "context_length": 200000,
+        "max_output_tokens": 64000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+    "claude-opus-4-20250514": {
+        "id": "claude-opus-4-20250514",
+        "context_length": 200000,
+        "max_output_tokens": 32000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+    "claude-opus-4-1-20250805": {
+        "id": "claude-opus-4-1-20250805",
+        "context_length": 200000,
+        "max_output_tokens": 32000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+    "claude-sonnet-4-5-20250929": {
+        "id": "claude-sonnet-4-5-20250929",
+        "context_length": 200000,
+        "max_output_tokens": 64000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+    "claude-haiku-4-5-20251001": {
+        "id": "claude-haiku-4-5-20251001",
+        "context_length": 200000,
+        "max_output_tokens": 64000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+    "claude-opus-4-6": {
+        "id": "claude-opus-4-6",
+        "context_length": 1000000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+    "claude-sonnet-4-6": {
+        "id": "claude-sonnet-4-6",
+        "context_length": 1000000,
+        "max_output_tokens": 64000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+    "claude-opus-4-7": {
+        "id": "claude-opus-4-7",
+        "context_length": 1000000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+    "claude-opus-4-8": {
+        "id": "claude-opus-4-8",
+        "context_length": 1000000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+    "claude-fable-5": {
+        "id": "claude-fable-5",
+        "context_length": 1000000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
+}
