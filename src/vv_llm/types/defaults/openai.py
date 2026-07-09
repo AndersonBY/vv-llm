@@ -254,4 +254,28 @@ OPENAI_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": True,
         "native_multimodal": True,
     },
+    "gpt-5.6-sol": {
+        "id": "gpt-5.6-sol",
+        "context_length": 1050000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "gpt-5.6-terra": {
+        "id": "gpt-5.6-terra",
+        "context_length": 1050000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
+    "gpt-5.6-luna": {
+        "id": "gpt-5.6-luna",
+        "context_length": 1050000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
 }
