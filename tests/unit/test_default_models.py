@@ -1,6 +1,6 @@
 import importlib
 
-from vv_llm.types.defaults import MINIMAX_MODELS, OPENAI_MODELS
+from vv_llm.types.defaults import MINIMAX_MODELS, MOONSHOT_MODELS, OPENAI_MODELS
 
 
 def test_defaults_are_split_by_backend_modules():
@@ -49,3 +49,14 @@ def test_openai_gpt_56_models_are_available():
         assert model["function_call_available"] is True
         assert model["response_format_available"] is True
         assert model["native_multimodal"] is True
+
+
+def test_moonshot_kimi_k3_is_available():
+    model = MOONSHOT_MODELS["kimi-k3"]
+
+    assert model["id"] == "kimi-k3"
+    assert model["context_length"] == 1_048_576
+    assert model["max_output_tokens"] == 1_048_576
+    assert model["function_call_available"] is True
+    assert model["response_format_available"] is True
+    assert model["native_multimodal"] is True

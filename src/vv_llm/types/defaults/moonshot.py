@@ -62,4 +62,12 @@ MOONSHOT_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": True,
         "native_multimodal": True,
     },
+    "kimi-k3": {
+        "id": "kimi-k3",
+        "context_length": 1048576,
+        "max_output_tokens": 1048576,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    },
 }
