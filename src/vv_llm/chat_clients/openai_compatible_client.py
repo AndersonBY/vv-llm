@@ -2,7 +2,7 @@
 # @Date:   2024-07-26 14:48:55
 import json
 from functools import cached_property
-from collections.abc import Generator, AsyncGenerator, Iterable
+from collections.abc import Generator, AsyncGenerator, Iterable, Mapping
 from typing import Any, TYPE_CHECKING, overload, Literal, cast
 
 import httpx
@@ -54,6 +54,81 @@ from ..types.llm_parameters import (
 if TYPE_CHECKING:
     from ..settings import Settings
     from ..types.settings import SettingsDict
+
+
+_MISSING = object()
+
+
+def _get_explicit_field(value: Any, field_name: str) -> Any:
+    if isinstance(value, Mapping):
+        return value.get(field_name, _MISSING)
+
+    fields_set = getattr(value, "model_fields_set", None)
+    if fields_set is not None:
+        if field_name not in fields_set:
+            return _MISSING
+        return getattr(value, field_name, _MISSING)
+
+    try:
+        return vars(value).get(field_name, _MISSING)
+    except TypeError:
+        return _MISSING
+
+
+def _is_valid_token_count(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+
+def _copy_prompt_tokens_details(value: Any) -> PromptTokensDetails | None:
+    if isinstance(value, PromptTokensDetails):
+        return value.model_copy()
+    if isinstance(value, Mapping):
+        try:
+            return PromptTokensDetails.model_validate(value)
+        except ValueError:
+            return None
+    return None
+
+
+def _normalize_openai_compatible_usage(raw_usage: Any, backend_name: BackendType | str) -> Usage | None:
+    """Normalize cache reads while preserving omitted versus observed-zero semantics."""
+    if raw_usage is None:
+        return None
+
+    top_level_cached_tokens = _get_explicit_field(raw_usage, "cached_tokens")
+    raw_prompt_tokens_details = _get_explicit_field(raw_usage, "prompt_tokens_details")
+    nested_cached_tokens = _MISSING
+    prompt_tokens_details = None
+
+    if raw_prompt_tokens_details is not _MISSING and raw_prompt_tokens_details is not None:
+        nested_cached_tokens = _get_explicit_field(raw_prompt_tokens_details, "cached_tokens")
+        prompt_tokens_details = _copy_prompt_tokens_details(raw_prompt_tokens_details)
+        if prompt_tokens_details is not None and nested_cached_tokens is not _MISSING and not _is_valid_token_count(nested_cached_tokens):
+            prompt_tokens_details = prompt_tokens_details.model_copy(update={"cached_tokens": None})
+
+    cached_tokens = _MISSING
+    for candidate in (top_level_cached_tokens, nested_cached_tokens):
+        if _is_valid_token_count(candidate):
+            cached_tokens = candidate
+            break
+
+    if cached_tokens is _MISSING and backend_name == BackendType.Moonshot and top_level_cached_tokens is _MISSING and raw_prompt_tokens_details is _MISSING:
+        cached_tokens = 0
+
+    if cached_tokens is not _MISSING:
+        if prompt_tokens_details is None:
+            prompt_tokens_details = PromptTokensDetails(cached_tokens=cached_tokens)
+        else:
+            prompt_tokens_details = prompt_tokens_details.model_copy(update={"cached_tokens": cached_tokens})
+
+    return Usage(
+        completion_tokens=raw_usage.completion_tokens or 0,
+        prompt_tokens=raw_usage.prompt_tokens or 0,
+        total_tokens=raw_usage.total_tokens or 0,
+        cache_creation_tokens=getattr(raw_usage, "cache_creation_tokens", None),  # noqa: B009
+        completion_tokens_details=raw_usage.completion_tokens_details,
+        prompt_tokens_details=prompt_tokens_details,
+    )
 
 
 class OpenAICompatibleChatClient(BaseChatClient):
@@ -494,22 +569,11 @@ class OpenAICompatibleChatClient(BaseChatClient):
                 accumulated_content = []
 
                 for chunk in stream_response:
-                    if chunk.usage and chunk.usage.total_tokens:
-                        if getattr(chunk.usage, "cached_tokens", None):  # noqa: B009
-                            if getattr(chunk.usage, "prompt_tokens_details", None):  # noqa: B009
-                                chunk.usage.prompt_tokens_details.cached_tokens = chunk.usage.cached_tokens
-                            else:
-                                chunk.usage.prompt_tokens_details = PromptTokensDetails(cached_tokens=chunk.usage.cached_tokens)
-                        usage = Usage(
-                            completion_tokens=chunk.usage.completion_tokens or 0,
-                            prompt_tokens=chunk.usage.prompt_tokens or 0,
-                            total_tokens=chunk.usage.total_tokens or 0,
-                            prompt_tokens_details=chunk.usage.prompt_tokens_details,
-                            completion_tokens_details=chunk.usage.completion_tokens_details,
-                        )
+                    if chunk.usage is not None:
+                        usage = _normalize_openai_compatible_usage(chunk.usage, self.backend_name)
 
                     if not chunk.choices or len(chunk.choices) == 0 or not chunk.choices[0].delta:
-                        if usage:
+                        if usage is not None:
                             yield ChatCompletionDeltaMessage(usage=usage)
                         continue
 
@@ -727,12 +791,6 @@ class OpenAICompatibleChatClient(BaseChatClient):
             if not response.choices:
                 raise ValueError(f"No response choices: {response}")
 
-            if response.usage and getattr(response.usage, "cached_tokens", None):  # noqa: B009
-                if getattr(response.usage, "prompt_tokens_details", None):  # noqa: B009
-                    response.usage.prompt_tokens_details.cached_tokens = response.usage.cached_tokens
-                else:
-                    response.usage.prompt_tokens_details = PromptTokensDetails(cached_tokens=response.usage.cached_tokens)
-
             message_obj = response.choices[0].message
             reasoning_content = getattr(message_obj, "reasoning_content", None)
             if reasoning_content is None:
@@ -741,7 +799,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
             result = {
                 "content": message_obj.content,
                 "reasoning_content": reasoning_content,
-                "usage": response.usage.model_dump() if response.usage else None,
+                "usage": _normalize_openai_compatible_usage(response.usage, self.backend_name),
             }
 
             if not result["reasoning_content"] and result["content"]:
@@ -1213,22 +1271,11 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                 accumulated_content = []
 
                 async for chunk in stream_response:
-                    if chunk.usage and chunk.usage.total_tokens:
-                        if getattr(chunk.usage, "cached_tokens", None):  # noqa: B009
-                            if getattr(chunk.usage, "prompt_tokens_details", None):  # noqa: B009
-                                chunk.usage.prompt_tokens_details.cached_tokens = chunk.usage.cached_tokens
-                            else:
-                                chunk.usage.prompt_tokens_details = PromptTokensDetails(cached_tokens=chunk.usage.cached_tokens)
-                        usage = Usage(
-                            completion_tokens=chunk.usage.completion_tokens or 0,
-                            prompt_tokens=chunk.usage.prompt_tokens or 0,
-                            total_tokens=chunk.usage.total_tokens or 0,
-                            completion_tokens_details=chunk.usage.completion_tokens_details,
-                            prompt_tokens_details=chunk.usage.prompt_tokens_details,
-                        )
+                    if chunk.usage is not None:
+                        usage = _normalize_openai_compatible_usage(chunk.usage, self.backend_name)
 
                     if not chunk.choices or len(chunk.choices) == 0 or not chunk.choices[0].delta:
-                        if usage:
+                        if usage is not None:
                             yield ChatCompletionDeltaMessage(usage=usage)
                         continue
 
@@ -1446,12 +1493,6 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
             if not response.choices:
                 raise ValueError(f"No response choices: {response}")
 
-            if response.usage and getattr(response.usage, "cached_tokens", None):  # noqa: B009
-                if getattr(response.usage, "prompt_tokens_details", None):  # noqa: B009
-                    response.usage.prompt_tokens_details.cached_tokens = response.usage.cached_tokens
-                else:
-                    response.usage.prompt_tokens_details = PromptTokensDetails(cached_tokens=response.usage.cached_tokens)
-
             message_obj = response.choices[0].message
             reasoning_content = getattr(message_obj, "reasoning_content", None)
             if reasoning_content is None:
@@ -1460,7 +1501,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
             result = {
                 "content": message_obj.content,
                 "reasoning_content": reasoning_content,
-                "usage": response.usage.model_dump() if response.usage else None,
+                "usage": _normalize_openai_compatible_usage(response.usage, self.backend_name),
             }
 
             if not result["reasoning_content"] and result["content"]:

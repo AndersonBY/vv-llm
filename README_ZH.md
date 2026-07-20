@@ -184,6 +184,12 @@ asyncio.run(main())
 - **Prompt 缓存** — 支持 Anthropic prompt caching
 - **重试与退避** — 可配置的重试逻辑
 
+## 缓存 Usage 语义
+
+OpenAI-compatible chat completion 通过 `usage.prompt_tokens_details.cached_tokens` 表示缓存读取量。`usage.prompt_tokens` 始终是总输入 token 数，因此调用方可用 `prompt_tokens - cached_tokens` 计算未缓存输入。该路径不会填充 Anthropic 的 `cache_read_input_tokens` 字段，因为 Anthropic 将其基础 `input_tokens` 定义为未缓存输入，两者口径不同。
+
+对通用 OpenAI-compatible 后端，缓存读取字段省略时仍保持未知，显式的 `cached_tokens: 0` 则保留为观测零。Moonshot 的冷请求可能同时省略顶层 `cached_tokens` 和 `prompt_tokens_details`；仅在两者都完全省略时，vv-llm 才依据 provider 契约投影 `prompt_tokens_details.cached_tokens = 0`。显式 `null` 或无效缓存值继续保持未知。
+
 ## 工具函数
 
 ```python

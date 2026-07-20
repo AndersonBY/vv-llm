@@ -184,6 +184,12 @@ asyncio.run(main())
 - **Prompt caching** — Anthropic prompt caching support
 - **Retry with backoff** — configurable retry logic for transient failures
 
+## Cache Usage Semantics
+
+OpenAI-compatible chat completions report cache reads through `usage.prompt_tokens_details.cached_tokens`. `usage.prompt_tokens` remains the total input token count, so consumers can calculate uncached input as `prompt_tokens - cached_tokens`. This path intentionally does not populate Anthropic's `cache_read_input_tokens` field because Anthropic defines its base `input_tokens` as uncached input.
+
+For generic OpenAI-compatible backends, omitted cache-read fields remain unknown, while an explicit `cached_tokens: 0` is preserved as an observed zero. Moonshot may omit both top-level `cached_tokens` and `prompt_tokens_details` on a cold request; only in that fully omitted case does vv-llm project `prompt_tokens_details.cached_tokens = 0` from the provider contract. Explicit `null` or invalid cache values remain unknown.
+
 ## Utilities
 
 ```python
