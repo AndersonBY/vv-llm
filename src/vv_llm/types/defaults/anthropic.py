@@ -126,4 +126,12 @@ ANTHROPIC_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": False,
         "native_multimodal": True,
     },
+    "claude-opus-5": {
+        "id": "claude-opus-5",
+        "context_length": 1000000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+    },
 }

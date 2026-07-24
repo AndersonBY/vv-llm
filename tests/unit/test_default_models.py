@@ -1,6 +1,6 @@
 import importlib
 
-from vv_llm.types.defaults import MINIMAX_MODELS, MOONSHOT_MODELS, OPENAI_MODELS
+from vv_llm.types.defaults import ANTHROPIC_MODELS, MINIMAX_MODELS, MOONSHOT_MODELS, OPENAI_MODELS
 
 
 def test_defaults_are_split_by_backend_modules():
@@ -59,4 +59,15 @@ def test_moonshot_kimi_k3_is_available():
     assert model["max_output_tokens"] == 1_048_576
     assert model["function_call_available"] is True
     assert model["response_format_available"] is True
+    assert model["native_multimodal"] is True
+
+
+def test_anthropic_claude_opus_5_is_available():
+    model = ANTHROPIC_MODELS["claude-opus-5"]
+
+    assert model["id"] == "claude-opus-5"
+    assert model["context_length"] == 1_000_000
+    assert model["max_output_tokens"] == 128_000
+    assert model["function_call_available"] is True
+    assert model["response_format_available"] is False
     assert model["native_multimodal"] is True
