@@ -55,6 +55,15 @@ resp = client.create_completion([
 print(resp.content)
 ```
 
+Pass `thinking` explicitly when a provider supports Anthropic-style thinking control; omit it to keep the provider default:
+
+```python
+resp = client.create_completion(
+    messages=[{"role": "user", "content": "Answer directly"}],
+    thinking={"type": "disabled"},
+)
+```
+
 ### Streaming
 
 ```python

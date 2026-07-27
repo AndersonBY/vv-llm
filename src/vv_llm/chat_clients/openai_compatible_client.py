@@ -90,6 +90,18 @@ def _copy_prompt_tokens_details(value: Any) -> PromptTokensDetails | None:
     return None
 
 
+def _merge_thinking_into_extra_body(
+    extra_body: Body | None,
+    thinking: ThinkingConfigParam | None | NotGiven,
+) -> Body | None:
+    if thinking is None or isinstance(thinking, (AnthropicNotGiven, OpenAINotGiven)):
+        return extra_body
+
+    merged_extra_body = dict(cast(Mapping[str, Any], extra_body)) if extra_body is not None else {}
+    merged_extra_body["thinking"] = thinking
+    return cast(Body, merged_extra_body)
+
+
 def _normalize_openai_compatible_usage(raw_usage: Any, backend_name: BackendType | str) -> Usage | None:
     """Normalize cache reads while preserving omitted versus observed-zero semantics."""
     if raw_usage is None:
@@ -379,6 +391,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
             max_tokens = NOT_GIVEN
         if isinstance(stream_options, AnthropicNotGiven):
             stream_options = NOT_GIVEN
+        extra_body = _merge_thinking_into_extra_body(extra_body, thinking)
 
         raw_client = self.raw_client  # 调用完 self.raw_client 后，self.model_id 会被赋值
         self.model_setting = self.backend_settings.models[self.model]
@@ -461,6 +474,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                         temperature=None if self.temperature is NOT_GIVEN else self.temperature,
                         top_p=None if top_p is NOT_GIVEN else top_p,
                         max_output_tokens=req_max_output_tokens,
+                        extra_body=extra_body,
                         **tools_params,
                     )
 
@@ -489,6 +503,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                     temperature=None if self.temperature is NOT_GIVEN else self.temperature,
                     top_p=None if top_p is NOT_GIVEN else top_p,
                     max_output_tokens=req_max_output_tokens,
+                    extra_body=extra_body,
                     **tools_params,
                 )
 
@@ -1079,6 +1094,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
             max_tokens = NOT_GIVEN
         if isinstance(stream_options, AnthropicNotGiven):
             stream_options = NOT_GIVEN
+        extra_body = _merge_thinking_into_extra_body(extra_body, thinking)
 
         raw_client = self.raw_client  # 调用完 self.raw_client 后，self.model_id 会被赋值
         self.model_setting = self.backend_settings.models[self.model]
@@ -1167,6 +1183,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                             temperature=None if self.temperature is NOT_GIVEN else self.temperature,
                             top_p=None if top_p is NOT_GIVEN else top_p,
                             max_output_tokens=req_max_output_tokens,
+                            extra_body=extra_body,
                             **tools_params,
                         ) as stream_response:
                             async for event in stream_response:
@@ -1192,6 +1209,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                     temperature=None if self.temperature is NOT_GIVEN else self.temperature,
                     top_p=None if top_p is NOT_GIVEN else top_p,
                     max_output_tokens=req_max_output_tokens,
+                    extra_body=extra_body,
                     **tools_params,
                 )
 

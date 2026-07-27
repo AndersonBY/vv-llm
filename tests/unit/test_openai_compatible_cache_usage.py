@@ -199,6 +199,55 @@ def test_sync_and_async_non_streaming_clients_share_moonshot_normalization() -> 
     assert async_result.usage.prompt_tokens_details.cached_tokens == 0
 
 
+def test_sync_and_async_clients_forward_named_thinking_in_extra_body() -> None:
+    settings = _moonshot_settings()
+    response = _chat_completion(_completion_usage())
+    sync_captured: dict[str, Any] = {}
+
+    def sync_create(**kwargs: Any) -> ChatCompletion:
+        sync_captured.update(kwargs)
+        return response
+
+    sync_client = MoonshotChatClient(model=TEST_MODEL, stream=False, settings=settings)
+    _bind_raw_client(sync_client, sync_create)
+    sync_client.create_completion(
+        messages=[{"role": "user", "content": "hello"}],
+        stream=False,
+        max_tokens=16,
+        thinking={"type": "enabled", "budget_tokens": 1600},
+        extra_body={"trace_id": "sync"},
+    )
+
+    async def run() -> dict[str, Any]:
+        async_captured: dict[str, Any] = {}
+
+        async def async_create(**kwargs: Any) -> ChatCompletion:
+            async_captured.update(kwargs)
+            return response
+
+        async_client = AsyncMoonshotChatClient(model=TEST_MODEL, stream=False, settings=settings)
+        _bind_raw_client(async_client, async_create)
+        await async_client.create_completion(
+            messages=[{"role": "user", "content": "hello"}],
+            stream=False,
+            max_tokens=16,
+            thinking={"type": "disabled"},
+            extra_body={"trace_id": "async"},
+        )
+        return async_captured
+
+    async_captured = asyncio.run(run())
+
+    assert sync_captured["extra_body"] == {
+        "trace_id": "sync",
+        "thinking": {"type": "enabled", "budget_tokens": 1600},
+    }
+    assert async_captured["extra_body"] == {
+        "trace_id": "async",
+        "thinking": {"type": "disabled"},
+    }
+
+
 def test_sync_and_async_streaming_clients_preserve_all_zero_usage() -> None:
     settings = _moonshot_settings()
     zero_usage = CompletionUsage(completion_tokens=0, prompt_tokens=0, total_tokens=0)

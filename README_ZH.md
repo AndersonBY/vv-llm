@@ -55,6 +55,15 @@ resp = client.create_completion([
 print(resp.content)
 ```
 
+支持 Anthropic 风格 thinking 控制的 provider 可以显式传入 `thinking`；不传时继续使用 provider 默认值：
+
+```python
+resp = client.create_completion(
+    messages=[{"role": "user", "content": "直接回答"}],
+    thinking={"type": "disabled"},
+)
+```
+
 ### 流式调用
 
 ```python
