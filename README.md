@@ -64,6 +64,91 @@ resp = client.create_completion(
 )
 ```
 
+The legacy keyword API remains supported. New code can use a normalized request and typed thinking controls:
+
+```python
+from vv_llm import ChatRequest, ChatRequestOptions, ThinkingPreference
+
+resp = client.create(
+    ChatRequest(
+        messages=[{"role": "user", "content": "Answer directly"}],
+        options=ChatRequestOptions(
+            thinking=ThinkingPreference.disabled(),
+            max_tokens=512,
+        ),
+    )
+)
+
+print(client.capabilities.thinking)
+```
+
+Use `ThinkingPreference.default()` to preserve the provider default, `enabled()` or
+`enabled(budget_tokens=...)` to opt in, and `disabled()` to opt out explicitly.
+
+### Middleware, Retry, And Metadata
+
+The legacy client remains unchanged. Wrap it only when the application needs a
+versioned middleware chain, classified retry, or execution metadata:
+
+```python
+from vv_llm import ChatMiddlewareV1, ChatRequest, MiddlewareChatClient, RetryPolicy
+
+class TraceMiddleware(ChatMiddlewareV1):
+    def on_request(self, context, request):
+        context.attributes["trace_id"] = "request-42"
+        return request
+
+runtime = MiddlewareChatClient(
+    client,
+    [TraceMiddleware()],
+    retry_policy=RetryPolicy(max_attempts=3, total_timeout=20),
+)
+result = runtime.create_with_metadata(
+    ChatRequest(messages=[{"role": "user", "content": "Answer directly"}])
+)
+
+print(result.response.content)
+print(result.metadata.provider, result.metadata.attempts, result.metadata.latency_ms)
+```
+
+`ErrorKind` distinguishes authentication, rate limiting, network, timeout,
+invalid request, context length, content policy, missing model, provider
+internal, serialization, and configuration failures. The default retry policy
+retries only transient kinds and respects `Retry-After`, exponential backoff,
+jitter, and an optional total deadline.
+
+### Explicit Registry And Fallback
+
+Fallback is opt-in and ordered. Every registration declares model capabilities,
+so an incompatible route is skipped without sending a request:
+
+```python
+from vv_llm import FallbackChatClient, FallbackRoute, ProviderRegistry
+
+registry = ProviderRegistry()
+registry.register(
+    "primary",
+    lambda: primary_client,
+    capabilities=primary_client.capabilities,
+)
+registry.register(
+    "secondary",
+    lambda: secondary_client,
+    capabilities=secondary_client.capabilities,
+)
+runtime = FallbackChatClient(
+    registry,
+    [
+        FallbackRoute("primary", "primary-model"),
+        FallbackRoute("secondary", "secondary-model"),
+    ],
+)
+```
+
+Authentication and invalid-request errors do not fall back by default. Streaming
+may switch routes only while establishing the stream or before its first visible
+chunk; after output begins, later errors are returned without replay.
+
 ### Streaming
 
 ```python
@@ -192,6 +277,15 @@ asyncio.run(main())
 - **Context length control** — automatic message truncation to fit model limits
 - **Prompt caching** — Anthropic prompt caching support
 - **Retry with backoff** — configurable retry logic for transient failures
+- **Versioned middleware** — stable `v1` request, response, and error hooks outside provider adapters
+- **Classified errors** — provider-neutral error kinds with retryability and request context
+- **Explicit fallback** — registered, ordered, capability-aware routes with no hidden provider switching
+- **Scripted testing** — deterministic completion/error/stream scripts for conformance tests
+
+## Examples
+
+Runnable typed-thinking, sync/async streaming, middleware metadata, and explicit
+fallback examples are available in [`examples/`](examples/README.md).
 
 ## Cache Usage Semantics
 

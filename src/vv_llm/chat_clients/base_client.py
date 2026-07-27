@@ -32,6 +32,7 @@ from ..settings import Settings, normalize_settings
 from ..types import defaults as defs
 from ..types.settings import EndpointOptionDict, SettingsDict
 from ..types.enums import ContextLengthControlType, BackendType
+from ..types.chat_request import CapabilityPolicy, ChatRequest, ModelCapabilities
 from ..types.llm_parameters import (
     NotGiven,
     NOT_GIVEN,
@@ -540,6 +541,24 @@ class BaseChatClient(ABC):
             ),
         )
 
+    @property
+    def capabilities(self) -> ModelCapabilities:
+        capabilities = self.backend_settings.get_model_setting(self.model).capabilities
+        return capabilities or ModelCapabilities()
+
+    def create(
+        self,
+        request: ChatRequest,
+        *,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
+    ) -> ChatCompletionMessage | Generator[ChatCompletionDeltaMessage, Any, None]:
+        request.validate_capabilities(self.capabilities, capability_policy)
+        create_completion = cast(Any, self.create_completion)
+        return cast(
+            ChatCompletionMessage | Generator[ChatCompletionDeltaMessage, Any, None],
+            create_completion(**request.to_completion_kwargs(self.backend_name.value)),
+        )
+
     def model_list(self):
         _raw_client = self.raw_client
         if isinstance(_raw_client, OpenAI | AzureOpenAI):
@@ -1009,6 +1028,24 @@ class BaseAsyncChatClient(ABC):
                 extra_body=extra_body,
                 timeout=timeout,
             ),
+        )
+
+    @property
+    def capabilities(self) -> ModelCapabilities:
+        capabilities = self.backend_settings.get_model_setting(self.model).capabilities
+        return capabilities or ModelCapabilities()
+
+    async def create(
+        self,
+        request: ChatRequest,
+        *,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
+    ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
+        request.validate_capabilities(self.capabilities, capability_policy)
+        create_completion = cast(Any, self.create_completion)
+        return cast(
+            ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any],
+            await create_completion(**request.to_completion_kwargs(self.backend_name.value)),
         )
 
     async def model_list(self):

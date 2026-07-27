@@ -77,6 +77,7 @@ class ModelConfigDict(TypedDict):
     native_multimodal: NotRequired[bool]
     context_length: NotRequired[int | None]
     max_output_tokens: NotRequired[int | None]
+    capabilities: NotRequired[dict]
 
 
 class RetrievalModelConfigDict(TypedDict):

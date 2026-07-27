@@ -1,6 +1,6 @@
 import importlib
 
-from vv_llm.types.defaults import ANTHROPIC_MODELS, MINIMAX_MODELS, MOONSHOT_MODELS, OPENAI_MODELS
+from vv_llm.types.defaults import ANTHROPIC_MODELS, DEEPSEEK_MODELS, MINIMAX_MODELS, MOONSHOT_MODELS, OPENAI_MODELS
 
 
 def test_defaults_are_split_by_backend_modules():
@@ -71,3 +71,10 @@ def test_anthropic_claude_opus_5_is_available():
     assert model["function_call_available"] is True
     assert model["response_format_available"] is False
     assert model["native_multimodal"] is True
+
+
+def test_deepseek_v4_models_expose_configurable_thinking_capability():
+    for model_name in ("deepseek-v4-flash", "deepseek-v4-pro"):
+        capabilities = DEEPSEEK_MODELS[model_name]["capabilities"]
+        assert capabilities["thinking"] == "configurable"
+        assert capabilities["structured_output"] == "json_schema"

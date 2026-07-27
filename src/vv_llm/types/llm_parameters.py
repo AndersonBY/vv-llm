@@ -5,7 +5,7 @@ from typing import Literal
 from typing_extensions import TypedDict, NotRequired
 
 import httpx
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from anthropic._types import NotGiven as AnthropicNotGiven
 from anthropic._types import NOT_GIVEN as ANTHROPIC_NOT_GIVEN
@@ -26,6 +26,7 @@ from openai.types.chat.chat_completion_tool_choice_option_param import ChatCompl
 from openai.types.completion_usage import CompletionTokensDetails, PromptTokensDetails
 
 from . import defaults as defs
+from .chat_request import Modality, ModelCapabilities, StructuredOutputCapability
 from .settings import EndpointOptionDict
 
 
@@ -153,6 +154,22 @@ class ModelSetting(BaseModel):
     native_multimodal: bool = Field(False, description="Indicates if the model is a native multimodal model.")
     context_length: int = Field(32768, description="The context length for the model.")
     max_output_tokens: int | None = Field(None, description="Maximum number of output tokens allowed.")
+    capabilities: ModelCapabilities | None = Field(None, description="Provider-neutral model capabilities.")
+
+    @model_validator(mode="after")
+    def normalize_capabilities(self) -> "ModelSetting":
+        if self.capabilities is None:
+            self.capabilities = ModelCapabilities.from_legacy(
+                function_call_available=self.function_call_available,
+                response_format_available=self.response_format_available,
+                native_multimodal=self.native_multimodal,
+            )
+            return self
+
+        self.function_call_available = self.capabilities.tools
+        self.response_format_available = self.capabilities.structured_output is not StructuredOutputCapability.NONE
+        self.native_multimodal = Modality.IMAGE in self.capabilities.input_modalities
+        return self
 
 
 class BackendSettings(BaseModel):
@@ -171,10 +188,21 @@ class BackendSettings(BaseModel):
     def update_models(self, default_models: dict[str, dict], input_models: dict[str, dict]):
         updated_models: dict[str, ModelSetting] = {}
         for model_name, model_data in default_models.items():
-            updated_model = ModelSetting(**model_data)
-            if model_name in input_models:
-                updated_model = updated_model.model_copy(update=input_models[model_name])
-            updated_models[model_name] = updated_model
+            user_model_data = input_models.get(model_name, {})
+            merged_model_data = {**model_data, **user_model_data}
+            if "capabilities" not in user_model_data and "capabilities" in merged_model_data:
+                capabilities = ModelCapabilities.model_validate(merged_model_data["capabilities"])
+                if "function_call_available" in user_model_data:
+                    capabilities.tools = bool(user_model_data["function_call_available"])
+                if "response_format_available" in user_model_data:
+                    capabilities.structured_output = StructuredOutputCapability.JSON_SCHEMA if user_model_data["response_format_available"] else StructuredOutputCapability.NONE
+                if "native_multimodal" in user_model_data:
+                    if user_model_data["native_multimodal"]:
+                        capabilities.input_modalities.add(Modality.IMAGE)
+                    else:
+                        capabilities.input_modalities.discard(Modality.IMAGE)
+                merged_model_data["capabilities"] = capabilities
+            updated_models[model_name] = ModelSetting(**merged_model_data)
 
         # Add any new models from input that weren't in defaults
         for model_name, model_data in input_models.items():

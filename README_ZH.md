@@ -64,6 +64,88 @@ resp = client.create_completion(
 )
 ```
 
+旧的关键字参数 API 会继续兼容。新代码可以使用规范化请求和类型化 thinking 控制：
+
+```python
+from vv_llm import ChatRequest, ChatRequestOptions, ThinkingPreference
+
+resp = client.create(
+    ChatRequest(
+        messages=[{"role": "user", "content": "直接回答"}],
+        options=ChatRequestOptions(
+            thinking=ThinkingPreference.disabled(),
+            max_tokens=512,
+        ),
+    )
+)
+
+print(client.capabilities.thinking)
+```
+
+`ThinkingPreference.default()` 保留 provider 默认行为，`enabled()` 或
+`enabled(budget_tokens=...)` 显式开启，`disabled()` 显式关闭。
+
+### Middleware、重试与 Metadata
+
+原有 client 行为不变。只有在应用需要版本化 middleware、分类重试或执行 metadata
+时才进行包装：
+
+```python
+from vv_llm import ChatMiddlewareV1, ChatRequest, MiddlewareChatClient, RetryPolicy
+
+class TraceMiddleware(ChatMiddlewareV1):
+    def on_request(self, context, request):
+        context.attributes["trace_id"] = "request-42"
+        return request
+
+runtime = MiddlewareChatClient(
+    client,
+    [TraceMiddleware()],
+    retry_policy=RetryPolicy(max_attempts=3, total_timeout=20),
+)
+result = runtime.create_with_metadata(
+    ChatRequest(messages=[{"role": "user", "content": "直接回答"}])
+)
+
+print(result.response.content)
+print(result.metadata.provider, result.metadata.attempts, result.metadata.latency_ms)
+```
+
+`ErrorKind` 统一区分认证、限流、网络、超时、无效请求、上下文长度、内容策略、
+模型不存在、provider 内部错误、序列化和配置错误。默认策略只重试瞬时错误，
+并支持 `Retry-After`、指数退避、抖动和可选的总 deadline。
+
+### 显式 Registry 与 Fallback
+
+Fallback 必须显式启用并声明顺序。每个注册项都声明模型能力，不兼容的 route
+会在发请求之前跳过：
+
+```python
+from vv_llm import FallbackChatClient, FallbackRoute, ProviderRegistry
+
+registry = ProviderRegistry()
+registry.register(
+    "primary",
+    lambda: primary_client,
+    capabilities=primary_client.capabilities,
+)
+registry.register(
+    "secondary",
+    lambda: secondary_client,
+    capabilities=secondary_client.capabilities,
+)
+runtime = FallbackChatClient(
+    registry,
+    [
+        FallbackRoute("primary", "primary-model"),
+        FallbackRoute("secondary", "secondary-model"),
+    ],
+)
+```
+
+默认不会对认证和无效请求错误执行 fallback。流式调用只能在建立 stream 或首个
+可见 chunk 之前切换 route；一旦已有输出，后续错误会直接返回，不会重放请求。
+
 ### 流式调用
 
 ```python
@@ -192,6 +274,15 @@ asyncio.run(main())
 - **上下文长度控制** — 自动截断消息以适配模型限制
 - **Prompt 缓存** — 支持 Anthropic prompt caching
 - **重试与退避** — 可配置的重试逻辑
+- **版本化 middleware** — provider adapter 外稳定的 `v1` 请求、响应和错误 hook
+- **统一错误分类** — 带重试语义和请求上下文的 provider-neutral 错误
+- **显式 fallback** — 只按注册顺序执行 capability-aware route，不隐式切换 provider
+- **Scripted 测试** — 用确定性的响应、错误和 stream 脚本进行契约测试
+
+## 使用示例
+
+[`examples/`](examples/README.md) 提供类型化 thinking、同步/异步流式输出、
+middleware metadata 和显式 fallback 的可运行示例。
 
 ## 缓存 Usage 语义
 

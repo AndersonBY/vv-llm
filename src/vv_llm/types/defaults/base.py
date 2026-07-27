@@ -19,3 +19,4 @@ class ModelSettingDict(TypedDict):
     native_multimodal: bool
     context_length: int
     max_output_tokens: NotRequired[int]
+    capabilities: NotRequired[dict]

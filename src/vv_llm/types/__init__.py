@@ -37,7 +37,13 @@ from .defaults import (
     XIAOMI_MODELS,
 )
 from .enums import BackendType, EmbeddingBackendType, RerankBackendType, LLMType, ContextLengthControlType
-from .exception import APIStatusError, APIConnectionError
+from .exception import (
+    APIStatusError,
+    APIConnectionError,
+    ErrorKind,
+    VvLlmError,
+    classify_exception,
+)
 from .llm_parameters import (
     EndpointSetting,
     ModelSetting,
@@ -72,6 +78,7 @@ from .retrieval_parameters import (
     RerankUsage,
     RerankResponse,
 )
+from .response import CompletionResult, ResponseMetadata
 from .settings import (
     RedisConfigDict,
     DiskCacheConfigDict,
@@ -93,6 +100,17 @@ from .settings import (
 
 from anthropic.types import ThinkingConfigParam, ThinkingConfigEnabledParam
 from openai.types.chat.completion_create_params import ResponseFormat
+from .chat_request import (
+    CapabilityPolicy,
+    ChatRequest,
+    ChatRequestOptions,
+    Modality,
+    ModelCapabilities,
+    StructuredOutputCapability,
+    ThinkingCapability,
+    ThinkingMode,
+    ThinkingPreference,
+)
 
 
 __all__ = [
@@ -139,6 +157,9 @@ __all__ = [
     "ContextLengthControlType",
     "APIStatusError",
     "APIConnectionError",
+    "ErrorKind",
+    "VvLlmError",
+    "classify_exception",
     "EndpointOptionDict",
     "EndpointSetting",
     "ModelSetting",
@@ -154,6 +175,8 @@ __all__ = [
     "RerankResult",
     "RerankUsage",
     "RerankResponse",
+    "CompletionResult",
+    "ResponseMetadata",
     "ChatCompletionMessage",
     "ChatCompletionDeltaMessage",
     "ChatCompletionStreamOptionsParam",
@@ -189,4 +212,13 @@ __all__ = [
     "ThinkingConfigParam",
     "ThinkingConfigEnabledParam",
     "ResponseFormat",
+    "CapabilityPolicy",
+    "ChatRequest",
+    "ChatRequestOptions",
+    "Modality",
+    "ModelCapabilities",
+    "StructuredOutputCapability",
+    "ThinkingCapability",
+    "ThinkingMode",
+    "ThinkingPreference",
 ]

@@ -12,6 +12,7 @@ from openai.types.completion_usage import CompletionUsage, PromptTokensDetails
 from vv_llm.chat_clients.moonshot_client import AsyncMoonshotChatClient, MoonshotChatClient
 from vv_llm.chat_clients.openai_compatible_client import _normalize_openai_compatible_usage
 from vv_llm.settings import Settings
+from vv_llm.types.chat_request import CapabilityPolicy, ChatRequest, ChatRequestOptions, ThinkingPreference
 from vv_llm.types.enums import BackendType
 
 
@@ -246,6 +247,61 @@ def test_sync_and_async_clients_forward_named_thinking_in_extra_body() -> None:
         "trace_id": "async",
         "thinking": {"type": "disabled"},
     }
+
+
+def test_typed_chat_request_preserves_legacy_completion_behavior() -> None:
+    settings = _moonshot_settings()
+    response = _chat_completion(_completion_usage())
+    sync_captured: dict[str, Any] = {}
+
+    def sync_create(**kwargs: Any) -> ChatCompletion:
+        sync_captured.update(kwargs)
+        return response
+
+    sync_client = MoonshotChatClient(model=TEST_MODEL, stream=False, settings=settings)
+    _bind_raw_client(sync_client, sync_create)
+    result = sync_client.create(
+        ChatRequest(
+            messages=[{"role": "user", "content": "hello"}],
+            options=ChatRequestOptions(
+                max_tokens=16,
+                thinking=ThinkingPreference.enabled(1600),
+                provider_options={"moonshot": {"trace_id": "typed-sync"}},
+            ),
+        ),
+        capability_policy=CapabilityPolicy.PASSTHROUGH,
+    )
+
+    assert result.content == "ok"
+    assert sync_captured["extra_body"] == {
+        "trace_id": "typed-sync",
+        "thinking": {"type": "enabled", "budget_tokens": 1600},
+    }
+
+    async def run() -> dict[str, Any]:
+        async_captured: dict[str, Any] = {}
+
+        async def async_create(**kwargs: Any) -> ChatCompletion:
+            async_captured.update(kwargs)
+            return response
+
+        async_client = AsyncMoonshotChatClient(model=TEST_MODEL, stream=False, settings=settings)
+        _bind_raw_client(async_client, async_create)
+        result = await async_client.create(
+            ChatRequest(
+                messages=[{"role": "user", "content": "hello"}],
+                options=ChatRequestOptions(
+                    max_tokens=16,
+                    thinking=ThinkingPreference.disabled(),
+                ),
+            ),
+            capability_policy=CapabilityPolicy.PASSTHROUGH,
+        )
+        assert result.content == "ok"
+        return async_captured
+
+    async_captured = asyncio.run(run())
+    assert async_captured["extra_body"] == {"thinking": {"type": "disabled"}}
 
 
 def test_sync_and_async_streaming_clients_preserve_all_zero_usage() -> None:

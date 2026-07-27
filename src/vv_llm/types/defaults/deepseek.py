@@ -21,6 +21,11 @@ DEEPSEEK_MODELS: Final[dict[str, ModelSettingDict]] = {
         "function_call_available": True,
         "response_format_available": False,
         "native_multimodal": False,
+        "capabilities": {
+            "tools": True,
+            "structured_output": "none",
+            "thinking": "always_enabled",
+        },
     },
     "deepseek-v4-flash": {
         "id": "deepseek-v4-flash",
@@ -29,6 +34,11 @@ DEEPSEEK_MODELS: Final[dict[str, ModelSettingDict]] = {
         "function_call_available": True,
         "response_format_available": True,
         "native_multimodal": False,
+        "capabilities": {
+            "tools": True,
+            "structured_output": "json_schema",
+            "thinking": "configurable",
+        },
     },
     "deepseek-v4-pro": {
         "id": "deepseek-v4-pro",
@@ -37,5 +47,10 @@ DEEPSEEK_MODELS: Final[dict[str, ModelSettingDict]] = {
         "function_call_available": True,
         "response_format_available": True,
         "native_multimodal": False,
+        "capabilities": {
+            "tools": True,
+            "structured_output": "json_schema",
+            "thinking": "configurable",
+        },
     },
 }
