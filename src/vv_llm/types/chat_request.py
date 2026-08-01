@@ -120,7 +120,7 @@ class ChatRequestOptions(BaseModel):
     prediction: Any | None = None
     presence_penalty: float | None = None
     reasoning_effort: str | None = None
-    thinking: ThinkingPreference | dict[str, Any] | None = None
+    thinking: dict[str, Any] | ThinkingPreference | None = None
     seed: int | None = None
     service_tier: str | None = None
     stop: str | list[str] | None = None

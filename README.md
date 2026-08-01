@@ -114,8 +114,9 @@ print(result.metadata.provider, result.metadata.attempts, result.metadata.latenc
 `ErrorKind` distinguishes authentication, rate limiting, network, timeout,
 invalid request, context length, content policy, missing model, provider
 internal, serialization, and configuration failures. The default retry policy
-retries only transient kinds and respects `Retry-After`, exponential backoff,
-jitter, and an optional total deadline.
+retries only transient kinds and respects `retry-after-ms` plus numeric or
+HTTP-date `Retry-After`, exponential backoff, jitter, and an optional total
+deadline.
 
 ### Explicit Registry And Fallback
 

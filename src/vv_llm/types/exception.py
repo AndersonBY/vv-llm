@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import math
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from enum import Enum
 from typing import Any
 
@@ -147,17 +150,48 @@ def _status_error_kind(status_code: int, provider_code: str | None, message: str
     return ErrorKind.UNKNOWN
 
 
-def _retry_after(response: Any) -> float | None:
+def _retry_after(response: Any, *, now: datetime | None = None) -> float | None:
     headers = getattr(response, "headers", None)
     if headers is None:
         return None
+
+    milliseconds = _nonnegative_number(headers.get("retry-after-ms"))
+    if milliseconds is not None:
+        return milliseconds / 1000.0
+
     value = headers.get("retry-after")
     if value is None:
         return None
+
+    seconds = _nonnegative_number(value)
+    if seconds is not None:
+        return seconds
+
     try:
-        return max(0.0, float(value))
+        retry_at = parsedate_to_datetime(str(value))
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if retry_at is None:
+        return None
+    if retry_at.tzinfo is None:
+        retry_at = retry_at.replace(tzinfo=timezone.utc)
+
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=timezone.utc)
+    return max(0.0, (retry_at - current).total_seconds())
+
+
+def _nonnegative_number(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        number = float(value)
     except (TypeError, ValueError):
         return None
+    if not math.isfinite(number):
+        return None
+    return max(0.0, number)
 
 
 __all__ = [

@@ -113,7 +113,8 @@ print(result.metadata.provider, result.metadata.attempts, result.metadata.latenc
 
 `ErrorKind` 统一区分认证、限流、网络、超时、无效请求、上下文长度、内容策略、
 模型不存在、provider 内部错误、序列化和配置错误。默认策略只重试瞬时错误，
-并支持 `Retry-After`、指数退避、抖动和可选的总 deadline。
+并支持优先级更高的 `retry-after-ms`、秒数或 HTTP-date 格式的 `Retry-After`、
+指数退避、抖动和可选的总 deadline。
 
 ### 显式 Registry 与 Fallback
 
