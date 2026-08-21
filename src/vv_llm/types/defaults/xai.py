@@ -40,4 +40,17 @@ XAI_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": True,
         "native_multimodal": True,
     },
+    "grok-4.6": {
+        "id": "grok-4.6",
+        "context_length": 500000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+        "capabilities": {
+            "tools": True,
+            "structured_output": "json_schema",
+            "input_modalities": ["text", "image"],
+            "thinking": "configurable",
+        },
+    },
 }

@@ -40,6 +40,20 @@ DEEPSEEK_MODELS: Final[dict[str, ModelSettingDict]] = {
             "thinking": "configurable",
         },
     },
+    "deepseek-v4-flash-vision-exp": {
+        "id": "deepseek-v4-flash-vision-exp",
+        "context_length": 1000000,
+        "max_output_tokens": 384000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+        "capabilities": {
+            "tools": True,
+            "structured_output": "json_schema",
+            "input_modalities": ["text", "image"],
+            "thinking": "configurable",
+        },
+    },
     "deepseek-v4-pro": {
         "id": "deepseek-v4-pro",
         "context_length": 1000000,

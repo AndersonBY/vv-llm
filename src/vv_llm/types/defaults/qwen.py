@@ -446,4 +446,33 @@ QWEN_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": True,
         "native_multimodal": False,
     },
+    "qwen3.8-max": {
+        "id": "qwen3.8-max",
+        "context_length": 1_000_000,
+        "max_output_tokens": 131_072,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+        "capabilities": {
+            "tools": True,
+            "structured_output": "json_schema",
+            "input_modalities": ["text", "image", "video"],
+            "parallel_tool_calls": True,
+            "thinking": "configurable",
+        },
+    },
+    "qwen3.8-27b": {
+        "id": "qwen3.8-27b",
+        "context_length": 1_000_000,
+        "max_output_tokens": 131_072,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+        "capabilities": {
+            "tools": True,
+            "structured_output": "json_schema",
+            "input_modalities": ["text", "image", "video"],
+            "thinking": "configurable",
+        },
+    },
 }

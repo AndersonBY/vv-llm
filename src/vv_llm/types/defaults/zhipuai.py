@@ -142,4 +142,17 @@ ZHIPUAI_MODELS: Final[dict[str, ModelSettingDict]] = {
         "max_output_tokens": 128000,
         "native_multimodal": False,
     },
+    "glm-5.3": {
+        "id": "glm-5.3",
+        "context_length": 1000000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "max_output_tokens": 128000,
+        "native_multimodal": False,
+        "capabilities": {
+            "tools": True,
+            "structured_output": "json_schema",
+            "thinking": "always_enabled",
+        },
+    },
 }

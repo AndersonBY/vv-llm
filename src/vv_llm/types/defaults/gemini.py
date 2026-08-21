@@ -102,4 +102,18 @@ GEMINI_MODELS: Final[dict[str, ModelSettingDict]] = {
         "response_format_available": True,
         "native_multimodal": True,
     },
+    "gemini-3.7-flash": {
+        "id": "gemini-3.7-flash",
+        "context_length": 1048576,
+        "max_output_tokens": 65536,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+        "capabilities": {
+            "tools": True,
+            "structured_output": "json_schema",
+            "input_modalities": ["text", "image", "video", "audio"],
+            "thinking": "configurable",
+        },
+    },
 }

@@ -1,6 +1,6 @@
 import importlib
 
-from vv_llm.types.defaults import ANTHROPIC_MODELS, DEEPSEEK_MODELS, MINIMAX_MODELS, MOONSHOT_MODELS, OPENAI_MODELS
+from vv_llm.types.defaults import ANTHROPIC_MODELS, DEEPSEEK_MODELS, GEMINI_MODELS, MINIMAX_MODELS, MOONSHOT_MODELS, OPENAI_MODELS, QWEN_MODELS, XAI_MODELS, ZHIPUAI_MODELS
 
 
 def test_defaults_are_split_by_backend_modules():
@@ -78,3 +78,87 @@ def test_deepseek_v4_models_expose_configurable_thinking_capability():
         capabilities = DEEPSEEK_MODELS[model_name]["capabilities"]
         assert capabilities["thinking"] == "configurable"
         assert capabilities["structured_output"] == "json_schema"
+
+
+def test_deepseek_v4_flash_vision_matches_flash_limits_and_accepts_images():
+    flash = DEEPSEEK_MODELS["deepseek-v4-flash"]
+    vision = DEEPSEEK_MODELS["deepseek-v4-flash-vision-exp"]
+
+    assert vision["id"] == "deepseek-v4-flash-vision-exp"
+    assert vision["context_length"] == flash["context_length"]
+    assert vision["max_output_tokens"] == flash["max_output_tokens"]
+    assert vision["function_call_available"] == flash["function_call_available"]
+    assert vision["response_format_available"] == flash["response_format_available"]
+    assert vision["native_multimodal"] is True
+    assert vision["capabilities"]["tools"] == flash["capabilities"]["tools"]
+    assert vision["capabilities"]["structured_output"] == flash["capabilities"]["structured_output"]
+    assert vision["capabilities"]["thinking"] == flash["capabilities"]["thinking"]
+    assert vision["capabilities"]["input_modalities"] == ["text", "image"]
+
+
+def test_zhipuai_glm_53_defaults_match_documented_capabilities():
+    model = ZHIPUAI_MODELS["glm-5.3"]
+
+    assert model["id"] == "glm-5.3"
+    assert model["context_length"] == 1_000_000
+    assert model["max_output_tokens"] == 128_000
+    assert model["function_call_available"] is True
+    assert model["response_format_available"] is True
+    assert model["native_multimodal"] is False
+    assert model["capabilities"] == {
+        "tools": True,
+        "structured_output": "json_schema",
+        "thinking": "always_enabled",
+    }
+
+
+def test_qwen_38_models_match_hosted_api_capabilities():
+    for model_name in ("qwen3.8-max", "qwen3.8-27b"):
+        model = QWEN_MODELS[model_name]
+
+        assert model["id"] == model_name
+        assert model["context_length"] == 1_000_000
+        assert model["max_output_tokens"] == 131_072
+        assert model["function_call_available"] is True
+        assert model["response_format_available"] is True
+        assert model["native_multimodal"] is True
+        assert model["capabilities"]["tools"] is True
+        assert model["capabilities"]["structured_output"] == "json_schema"
+        assert model["capabilities"]["input_modalities"] == ["text", "image", "video"]
+        assert model["capabilities"]["thinking"] == "configurable"
+
+    assert QWEN_MODELS["qwen3.8-max"]["capabilities"]["parallel_tool_calls"] is True
+
+
+def test_gemini_37_flash_matches_documented_limits_and_capabilities():
+    model = GEMINI_MODELS["gemini-3.7-flash"]
+
+    assert model["id"] == "gemini-3.7-flash"
+    assert model["context_length"] == 1_048_576
+    assert model["max_output_tokens"] == 65_536
+    assert model["function_call_available"] is True
+    assert model["response_format_available"] is True
+    assert model["native_multimodal"] is True
+    assert model["capabilities"] == {
+        "tools": True,
+        "structured_output": "json_schema",
+        "input_modalities": ["text", "image", "video", "audio"],
+        "thinking": "configurable",
+    }
+
+
+def test_xai_grok_46_matches_documented_capabilities():
+    model = XAI_MODELS["grok-4.6"]
+
+    assert model["id"] == "grok-4.6"
+    assert model["context_length"] == 500_000
+    assert "max_output_tokens" not in model
+    assert model["function_call_available"] is True
+    assert model["response_format_available"] is True
+    assert model["native_multimodal"] is True
+    assert model["capabilities"] == {
+        "tools": True,
+        "structured_output": "json_schema",
+        "input_modalities": ["text", "image"],
+        "thinking": "configurable",
+    }
