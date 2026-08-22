@@ -591,11 +591,12 @@ def format_image_message(
     backend: BackendType = BackendType.OpenAI,
     process_image: bool = True,
     cache_control: dict | None = None,
+    max_image_dimension: int | None = None,
 ) -> dict:
     if process_image:
         from ..utilities.media_processing import ImageProcessor
 
-        image_processor = ImageProcessor(image_source=image)
+        image_processor = ImageProcessor(image_source=image, max_image_dimension=max_image_dimension)
         if backend == BackendType.OpenAI:
             result = {
                 "type": "image_url",
@@ -759,6 +760,7 @@ def transform_from_openai_message(
     native_multimodal: bool = False,
     function_call_available: bool = False,
     process_image: bool = True,
+    max_image_dimension: int | None = None,
 ):
     message_dict = cast(dict[str, Any], message)
     role = message.get("role", "user")
@@ -794,6 +796,7 @@ def transform_from_openai_message(
                                 backend,
                                 process_image,
                                 cache_control=item_cache_control,
+                                max_image_dimension=max_image_dimension,
                             )
                         )
                     else:
@@ -857,6 +860,17 @@ def transform_from_openai_message(
             for item in content:
                 if item["type"] == "image_url" and not native_multimodal:
                     formatted_content.append({"type": "text", "text": f"Image<image_url: {item['image_url']['url']}>"})
+                elif item["type"] == "image_url" and process_image and max_image_dimension is not None:
+                    formatted_image = format_image_message(
+                        item["image_url"]["url"],
+                        backend,
+                        process_image=True,
+                        cache_control=item.get("cache_control"),
+                        max_image_dimension=max_image_dimension,
+                    )
+                    if "detail" in item["image_url"] and isinstance(formatted_image.get("image_url"), dict):
+                        formatted_image["image_url"]["detail"] = item["image_url"]["detail"]
+                    formatted_content.append(formatted_image)
                 else:
                     # Preserve item as-is (including cache_control)
                     formatted_content.append(item)
@@ -891,6 +905,7 @@ def format_messages(
     native_multimodal: bool = False,
     function_call_available: bool = False,
     process_image: bool = True,
+    max_image_dimension: int | None = None,
 ) -> list:
     """将 VectorVein 和 OpenAI 的 Message 序列化后的格式转换为不同模型支持的格式
 
@@ -900,6 +915,7 @@ def format_messages(
         native_multimodal (bool, optional): Use native multimodal ability. Defaults to False.
         function_call_available (bool, optional): Use function call ability. Defaults to False.
         process_image (bool, optional): Process image. Defaults to True.
+        max_image_dimension (int, optional): Maximum width or height for model image inputs. Defaults to None.
 
     Returns:
         list: 转换后的消息列表
@@ -929,14 +945,29 @@ def format_messages(
                 content = ""
             if vectorvein_message.get("content_type") == "TXT":
                 role = "user" if vectorvein_message.get("author_type") == "U" else "assistant"
-                formatted_message = format_text_message(content, role, vectorvein_message.get("attachments", []), backend, native_multimodal, process_image)
+                formatted_message = format_text_message(
+                    content,
+                    role,
+                    vectorvein_message.get("attachments", []),
+                    backend,
+                    native_multimodal,
+                    process_image,
+                    max_image_dimension=max_image_dimension,
+                )
                 formatted_messages.append(formatted_message)
             elif vectorvein_message.get("content_type") == "WKF" and vectorvein_message.get("status") in ("S", "R"):
                 formatted_messages.extend(format_workflow_messages(cast(VectorVeinWorkflowMessage, vectorvein_message), content, backend))
         else:
             # 处理 OpenAI 格式的消息
             message = cast(ChatCompletionMessageParam, message)
-            formatted_message = transform_from_openai_message(message, backend, native_multimodal, function_call_available, process_image)
+            formatted_message = transform_from_openai_message(
+                message,
+                backend,
+                native_multimodal,
+                function_call_available,
+                process_image,
+                max_image_dimension,
+            )
             formatted_messages.append(formatted_message)
 
     return formatted_messages
@@ -950,6 +981,7 @@ def format_text_message(
     native_multimodal: bool,
     process_image: bool = True,
     cache_control: dict | None = None,
+    max_image_dimension: int | None = None,
 ):
     images_extensions = ("jpg", "jpeg", "png", "bmp")
     has_images = any(attachment.lower().endswith(images_extensions) for attachment in attachments)
@@ -968,7 +1000,12 @@ def format_text_message(
             "content": [
                 text_block,
                 *[
-                    format_image_message(image=attachment, backend=backend, process_image=process_image)
+                    format_image_message(
+                        image=attachment,
+                        backend=backend,
+                        process_image=process_image,
+                        max_image_dimension=max_image_dimension,
+                    )
                     for attachment in attachments
                     if attachment.lower().endswith(images_extensions)
                 ],

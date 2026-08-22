@@ -152,6 +152,7 @@ class ModelSetting(BaseModel):
     function_call_available: bool = Field(False, description="Indicates if function call is available.")
     response_format_available: bool = Field(False, description="Indicates if response format is available.")
     native_multimodal: bool = Field(False, description="Indicates if the model is a native multimodal model.")
+    max_image_dimension: int | None = Field(None, ge=1, description="Maximum width or height for model image inputs.")
     context_length: int = Field(32768, description="The context length for the model.")
     max_output_tokens: int | None = Field(None, description="Maximum number of output tokens allowed.")
     capabilities: ModelCapabilities | None = Field(None, description="Provider-neutral model capabilities.")

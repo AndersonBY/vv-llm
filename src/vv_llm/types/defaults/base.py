@@ -17,6 +17,7 @@ class ModelSettingDict(TypedDict):
     function_call_available: bool
     response_format_available: bool
     native_multimodal: bool
+    max_image_dimension: NotRequired[int]
     context_length: int
     max_output_tokens: NotRequired[int]
     capabilities: NotRequired[dict]

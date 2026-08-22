@@ -87,6 +87,7 @@ def test_deepseek_v4_flash_vision_matches_flash_limits_and_accepts_images():
     assert vision["id"] == "deepseek-v4-flash-vision-exp"
     assert vision["context_length"] == flash["context_length"]
     assert vision["max_output_tokens"] == flash["max_output_tokens"]
+    assert vision["max_image_dimension"] == 8192
     assert vision["function_call_available"] == flash["function_call_available"]
     assert vision["response_format_available"] == flash["response_format_available"]
     assert vision["native_multimodal"] is True

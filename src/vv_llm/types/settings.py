@@ -75,6 +75,7 @@ class ModelConfigDict(TypedDict):
     function_call_available: NotRequired[bool]
     response_format_available: NotRequired[bool]
     native_multimodal: NotRequired[bool]
+    max_image_dimension: NotRequired[int | None]
     context_length: NotRequired[int | None]
     max_output_tokens: NotRequired[int | None]
     capabilities: NotRequired[dict]

@@ -53,6 +53,15 @@ def test_explicit_capabilities_keep_legacy_properties_compatible() -> None:
     assert setting.native_multimodal is True
 
 
+def test_model_setting_validates_image_dimension_limit() -> None:
+    setting = ModelSetting(id="vision-model", max_image_dimension=8192)
+
+    assert setting.max_image_dimension == 8192
+
+    with pytest.raises(ValueError, match="greater than or equal to 1"):
+        ModelSetting(id="invalid-vision-model", max_image_dimension=0)
+
+
 def test_strict_capability_policy_rejects_unsupported_thinking() -> None:
     request = ChatRequest(
         messages=[{"role": "user", "content": "hello"}],

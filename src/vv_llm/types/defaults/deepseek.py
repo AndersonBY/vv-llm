@@ -47,6 +47,7 @@ DEEPSEEK_MODELS: Final[dict[str, ModelSettingDict]] = {
         "function_call_available": True,
         "response_format_available": True,
         "native_multimodal": True,
+        "max_image_dimension": 8192,
         "capabilities": {
             "tools": True,
             "structured_output": "json_schema",

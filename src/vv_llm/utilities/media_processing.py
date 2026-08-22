@@ -12,23 +12,35 @@ from PIL.ImageFile import ImageFile
 
 
 class ImageProcessor:
+    @staticmethod
+    def _get_image_format(image: Image.Image) -> str:
+        if image.format:
+            return image.format
+        if image.mode in ("RGBA", "LA") or (image.mode == "P" and "transparency" in image.info):
+            return "PNG"
+        return "JPEG"
+
     def __init__(
         self,
         image_source: Image.Image | str | Path,
         max_size: int | None = 5 * 1024 * 1024,
         max_width: int | None = None,
         max_height: int | None = None,
+        max_image_dimension: int | None = None,
     ):
         self.image_source = image_source
         if isinstance(image_source, Image.Image | Path):
             self.is_local = True
         else:
             self.is_local = not image_source.startswith("http")
+        if max_image_dimension is not None and max_image_dimension < 1:
+            raise ValueError("max_image_dimension must be at least 1")
         self.max_size = max_size
         self.max_width = max_width
         self.max_height = max_height
+        self.max_image_dimension = max_image_dimension
         self._image = self._load_image()
-        self._image_format = self._image.format or "JPEG"
+        self._image_format = self._get_image_format(self._image)
         self._cached_bytes = None
         self._cached_base64_image = None
 
@@ -57,37 +69,51 @@ class ImageProcessor:
         max_size: int | None = None,
         max_width: int | None = None,
         max_height: int | None = None,
+        max_image_dimension: int | None = None,
     ):
-        img_bytes = BytesIO()
-        image_format = img.format or "JPEG"
+        image_format = self._get_image_format(img)
+        self._image_format = image_format
         _img = img.copy()
-        _img.save(img_bytes, format=image_format, optimize=True)
+        if image_format == "JPEG" and _img.mode not in ("RGB", "L"):
+            _img = _img.convert("RGB")
 
-        if max_width is not None and _img.width > max_width:
-            new_size = (max_width, int(max_width * _img.height / _img.width))
-            _img = _img.resize(new_size, Image.Resampling.LANCZOS)
+        # Combine all dimension limits into one scale factor so the original
+        # aspect ratio is preserved regardless of which limit is reached first.
+        scale_factor = 1.0
+        if max_image_dimension is not None:
+            scale_factor = min(scale_factor, max_image_dimension / max(_img.width, _img.height))
+        if max_width is not None:
+            scale_factor = min(scale_factor, max_width / _img.width)
+        if max_height is not None:
+            scale_factor = min(scale_factor, max_height / _img.height)
 
-        if max_height is not None and _img.height > max_height:
-            new_size = (int(max_height * _img.width / _img.height), max_height)
+        if scale_factor < 1:
+            new_size = (
+                max(1, int(_img.width * scale_factor)),
+                max(1, int(_img.height * scale_factor)),
+            )
             _img = _img.resize(new_size, Image.Resampling.LANCZOS)
 
         img_bytes = BytesIO()
         _img.save(img_bytes, format=image_format, optimize=True)
 
-        if max_size is not None and img_bytes.getbuffer().nbytes <= max_size:
+        if max_size is None or img_bytes.getbuffer().nbytes <= max_size:
             return img_bytes
 
         original_size = _img.size
         scale_factor = 0.9
 
         while True:
-            new_size = (int(original_size[0] * scale_factor), int(original_size[1] * scale_factor))
+            new_size = (
+                max(1, int(original_size[0] * scale_factor)),
+                max(1, int(original_size[1] * scale_factor)),
+            )
             img_resized = _img.resize(new_size, Image.Resampling.LANCZOS)
 
             img_bytes_resized = BytesIO()
             img_resized.save(img_bytes_resized, format=image_format, optimize=True)
 
-            if max_size is not None and img_bytes_resized.getbuffer().nbytes <= max_size:
+            if img_bytes_resized.getbuffer().nbytes <= max_size:
                 return img_bytes_resized
 
             scale_factor -= 0.1
@@ -158,7 +184,7 @@ class ImageProcessor:
     def bytes(self):
         if self._cached_bytes is not None:
             return self._cached_bytes
-        if self.max_size is None and self.max_width is None and self.max_height is None:
+        if self.max_size is None and self.max_width is None and self.max_height is None and self.max_image_dimension is None:
             if isinstance(self._image, Image.Image):
                 img_bytes = BytesIO()
 
@@ -192,17 +218,14 @@ class ImageProcessor:
             self._cached_bytes = self._image.getvalue()
             return self._cached_bytes
 
-        img_bytes_resized = self._resize_image(self._image, self.max_size, self.max_width, self.max_height)
-        return img_bytes_resized.getvalue()
+        img_bytes_resized = self._resize_image(self._image, self.max_size, self.max_width, self.max_height, self.max_image_dimension)
+        self._cached_bytes = img_bytes_resized.getvalue()
+        return self._cached_bytes
 
     @property
     def base64_image(self):
-        if self.max_size is None and self.max_width is None and self.max_height is None:
+        if self._cached_base64_image is None:
             self._cached_base64_image = base64.b64encode(self.bytes).decode()
-            return self._cached_base64_image
-
-        img_bytes_resized = self._resize_image(self._image, self.max_size, self.max_width, self.max_height)
-        self._cached_base64_image = base64.b64encode(img_bytes_resized.getvalue()).decode()
         return self._cached_base64_image
 
     @property
