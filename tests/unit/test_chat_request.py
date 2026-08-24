@@ -11,6 +11,7 @@ from vv_llm import (
     ThinkingPreference,
 )
 from vv_llm.types.llm_parameters import BackendSettings, ModelSetting
+from vv_llm.chat_clients.tool_call_parser import refactor_tool_choice
 
 
 def test_thinking_preference_has_distinct_default_enabled_and_disabled_states() -> None:
@@ -107,3 +108,191 @@ def test_legacy_model_overrides_update_default_capabilities() -> None:
     assert setting.capabilities.structured_output.value == "none"
     assert {modality.value for modality in setting.capabilities.input_modalities} == {"text"}
     assert setting.capabilities.thinking is ThinkingCapability.CONFIGURABLE
+
+
+def test_contract_codec_maps_nested_stream_and_normalizes_tools() -> None:
+    canonical = {
+        "model": "contract-model",
+        "messages": [{"role": "user", "content": "hello"}],
+        "options": {
+            "temperature": 0.25,
+            "max_tokens": 64,
+            "stream": False,
+            "thinking": {"type": "disabled"},
+            "x_option": {"source": "test"},
+        },
+        "tools": [
+            {
+                "name": "lookup",
+                "description": "Look up a value",
+                "parameters": {"type": "object"},
+                "x_tool": "kept",
+            }
+        ],
+        "tool_choice": "auto",
+        "extra_body": {"trace_id": "test"},
+        "x_request": {"source": "test"},
+    }
+
+    request = ChatRequest.from_contract(canonical)
+
+    assert request.stream is False
+    assert request.tools == [
+        {
+            "type": "function",
+            "function": {
+                "name": "lookup",
+                "description": "Look up a value",
+                "parameters": {"type": "object"},
+            },
+            "x_tool": "kept",
+        }
+    ]
+    assert request.to_contract() == canonical
+
+
+def test_contract_codec_requires_model_and_excludes_transport_controls() -> None:
+    with pytest.raises(ValueError, match="requires a non-empty model"):
+        ChatRequest.from_contract({"messages": []})
+
+    request = ChatRequest(
+        model="contract-model",
+        messages=[],
+        skip_cutoff=True,
+        extra_headers={"x-request": "test"},
+        header_context={"trace_id": "test"},
+        extra_query={"debug": True},
+        options=ChatRequestOptions(
+            timeout=30,
+            provider_options={"deepseek": {"thinking": {"type": "disabled"}}},
+        ),
+    )
+
+    assert request.to_contract() == {
+        "model": "contract-model",
+        "messages": [],
+        "options": {"stream": False},
+    }
+
+
+def test_contract_codec_normalizes_multimodal_messages_and_tool_calls() -> None:
+    canonical = {
+        "model": "vision-model",
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "look", "cache_control": {"type": "ephemeral"}},
+                    {
+                        "type": "image_url",
+                        "url": "https://example.com/flat.png",
+                        "detail": "low",
+                        "cache_control": {"type": "ephemeral"},
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": "https://example.com/nested.png",
+                            "detail": "high",
+                            "x_image_source": "nested",
+                        },
+                        "x_part_source": "outer",
+                    },
+                ],
+            },
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [{"id": "call_1", "name": "lookup", "arguments": '{"query":"x"}'}],
+            },
+        ],
+    }
+
+    request = ChatRequest.from_contract(canonical)
+
+    assert request.messages == [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "look", "cache_control": {"type": "ephemeral"}},
+                {
+                    "type": "image_url",
+                    "image_url": {"url": "https://example.com/flat.png", "detail": "low"},
+                    "cache_control": {"type": "ephemeral"},
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": "https://example.com/nested.png",
+                        "detail": "high",
+                        "x_image_source": "nested",
+                    },
+                    "x_part_source": "outer",
+                },
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+                {
+                    "id": "call_1",
+                    "type": "function",
+                    "function": {"name": "lookup", "arguments": '{"query":"x"}'},
+                }
+            ],
+        },
+    ]
+    assert request.to_contract() == {
+        **canonical,
+        "options": {"stream": False},
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "look", "cache_control": {"type": "ephemeral"}},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": "https://example.com/flat.png", "detail": "low"},
+                        "cache_control": {"type": "ephemeral"},
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": "https://example.com/nested.png",
+                            "detail": "high",
+                            "x_image_source": "nested",
+                        },
+                        "x_part_source": "outer",
+                    },
+                ],
+            },
+            canonical["messages"][1],
+        ],
+    }
+
+
+def test_contract_codec_forwards_max_tokens_details_through_extra_body() -> None:
+    request = ChatRequest.from_contract(
+        {
+            "model": "reasoning-model",
+            "messages": [{"role": "user", "content": "hello"}],
+            "options": {"max_tokens_details": {"reasoning_tokens": 8}},
+        }
+    )
+
+    assert request.to_completion_kwargs("deepseek")["extra_body"] == {
+        "max_tokens_details": {"reasoning_tokens": 8},
+    }
+    assert request.to_contract()["options"]["max_tokens_details"] == {"reasoning_tokens": 8}
+
+
+def test_anthropic_tool_choice_rejects_unsupported_objects_without_auto_fallback() -> None:
+    assert refactor_tool_choice("auto") == {"type": "auto"}
+    assert refactor_tool_choice("required") == {"type": "any"}
+    assert refactor_tool_choice({"type": "function", "function": {"name": "lookup"}}) == {"type": "tool", "name": "lookup"}
+
+    with pytest.raises(ValueError, match="requires function.name"):
+        refactor_tool_choice({"type": "function", "function": {}})
+    with pytest.raises(ValueError, match="must be 'auto'"):
+        refactor_tool_choice({"type": "unsupported"})

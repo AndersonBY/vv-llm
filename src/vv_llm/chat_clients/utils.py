@@ -95,25 +95,6 @@ class ToolCallContentProcessor:
             return {}
 
 
-def convert_type(value, value_type):
-    if value_type == "string":
-        return str(value)
-    elif value_type == "number":
-        try:
-            return float(value)
-        except ValueError:
-            return value
-    elif value_type == "integer":
-        try:
-            return int(value)
-        except ValueError:
-            return value
-    elif value_type == "boolean":
-        return value.lower() in ("true", "1", "t")
-    else:
-        return value  # 如果类型未知，返回原始值
-
-
 def _get_first_enabled_endpoint(backend_setting, settings):
     """Get the first enabled endpoint from backend settings"""
     for endpoint_choice in backend_setting.endpoints:

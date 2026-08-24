@@ -1,24 +1,24 @@
 from __future__ import annotations
 
-import json
 from datetime import datetime, timezone
-from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 
-from vv_llm import CapabilityPolicy, ChatRequest, ChatRequestOptions
+from vv_llm import CapabilityPolicy, ChatRequest
 from vv_llm.chat_clients.deepseek_client import DeepSeekChatClient
+from vv_llm.contract import load_fixture
 from vv_llm.settings import Settings
 from vv_llm.types.exception import _retry_after
 
 
-FIXTURE_PATH = Path(__file__).parents[1] / "fixtures" / "protocol" / "openai_compatible_v1.json"
-
-
 def _fixture() -> dict[str, Any]:
-    return json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
+    return load_fixture("openai-compatible.v2.json")
+
+
+def _retry_fixture() -> dict[str, Any]:
+    return load_fixture("retry-after.v1.json")
 
 
 def _settings(model: str) -> Settings:
@@ -50,33 +50,11 @@ def _settings(model: str) -> Settings:
     )
 
 
-def _openai_tools(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [
-        {
-            "type": "function",
-            "function": {
-                "name": tool["name"],
-                "description": tool.get("description"),
-                "parameters": tool["parameters"],
-            },
-        }
-        for tool in tools
-    ]
-
-
 def _request_from_fixture(value: dict[str, Any], *, stream: bool | None = None) -> ChatRequest:
-    options = dict(value["options"])
+    request = ChatRequest.from_contract(value)
     if stream is not None:
-        options["stream"] = stream
-    return ChatRequest(
-        model=value["model"],
-        messages=value["messages"],
-        stream=bool(options.get("stream", False)),
-        options=ChatRequestOptions(**options),
-        tools=_openai_tools(value["tools"]),
-        tool_choice=value["tool_choice"],
-        extra_body=value["extra_body"],
-    )
+        request = request.model_copy(update={"stream": stream})
+    return request
 
 
 def _bind_raw_client(client: DeepSeekChatClient, create: Any) -> None:
@@ -127,13 +105,23 @@ def test_openai_compatible_fixture_covers_request_completion_and_stream() -> Non
 
     client = DeepSeekChatClient(model=canonical["model"], stream=False, settings=settings)
     _bind_raw_client(client, create_completion)
+    request = _request_from_fixture(canonical)
+    canonical_roundtrip = {
+        **canonical,
+        "messages": [dict(message) for message in fixture["request_case"]["expected_wire_request"]["messages"]],
+    }
+    canonical_roundtrip["messages"][1] = {
+        **canonical_roundtrip["messages"][1],
+        "tool_calls": canonical["messages"][1]["tool_calls"],
+    }
+    assert request.to_contract() == canonical_roundtrip
     result = client.create(
-        _request_from_fixture(canonical),
+        request,
         capability_policy=CapabilityPolicy.PASSTHROUGH,
     )
 
     expected_request = fixture["request_case"]["expected_wire_request"]
-    flattened_request = {key: captured[key] for key in expected_request if key not in canonical["extra_body"] and key != "thinking"}
+    flattened_request = {key: captured[key] for key in expected_request if key in captured and key not in canonical["extra_body"] and key != "thinking"}
     flattened_request.update(captured["extra_body"])
     assert flattened_request == expected_request
 
@@ -165,7 +153,7 @@ def test_openai_compatible_fixture_covers_request_completion_and_stream() -> Non
 
 
 def test_retry_after_fixture_cases() -> None:
-    for case in _fixture()["retry_after_cases"]:
+    for case in _retry_fixture()["cases"]:
         response = SimpleNamespace(headers=case["headers"])
         now = datetime.fromtimestamp(case["now_unix_seconds"], tz=timezone.utc)
         assert _retry_after(response, now=now) == case["expected_seconds"], case["name"]

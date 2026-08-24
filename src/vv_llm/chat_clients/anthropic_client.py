@@ -495,7 +495,7 @@ class AnthropicChatClient(BaseChatClient):
 
         tools_params: list[AnthropicToolParam] | Omit = refactor_tool_use_params(_tools) if _tools else omit
         tool_choice_param = omit
-        if _tool_choice:
+        if _tool_choice is not omit:
             tool_choice_param = refactor_tool_choice(_tool_choice)
 
         if not max_tokens:
@@ -995,7 +995,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
 
         tools_params: list[AnthropicToolParam] | Omit = refactor_tool_use_params(_tools) if _tools else omit
         tool_choice_param = omit
-        if _tool_choice:
+        if _tool_choice is not omit:
             tool_choice_param = refactor_tool_choice(_tool_choice)
 
         if not max_tokens:
