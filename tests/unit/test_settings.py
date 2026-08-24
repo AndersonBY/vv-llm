@@ -9,9 +9,8 @@ from vv_llm.types.enums import BackendType
 from vv_llm.types.llm_parameters import EndpointSetting
 
 
-def _v2_settings_dict() -> dict:
+def _settings_dict() -> dict:
     return {
-        "VERSION": "2",
         "endpoints": [
             {
                 "id": "openai-test",
@@ -36,7 +35,7 @@ def _v2_settings_dict() -> dict:
 
 
 def test_load_from_dict_and_get_backend_model() -> None:
-    settings = Settings.load_from_dict(_v2_settings_dict())
+    settings = Settings.load_from_dict(_settings_dict())
 
     backend = settings.get_backend(BackendType.OpenAI)
     assert "gpt-test" in backend.models
@@ -45,7 +44,7 @@ def test_load_from_dict_and_get_backend_model() -> None:
 
 def test_load_accepts_dict_and_settings_object() -> None:
     settings = Settings()
-    payload = _v2_settings_dict()
+    payload = _settings_dict()
 
     settings.load(payload)
     assert settings.get_endpoint("openai-test").api_key == "sk-test-key"
@@ -57,7 +56,7 @@ def test_load_accepts_dict_and_settings_object() -> None:
 
 
 def test_normalize_settings_returns_settings_instance() -> None:
-    payload = _v2_settings_dict()
+    payload = _settings_dict()
 
     normalized_from_dict = normalize_settings(payload)
     normalized_from_obj = normalize_settings(normalized_from_dict)
@@ -67,7 +66,7 @@ def test_normalize_settings_returns_settings_instance() -> None:
 
 
 def test_get_endpoint_raises_for_missing_id() -> None:
-    settings = Settings.load_from_dict(_v2_settings_dict())
+    settings = Settings.load_from_dict(_settings_dict())
 
     with pytest.raises(ValueError, match="missing-id"):
         settings.get_endpoint("missing-id")
@@ -76,7 +75,6 @@ def test_get_endpoint_raises_for_missing_id() -> None:
 def test_explicit_endpoint_type_overrides_legacy_azure_flag() -> None:
     settings = Settings.load_from_dict(
         {
-            "VERSION": "2",
             "endpoints": [
                 {
                     "id": "packy-zhipu",
@@ -108,7 +106,6 @@ def test_explicit_endpoint_type_overrides_legacy_azure_flag() -> None:
 def test_legacy_azure_flag_still_maps_when_endpoint_type_missing() -> None:
     settings = Settings.load_from_dict(
         {
-            "VERSION": "2",
             "endpoints": [
                 {
                     "id": "legacy-azure",

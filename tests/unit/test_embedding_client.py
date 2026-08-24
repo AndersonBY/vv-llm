@@ -14,7 +14,6 @@ from vv_llm.types.enums import EmbeddingBackendType
 
 def _base_settings() -> dict:
     return {
-        "VERSION": "2",
         "endpoints": [
             {
                 "id": "embed-endpoint",

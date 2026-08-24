@@ -13,7 +13,6 @@ from vv_llm.types.enums import RerankBackendType
 
 def _base_settings() -> dict:
     return {
-        "VERSION": "2",
         "endpoints": [
             {
                 "id": "rerank-endpoint",

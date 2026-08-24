@@ -22,7 +22,6 @@ Also supports Azure OpenAI, Vertex AI, and AWS Bedrock deployments.
 from vv_llm.settings import settings
 
 settings.load({
-    "VERSION": "2",
     "endpoints": [
         {
             "id": "openai-default",
@@ -187,7 +186,6 @@ asyncio.run(main())
 from vv_llm.settings import settings
 
 settings.load({
-    "VERSION": "2",
     "endpoints": [
         {
             "id": "siliconflow",
@@ -288,14 +286,14 @@ asyncio.run(main())
 - **Explicit fallback** — registered, ordered, capability-aware routes with no hidden provider switching
 - **Scripted testing** — deterministic completion/error/stream scripts for conformance tests
 
-The package includes `vv-llm-contract` 1.0.0. Read contract metadata, the model
+The package includes `vv-llm-contract` 1.0.1. Read contract metadata, the model
 catalog, and integrity status through `vv_llm.contract`:
 
 ```python
 from vv_llm.contract import contract_info, load_catalog, verify_contract
 
 info = contract_info()
-assert info.contract_version == "1.0.0"
+assert info.contract_version == "1.0.1"
 assert verify_contract().ok
 catalog = load_catalog()
 ```

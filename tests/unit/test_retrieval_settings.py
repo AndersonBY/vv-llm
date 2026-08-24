@@ -7,7 +7,6 @@ from vv_llm.types.enums import EmbeddingBackendType, RerankBackendType
 
 
 SETTINGS_PAYLOAD = {
-    "VERSION": "2",
     "endpoints": [
         {
             "id": "retrieval-endpoint",

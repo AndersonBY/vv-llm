@@ -1,6 +1,5 @@
 # @Author: Bi Ying
 # @Date:   2024-07-27 00:30:56
-import warnings
 from copy import deepcopy
 from typing import Any, Literal, cast
 
@@ -79,40 +78,20 @@ def _normalize_endpoint_transport_flags(endpoint: dict[str, Any]) -> None:
 
 
 class Settings(BaseModel):
-    VERSION: str | None = Field(default="2", description="Configuration version. If provided, will use the corresponding format.")
+    VERSION: str | None = Field(default="2", description="Optional wire-format metadata.")
     endpoints: list[EndpointSetting] = Field(default_factory=list, description="Available endpoints for the LLM service.")
     token_server: Server | None = Field(default=None, description="Token server address. Format: host:port")
     rate_limit: RateLimitConfig | None = Field(default=None, description="Rate limit settings.")
 
-    # V2 format: all model backend configs in a single dictionary
-    backends: Backends | None = Field(default=None, description="All model backends in one place (V2 format).")
+    backends: Backends = Field(default_factory=Backends, description="All model backends in one place.")
     embedding_backends: dict[str, RetrievalBackendSettings] | None = Field(
         default=None,
-        description="Embedding backend settings in V2 format.",
+        description="Embedding backend settings.",
     )
     rerank_backends: dict[str, RetrievalBackendSettings] | None = Field(
         default=None,
-        description="Rerank backend settings in V2 format.",
+        description="Rerank backend settings.",
     )
-
-    # V1 format: each model backend config
-    anthropic: BackendSettings | None = Field(default_factory=BackendSettings, description="Anthropic models settings.")
-    deepseek: BackendSettings | None = Field(default_factory=BackendSettings, description="Deepseek models settings.")
-    gemini: BackendSettings | None = Field(default_factory=BackendSettings, description="Gemini models settings.")
-    groq: BackendSettings | None = Field(default_factory=BackendSettings, description="Groq models settings.")
-    local: BackendSettings | None = Field(default_factory=BackendSettings, description="Local models settings.")
-    minimax: BackendSettings | None = Field(default_factory=BackendSettings, description="Minimax models settings.")
-    mistral: BackendSettings | None = Field(default_factory=BackendSettings, description="Mistral models settings.")
-    moonshot: BackendSettings | None = Field(default_factory=BackendSettings, description="Moonshot models settings.")
-    openai: BackendSettings | None = Field(default_factory=BackendSettings, description="OpenAI models settings.")
-    qwen: BackendSettings | None = Field(default_factory=BackendSettings, description="Qwen models settings.")
-    yi: BackendSettings | None = Field(default_factory=BackendSettings, description="Yi models settings.")
-    zhipuai: BackendSettings | None = Field(default_factory=BackendSettings, description="Zhipuai models settings.")
-    baichuan: BackendSettings | None = Field(default_factory=BackendSettings, description="Baichuan models settings.")
-    stepfun: BackendSettings | None = Field(default_factory=BackendSettings, description="StepFun models settings.")
-    xai: BackendSettings | None = Field(default_factory=BackendSettings, description="XAI models settings.")
-    xiaomi: BackendSettings | None = Field(default_factory=BackendSettings, description="Xiaomi models settings.")
-    ernie: BackendSettings | None = Field(default_factory=BackendSettings, description="Baidu Ernie models settings.")
 
     def __init__(self, **data):
         model_types = {
@@ -136,22 +115,17 @@ class Settings(BaseModel):
         }
 
         data = deepcopy(data)
+        legacy_backend = next((name for name in model_types if name in data), None)
+        if legacy_backend is not None:
+            raise ValueError(f"Top-level provider setting '{legacy_backend}' is unsupported; use 'backends.{legacy_backend}'.")
 
-        version = data.get("VERSION")
-
-        if len(data) == 0:
-            version = "2"
-            data["backends"] = {}
-
-        # If V2 format, model configs are in the backends dictionary
-        if version == "2":
-            if "backends" not in data:
-                raise ValueError("backends is required in V2 format.")
-
-            backends = cast(dict[str, Any], data["backends"])
+        raw_backends = data.get("backends")
+        if isinstance(raw_backends, Backends):
+            backends = cast(dict[str, Any], raw_backends.model_dump())
+        elif raw_backends is None:
+            backends = {}
         else:
-            backends = cast(dict[str, Any], data)
-            warnings.warn("You're using vectorvein's deprecated V1 format. Please use V2 format.", stacklevel=2)
+            backends = cast(dict[str, Any], raw_backends)
 
         for model_type, default_models in model_types.items():
             if model_type in backends:
@@ -167,6 +141,8 @@ class Settings(BaseModel):
                 backends[model_type] = model_settings
             else:
                 backends[model_type] = BackendSettings(models=cast(dict[str, Any], default_models))
+
+        data["backends"] = backends
 
         for endpoint in data.get("endpoints", []):
             _normalize_endpoint_transport_flags(endpoint)
@@ -199,13 +175,7 @@ class Settings(BaseModel):
 
     def get_backend(self, backend: BackendType) -> BackendSettings:
         backend_name = backend.value.lower()
-
-        # Use VERSION 2 format backends field first
-        if self.VERSION == "2" and self.backends is not None:
-            return getattr(self.backends, backend_name)
-
-        # Compatible with VERSION 1 format
-        return getattr(self, backend_name)
+        return getattr(self.backends, backend_name)
 
     def get_embedding_backend(self, backend: EmbeddingBackendType | str) -> RetrievalBackendSettings:
         backend_name = backend.value.lower() if isinstance(backend, EmbeddingBackendType) else str(backend).lower()
@@ -226,76 +196,8 @@ class Settings(BaseModel):
     def export(self):
         return cast(
             SettingsDict,
-            super().model_dump(
-                exclude={
-                    "anthropic",
-                    "deepseek",
-                    "gemini",
-                    "groq",
-                    "local",
-                    "minimax",
-                    "mistral",
-                    "moonshot",
-                    "openai",
-                    "qwen",
-                    "yi",
-                    "zhipuai",
-                    "baichuan",
-                    "stepfun",
-                    "xai",
-                    "xiaomi",
-                    "ernie",
-                },
-            ),
+            super().model_dump(),
         )
-
-    def upgrade_to_v2(self) -> "Settings":
-        """
-        Upgrade settings from v1 format to v2 format.
-        In v2 format, all backend settings are stored in the 'backends' field.
-
-        Returns:
-            Settings: Self with updated format
-        """
-        # If already v2, no need to upgrade
-        if self.VERSION == "2" and self.backends is not None:
-            return self
-
-        # Initialize backends if not exists
-        if self.backends is None:
-            self.backends = Backends()
-
-        # Move all backend settings to backends field
-        backend_names = [
-            "anthropic",
-            "deepseek",
-            "gemini",
-            "groq",
-            "local",
-            "minimax",
-            "mistral",
-            "moonshot",
-            "openai",
-            "qwen",
-            "yi",
-            "zhipuai",
-            "baichuan",
-            "stepfun",
-            "xai",
-            "xiaomi",
-            "ernie",
-        ]
-
-        for backend_name in backend_names:
-            backend_setting = getattr(self, backend_name)
-            if backend_setting is not None:
-                setattr(self.backends, backend_name, backend_setting)
-                delattr(self, backend_name)
-
-        # Set version to 2
-        self.VERSION = "2"
-
-        return self
 
 
 settings = Settings()

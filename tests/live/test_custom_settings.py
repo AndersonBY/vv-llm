@@ -27,7 +27,7 @@ def main() -> None:
         raise ValueError("test_custom_settings currently supports DeepSeek only. Use preset deepseek-reasoner/deepseek-chat.")
 
     local_settings = deepcopy(sample_settings)
-    local_settings["deepseek"]["models"][model]["endpoints"] = ["deepseek-default"]
+    local_settings["backends"]["deepseek"]["models"][model]["endpoints"] = ["deepseek-default"]
 
     def _run():
         client = create_chat_client(backend=backend, model=model, settings=local_settings)

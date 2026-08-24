@@ -41,7 +41,7 @@ from vv_llm.types import defaults
 
 result = verify_contract()
 assert result.ok and result.artifact_count == 14
-assert CONTRACT_VERSION == "1.0.0"
+assert CONTRACT_VERSION == "1.0.1"
 assert len(CONSUMER_LOCK_SHA256) == 64
 catalog = load_catalog()
 for backend, backend_data in catalog["backends"].items():

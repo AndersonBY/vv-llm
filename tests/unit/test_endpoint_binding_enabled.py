@@ -29,7 +29,6 @@ class DummyChatClient(BaseChatClient):
 
 
 CHAT_SETTINGS_PAYLOAD = {
-    "VERSION": "2",
     "endpoints": [
         {"id": "openai-disabled", "api_base": "https://api.openai.com/v1", "api_key": "sk-1", "enabled": True},
         {"id": "openai-enabled", "api_base": "https://api.openai.com/v1", "api_key": "sk-2", "enabled": True},
@@ -51,7 +50,6 @@ CHAT_SETTINGS_PAYLOAD = {
 
 
 RETRIEVAL_SETTINGS_PAYLOAD = {
-    "VERSION": "2",
     "endpoints": [
         {"id": "retrieval-disabled", "api_base": "https://example.com/v1", "api_key": "sk-1", "enabled": True},
         {"id": "retrieval-enabled", "api_base": "https://example.com/v1", "api_key": "sk-2", "enabled": True},
@@ -105,7 +103,6 @@ def test_chat_client_random_endpoint_skips_disabled_binding() -> None:
 def test_chat_client_resolves_endpoint_header_templates() -> None:
     settings = Settings.load_from_dict(
         {
-            "VERSION": "2",
             "endpoints": [
                 {
                     "id": "openai-enabled",

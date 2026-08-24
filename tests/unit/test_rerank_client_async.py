@@ -17,7 +17,6 @@ def anyio_backend() -> str:
 
 def _base_settings() -> dict:
     return {
-        "VERSION": "2",
         "endpoints": [
             {
                 "id": "rerank-endpoint",

@@ -18,7 +18,6 @@ TEST_MODEL = "claude-sonnet-4-5-20250929"
 def _anthropic_settings() -> Settings:
     return Settings.load_from_dict(
         {
-            "VERSION": "2",
             "rate_limit": {"enabled": False},
             "endpoints": [
                 {

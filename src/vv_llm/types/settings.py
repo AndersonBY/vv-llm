@@ -161,34 +161,7 @@ class BackendsDict(TypedDict):
     ernie: NotRequired[BackendSettingsDict]
 
 
-class SettingsV1Dict(TypedDict):
-    """TypedDict representing the expected structure of the settings dictionary."""
-
-    endpoints: list[EndpointSettingDict]
-    token_server: NotRequired[ServerDict]
-    rate_limit: NotRequired[RateLimitConfigDict]
-
-    # V1 format: each model backend config
-    anthropic: NotRequired[BackendSettingsDict]
-    deepseek: NotRequired[BackendSettingsDict]
-    gemini: NotRequired[BackendSettingsDict]
-    groq: NotRequired[BackendSettingsDict]
-    local: NotRequired[BackendSettingsDict]
-    minimax: NotRequired[BackendSettingsDict]
-    mistral: NotRequired[BackendSettingsDict]
-    moonshot: NotRequired[BackendSettingsDict]
-    openai: NotRequired[BackendSettingsDict]
-    qwen: NotRequired[BackendSettingsDict]
-    yi: NotRequired[BackendSettingsDict]
-    zhipuai: NotRequired[BackendSettingsDict]
-    baichuan: NotRequired[BackendSettingsDict]
-    stepfun: NotRequired[BackendSettingsDict]
-    xai: NotRequired[BackendSettingsDict]
-    xiaomi: NotRequired[BackendSettingsDict]
-    ernie: NotRequired[BackendSettingsDict]
-
-
-class SettingsV2Dict(TypedDict):
+class SettingsDict(TypedDict):
     """TypedDict representing the expected structure of the settings dictionary."""
 
     VERSION: NotRequired[str]
@@ -196,10 +169,6 @@ class SettingsV2Dict(TypedDict):
     token_server: NotRequired[ServerDict]
     rate_limit: NotRequired[RateLimitConfigDict]
 
-    # V2 format: all model backend configs in a single dictionary
     backends: NotRequired[BackendsDict]
     embedding_backends: NotRequired[dict[str, RetrievalBackendSettingsDict]]
     rerank_backends: NotRequired[dict[str, RetrievalBackendSettingsDict]]
-
-
-SettingsDict = SettingsV2Dict

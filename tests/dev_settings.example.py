@@ -11,7 +11,6 @@ from __future__ import annotations
 from vv_llm.types import SettingsDict
 
 sample_settings: SettingsDict = {
-    "VERSION": "2",
     "token_server": {"host": "127.0.0.1", "port": 8338, "url": "http://127.0.0.1:8338"},
     "rate_limit": {
         "enabled": False,

@@ -94,8 +94,6 @@ from .settings import (
     EndpointSettingDict,
     BackendsDict,
     SettingsDict,
-    SettingsV1Dict,
-    SettingsV2Dict,
 )
 
 from anthropic.types import ThinkingConfigParam, ThinkingConfigEnabledParam
@@ -207,8 +205,6 @@ __all__ = [
     "EndpointSettingDict",
     "BackendsDict",
     "SettingsDict",
-    "SettingsV1Dict",
-    "SettingsV2Dict",
     "ThinkingConfigParam",
     "ThinkingConfigEnabledParam",
     "ResponseFormat",

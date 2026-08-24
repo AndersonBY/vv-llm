@@ -8,7 +8,6 @@ from vv_llm.settings import Settings
 
 
 SETTINGS_PAYLOAD = {
-    "VERSION": "2",
     "endpoints": [
         {
             "id": "gemini-test",

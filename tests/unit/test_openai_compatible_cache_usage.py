@@ -40,7 +40,6 @@ def _cached_tokens(usage: CompletionUsage, backend: BackendType) -> int | None:
 def _moonshot_settings() -> Settings:
     return Settings.load_from_dict(
         {
-            "VERSION": "2",
             "rate_limit": {"enabled": False},
             "endpoints": [
                 {

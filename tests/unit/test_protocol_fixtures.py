@@ -24,7 +24,6 @@ def _retry_fixture() -> dict[str, Any]:
 def _settings(model: str) -> Settings:
     return Settings.load_from_dict(
         {
-            "VERSION": "2",
             "rate_limit": {"enabled": False},
             "endpoints": [
                 {

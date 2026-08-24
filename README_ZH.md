@@ -22,7 +22,6 @@ OpenAI | Anthropic | DeepSeek | Gemini | Qwen | Groq | Mistral | Moonshot | Mini
 from vv_llm.settings import settings
 
 settings.load({
-    "VERSION": "2",
     "endpoints": [
         {
             "id": "openai-default",
@@ -183,7 +182,6 @@ asyncio.run(main())
 from vv_llm.settings import settings
 
 settings.load({
-    "VERSION": "2",
     "endpoints": [
         {
             "id": "siliconflow",
@@ -284,13 +282,13 @@ asyncio.run(main())
 - **显式 fallback** — 只按注册顺序执行 capability-aware route，不隐式切换 provider
 - **Scripted 测试** — 用确定性的响应、错误和 stream 脚本进行契约测试
 
-包内包含 `vv-llm-contract` 1.0.0。通过 `vv_llm.contract` 读取 contract
+包内包含 `vv-llm-contract` 1.0.1。通过 `vv_llm.contract` 读取 contract
 metadata、模型目录和完整性状态：
 
 ```python
 from vv_llm.contract import contract_info, load_catalog, verify_contract
 
-assert contract_info().contract_version == "1.0.0"
+assert contract_info().contract_version == "1.0.1"
 assert verify_contract().ok
 catalog = load_catalog()
 ```
