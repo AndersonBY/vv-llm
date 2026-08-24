@@ -28,7 +28,7 @@ def main() -> int:
     with tempfile.TemporaryDirectory(prefix="vv-llm-wheel-smoke-") as temporary:
         target = Path(temporary) / "site-packages"
         subprocess.run(
-            [sys.executable, "-m", "pip", "install", "--no-deps", "--target", str(target), str(wheel)],
+            [sys.executable, "-m", "pip", "install", "--target", str(target), str(wheel)],
             check=True,
         )
         environment = os.environ.copy()
