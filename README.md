@@ -2,7 +2,7 @@
 
 [中文文档](./README_ZH.md)
 
-Universal LLM interface layer for Python. One API, 16 backends, sync & async.
+Universal LLM interface layer for Python. One API, 17 backends, sync & async.
 
 ```
 pip install vv-llm
@@ -10,7 +10,7 @@ pip install vv-llm
 
 ## Supported Backends
 
-OpenAI | Anthropic | DeepSeek | Gemini | Qwen | Groq | Mistral | Moonshot | MiniMax | Yi | ZhiPuAI | Baichuan | StepFun | xAI | Ernie | Local
+OpenAI | Anthropic | DeepSeek | Gemini | Qwen | Groq | Mistral | Moonshot | MiniMax | Yi | ZhiPuAI | Baichuan | StepFun | xAI | Xiaomi | Ernie | Local
 
 Also supports Azure OpenAI, Vertex AI, and AWS Bedrock deployments.
 
@@ -43,19 +43,39 @@ settings.load({
 })
 ```
 
-### Sync
+### Typed sync (canonical request)
 
 ```python
 from vv_llm.chat_clients import create_chat_client, BackendType
+from vv_llm import ChatRequest, ChatRequestOptions, ThinkingPreference
 
 client = create_chat_client(BackendType.OpenAI, model="gpt-4o")
-resp = client.create_completion([
-    {"role": "user", "content": "Explain RAG in one sentence"}
-])
+resp = client.create(
+    ChatRequest(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": "Explain RAG in one sentence"}],
+        options=ChatRequestOptions(
+            thinking=ThinkingPreference.default(),
+            max_tokens=512,
+        ),
+    )
+)
 print(resp.content)
 ```
 
-Pass `thinking` explicitly when a provider supports Anthropic-style thinking control; omit it to keep the provider default:
+`ChatRequest` is the normalized runtime request. At a contract boundary,
+`ChatRequest.from_contract(...)` decodes canonical JSON (where `model` is
+required and `options.stream` is nested), while `to_contract()` omits runtime
+transport controls such as headers and query parameters.
+
+Use `ThinkingPreference.default()` to preserve the provider default, `enabled()` or
+`enabled(budget_tokens=...)` to opt in, and `disabled()` to opt out explicitly.
+
+### Keyword API
+
+`create_completion(...)` accepts keyword arguments. Pass `thinking` explicitly
+when a provider supports Anthropic-style thinking control; omit it to use the
+provider default:
 
 ```python
 resp = client.create_completion(
@@ -64,31 +84,10 @@ resp = client.create_completion(
 )
 ```
 
-The legacy keyword API remains supported. New code can use a normalized request and typed thinking controls:
-
-```python
-from vv_llm import ChatRequest, ChatRequestOptions, ThinkingPreference
-
-resp = client.create(
-    ChatRequest(
-        messages=[{"role": "user", "content": "Answer directly"}],
-        options=ChatRequestOptions(
-            thinking=ThinkingPreference.disabled(),
-            max_tokens=512,
-        ),
-    )
-)
-
-print(client.capabilities.thinking)
-```
-
-Use `ThinkingPreference.default()` to preserve the provider default, `enabled()` or
-`enabled(budget_tokens=...)` to opt in, and `disabled()` to opt out explicitly.
-
 ### Middleware, Retry, And Metadata
 
-The legacy client remains unchanged. Wrap it only when the application needs a
-versioned middleware chain, classified retry, or execution metadata:
+Wrap a client with `MiddlewareChatClient` for middleware hooks, classified
+retry, and execution metadata:
 
 ```python
 from vv_llm import ChatMiddlewareV1, ChatRequest, MiddlewareChatClient, RetryPolicy
@@ -153,9 +152,13 @@ chunk; after output begins, later errors are returned without replay.
 ### Streaming
 
 ```python
-for chunk in client.create_stream([
-    {"role": "user", "content": "Write a haiku"}
-]):
+from vv_llm import ChatRequest
+
+for chunk in client.create(ChatRequest(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Write a haiku"}],
+    stream=True,
+)):
     if chunk.content:
         print(chunk.content, end="")
 ```
@@ -165,12 +168,14 @@ for chunk in client.create_stream([
 ```python
 import asyncio
 from vv_llm.chat_clients import create_async_chat_client, BackendType
+from vv_llm import ChatRequest
 
 async def main():
     client = create_async_chat_client(BackendType.OpenAI, model="gpt-4o")
-    resp = await client.create_completion([
-        {"role": "user", "content": "hello"}
-    ])
+    resp = await client.create(ChatRequest(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": "hello"}],
+    ))
     print(resp.content)
 
 asyncio.run(main())
@@ -266,7 +271,7 @@ asyncio.run(main())
 
 ## Features
 
-- **Unified interface** — same `create_completion` / `create_stream` API across all providers
+- **Unified interface** — canonical `ChatRequest` execution across all providers, with `create_completion` / `create_stream` retained for compatibility
 - **Embedding & rerank** — unified sync/async retrieval clients with normalized outputs
 - **Type-safe factory** — `create_chat_client(BackendType.X)` returns the correct client type
 - **Multi-endpoint** — configure multiple endpoints per backend with random selection and failover
@@ -283,10 +288,49 @@ asyncio.run(main())
 - **Explicit fallback** — registered, ordered, capability-aware routes with no hidden provider switching
 - **Scripted testing** — deterministic completion/error/stream scripts for conformance tests
 
+The package includes `vv-llm-contract` 1.0.0. Read contract metadata, the model
+catalog, and integrity status through `vv_llm.contract`:
+
+```python
+from vv_llm.contract import contract_info, load_catalog, verify_contract
+
+info = contract_info()
+assert info.contract_version == "1.0.0"
+assert verify_contract().ok
+catalog = load_catalog()
+```
+
+Maintainers can validate the packaged copy with `pdm run contract-check` and
+update it from a verified release directory with
+`pdm run contract-sync --source PATH`.
+
+## Python Capability Matrix
+
+| Surface | Python support | Boundary |
+|---|---|---|
+| Middleware | `MiddlewareChatClient` and `AsyncMiddlewareChatClient`; v1 request/response/error hooks and metadata | Opt-in wrapper around a chat client |
+| Fallback | `FallbackChatClient` and `AsyncFallbackChatClient`; ordered, capability-aware routes | Stream fallback is limited to setup/before the first visible chunk |
+| Retry | `RetryPolicy` plus sync/async executors; classified transient errors, `Retry-After`, backoff, jitter, deadline | Authentication and invalid-request errors are not retried by default |
+| Deterministic testing | Scripted clients, vendored protocol fixtures, and unit tests | No network access; live checks require explicit opt-in |
+| Chat providers | Anthropic native adapter; 15 OpenAI-compatible adapters; Local adapter | Sync/async and streaming are normalized; tools, structured output, multimodal input, and thinking remain model/provider dependent |
+| Embedding | Sync/async configured clients | `openai_embeddings`, SiliconFlow, Cohere, Voyage, and custom JSON HTTP protocols |
+| Rerank | Sync/async configured clients | OpenAI-compatible, Cohere, Jina, Voyage, SiliconFlow, and custom JSON HTTP protocols |
+
+### Chat Provider Matrix
+
+| Adapter | Providers | Transport and common behavior |
+|---|---|---|
+| Native | Anthropic | Native sync/async chat, streaming, tools, vision, thinking, and prompt-cache handling |
+| OpenAI-compatible | OpenAI, DeepSeek, Gemini, Groq, MiniMax, Mistral, Moonshot, Qwen, Yi, ZhiPuAI, Baichuan, StepFun, xAI, Xiaomi, Ernie | Shared sync/async request and stream normalization; actual tools, structured output, multimodal, and reasoning support follows the vendored model catalog and provider endpoint |
+| Local | Local | Same configured adapter shape for sync/async and streaming; endpoint behavior is deployment-specific |
+
 ## Examples
 
-Runnable typed-thinking, sync/async streaming, middleware metadata, and explicit
-fallback examples are available in [`examples/`](examples/README.md).
+Runnable examples are in [`examples/`](examples/README.md): `basic_chat.py`,
+`streaming.py`, `tools.py`, `multimodal.py`, and `contract_json.py` cover the
+main typed request paths. `async_streaming.py`, `typed_thinking.py`,
+`middleware_metadata.py`, and `registry_fallback.py` cover focused extensions;
+the last one is deterministic and offline.
 
 ## Cache Usage Semantics
 
@@ -320,6 +364,7 @@ pip install 'vv-llm[bedrock]'    # AWS Bedrock
 
 ```
 src/vv_llm/
+  _contract/      # Versioned schemas, fixtures, catalog, and consumer lock
   chat_clients/    # Per-backend clients + factory
   embedding_clients/  # Embedding clients + factory
   rerank_clients/     # Rerank clients + factory
@@ -333,16 +378,49 @@ tests/unit/        # Unit tests
 tests/live/        # Live integration tests (requires real API keys)
 ```
 
-## Development
+## User, Maintainer, And Release Workflows
+
+### Users
+
+Install the package and configure endpoints through the public `Settings` API.
+Contract artifacts are read from the installed package; no repository checkout
+or local path is required at runtime.
+
+### Maintainers
 
 ```bash
 pdm install -d          # Install dev dependencies
+pdm run contract-check  # Validate only the vendored contract lock
+pdm run contract-sync --source PATH  # Refresh from an explicit source tree
+# Or: VV_LLM_CONTRACT_SOURCE=PATH pdm run contract-sync
+# Compare an explicit source tree with the vendor:
+python scripts/sync_contract.py --check --source PATH
 pdm run lint            # Ruff linter
 pdm run format-check    # Ruff format check
 pdm run type-check      # Ty type checker
 pdm run test            # Unit tests
-pdm run test-live       # Live tests (needs real endpoints)
 ```
+
+For an intentional live smoke check, provide private settings through the
+existing `tests/dev_settings.py` mechanism and opt in explicitly:
+
+```bash
+VV_LLM_RUN_LIVE_TESTS=1 python tests/live/run_live_tests.py test_deepseek_contract_smoke.py
+```
+
+The smoke output contains only provider/model, response shape, usage counters,
+and exit status; it does not print credentials or response content.
+
+### Release publishers
+
+```bash
+pdm build
+python scripts/smoke_wheel.py
+```
+
+The release CI performs contract-check, unit tests, linting, package build, and
+isolated wheel smoke before publication. Live API checks are intentionally not
+part of release CI.
 
 ## License
 

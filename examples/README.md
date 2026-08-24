@@ -1,29 +1,37 @@
 # vv-llm Examples
 
-The examples use the current normalized request API while the existing
-`create_completion(**kwargs)` API remains supported.
-
-Copy `llm_settings.example.json`, replace the placeholder API key, and set:
+The examples use the typed `ChatRequest` API. Network examples read settings
+from `VV_LLM_SETTINGS_JSON`; choose the configured backend and model with:
 
 ```powershell
 $env:VV_LLM_SETTINGS_JSON = 'C:\path\to\llm_settings.json'
+$env:VV_LLM_BACKEND = 'openai'
+$env:VV_LLM_MODEL = 'gpt-4o-mini'
 ```
 
-Run an example from the repository root:
+`VV_LLM_MODEL` may be omitted to use the package default for the selected
+backend. `llm_settings.example.json` is a minimal OpenAI-compatible starting
+point; replace its placeholder key and endpoint details.
+
+Run examples from the repository root:
 
 ```powershell
-pdm run python examples/01_typed_thinking.py
-pdm run python examples/02_streaming.py
-pdm run python examples/03_async_streaming.py
-pdm run python examples/04_middleware_metadata.py
+pdm run python examples/basic_chat.py
+pdm run python examples/streaming.py
+pdm run python examples/tools.py
+pdm run python examples/multimodal.py
+pdm run python examples/contract_json.py
 ```
 
-`05_registry_fallback.py` is deterministic and does not call a real API:
+Additional focused examples are available:
 
 ```powershell
-pdm run python examples/05_registry_fallback.py
+pdm run python examples/async_streaming.py
+pdm run python examples/typed_thinking.py
+pdm run python examples/middleware_metadata.py
+pdm run python examples/registry_fallback.py
 ```
 
-The streaming examples use `ChatRequest(stream=True)`. Retry or fallback is
-allowed only before the first visible chunk; once output begins, a later error
-is returned without replaying the request.
+`contract_json.py` is offline. `registry_fallback.py` uses scripted clients and
+is also offline. `multimodal.py` reads `VV_LLM_IMAGE_URL`; the default URL is a
+placeholder, so set it to an image URL accessible to the selected provider.

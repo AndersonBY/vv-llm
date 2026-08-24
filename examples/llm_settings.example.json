@@ -2,18 +2,18 @@
   "VERSION": "2",
   "endpoints": [
     {
-      "id": "deepseek-default",
-      "api_base": "https://openrouter.ai/api/v1",
+      "id": "openai-default",
+      "api_base": "https://api.openai.com/v1",
       "api_key": "YOUR_API_KEY"
     }
   ],
   "backends": {
-    "deepseek": {
+    "openai": {
       "models": {
-        "deepseek-v4-flash": {
-          "id": "deepseek/deepseek-v4-flash",
+        "gpt-4o-mini": {
+          "id": "gpt-4o-mini",
           "endpoints": [
-            "deepseek-default"
+            "openai-default"
           ]
         }
       }

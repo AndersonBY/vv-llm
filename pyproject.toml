@@ -15,7 +15,7 @@ license = {text = "MIT"}
 name = "vv-llm"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.3.113"
+version = "0.4.0"
 
 [project.optional-dependencies]
 bedrock = ["boto3 >= 1.28.57", "botocore >= 1.31.57"]
@@ -32,10 +32,13 @@ requires = ["pdm-backend"]
 distribution = true
 
 [tool.pdm.build]
+includes = ["src/vv_llm", "scripts/sync_contract.py"]
 excludes = ["tests"]
 
 [tool.pdm.scripts]
 check-all = {composite = ["lint", "format-check", "type-check"]}
+contract-check = "python scripts/sync_contract.py --check"
+contract-sync = "python scripts/sync_contract.py"
 format = "ruff format src/"
 format-check = "ruff format --check src/"
 lint = "ruff check src/"

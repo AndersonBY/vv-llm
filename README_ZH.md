@@ -2,7 +2,7 @@
 
 [English README](./README.md)
 
-面向多模型场景的统一 LLM 接口层。一套 API，16 种后端，同步 & 异步。
+面向多模型场景的统一 LLM 接口层。一套 API，17 种后端，同步 & 异步。
 
 ```
 pip install vv-llm
@@ -10,7 +10,7 @@ pip install vv-llm
 
 ## 支持的后端
 
-OpenAI | Anthropic | DeepSeek | Gemini | Qwen | Groq | Mistral | Moonshot | MiniMax | Yi | ZhiPuAI | Baichuan | StepFun | xAI | Ernie | Local
+OpenAI | Anthropic | DeepSeek | Gemini | Qwen | Groq | Mistral | Moonshot | MiniMax | Yi | ZhiPuAI | Baichuan | StepFun | xAI | Xiaomi | Ernie | Local
 
 同时支持 Azure OpenAI、Vertex AI 和 AWS Bedrock 部署。
 
@@ -43,19 +43,38 @@ settings.load({
 })
 ```
 
-### 同步调用
+### 类型化同步调用（规范化请求）
 
 ```python
 from vv_llm.chat_clients import create_chat_client, BackendType
+from vv_llm import ChatRequest, ChatRequestOptions, ThinkingPreference
 
 client = create_chat_client(BackendType.OpenAI, model="gpt-4o")
-resp = client.create_completion([
-    {"role": "user", "content": "用一句话解释 RAG"}
-])
+resp = client.create(
+    ChatRequest(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": "用一句话解释 RAG"}],
+        options=ChatRequestOptions(
+            thinking=ThinkingPreference.default(),
+            max_tokens=512,
+        ),
+    )
+)
 print(resp.content)
 ```
 
-支持 Anthropic 风格 thinking 控制的 provider 可以显式传入 `thinking`；不传时继续使用 provider 默认值：
+`ChatRequest` 是规范化的运行时请求。跨 contract 边界时，使用
+`ChatRequest.from_contract(...)` 解码 canonical JSON（其中 `model` 必填且
+`options.stream` 嵌套在 options 内），使用 `to_contract()` 编码；headers、query
+等运行时传输控制不会进入 canonical JSON。
+
+`ThinkingPreference.default()` 保留 provider 默认行为，`enabled()` 或
+`enabled(budget_tokens=...)` 显式开启，`disabled()` 显式关闭。
+
+### 关键字参数 API
+
+`create_completion(...)` 接受关键字参数。支持 Anthropic 风格 thinking 控制的
+provider 可显式传入 `thinking`；不传时使用 provider 默认值：
 
 ```python
 resp = client.create_completion(
@@ -64,31 +83,10 @@ resp = client.create_completion(
 )
 ```
 
-旧的关键字参数 API 会继续兼容。新代码可以使用规范化请求和类型化 thinking 控制：
-
-```python
-from vv_llm import ChatRequest, ChatRequestOptions, ThinkingPreference
-
-resp = client.create(
-    ChatRequest(
-        messages=[{"role": "user", "content": "直接回答"}],
-        options=ChatRequestOptions(
-            thinking=ThinkingPreference.disabled(),
-            max_tokens=512,
-        ),
-    )
-)
-
-print(client.capabilities.thinking)
-```
-
-`ThinkingPreference.default()` 保留 provider 默认行为，`enabled()` 或
-`enabled(budget_tokens=...)` 显式开启，`disabled()` 显式关闭。
-
 ### Middleware、重试与 Metadata
 
-原有 client 行为不变。只有在应用需要版本化 middleware、分类重试或执行 metadata
-时才进行包装：
+需要 middleware hook、分类重试或执行 metadata 时，用
+`MiddlewareChatClient` 包装 client：
 
 ```python
 from vv_llm import ChatMiddlewareV1, ChatRequest, MiddlewareChatClient, RetryPolicy
@@ -150,9 +148,13 @@ runtime = FallbackChatClient(
 ### 流式调用
 
 ```python
-for chunk in client.create_stream([
-    {"role": "user", "content": "写一首四行诗"}
-]):
+from vv_llm import ChatRequest
+
+for chunk in client.create(ChatRequest(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "写一首四行诗"}],
+    stream=True,
+)):
     if chunk.content:
         print(chunk.content, end="")
 ```
@@ -162,12 +164,14 @@ for chunk in client.create_stream([
 ```python
 import asyncio
 from vv_llm.chat_clients import create_async_chat_client, BackendType
+from vv_llm import ChatRequest
 
 async def main():
     client = create_async_chat_client(BackendType.OpenAI, model="gpt-4o")
-    resp = await client.create_completion([
-        {"role": "user", "content": "hello"}
-    ])
+    resp = await client.create(ChatRequest(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": "hello"}],
+    ))
     print(resp.content)
 
 asyncio.run(main())
@@ -263,7 +267,7 @@ asyncio.run(main())
 
 ## 核心特性
 
-- **统一接口** — 所有后端共享相同的 `create_completion` / `create_stream` API
+- **统一接口** — 所有后端共享规范化 `ChatRequest` 执行入口，同时兼容 `create_completion` / `create_stream`
 - **Embedding 与 rerank** — 提供统一的同步/异步检索客户端与标准化输出
 - **类型安全的工厂** — `create_chat_client(BackendType.X)` 返回对应的客户端类型
 - **多端点管理** — 每个后端可配置多个端点，支持随机选择和故障转移
@@ -280,10 +284,47 @@ asyncio.run(main())
 - **显式 fallback** — 只按注册顺序执行 capability-aware route，不隐式切换 provider
 - **Scripted 测试** — 用确定性的响应、错误和 stream 脚本进行契约测试
 
+包内包含 `vv-llm-contract` 1.0.0。通过 `vv_llm.contract` 读取 contract
+metadata、模型目录和完整性状态：
+
+```python
+from vv_llm.contract import contract_info, load_catalog, verify_contract
+
+assert contract_info().contract_version == "1.0.0"
+assert verify_contract().ok
+catalog = load_catalog()
+```
+
+维护者可用 `pdm run contract-check` 校验包内副本，并用
+`pdm run contract-sync --source PATH` 从已校验的 release 目录更新。
+
+## Python 能力矩阵
+
+| 能力面 | Python 支持 | 边界 |
+|---|---|---|
+| Middleware | `MiddlewareChatClient` / `AsyncMiddlewareChatClient`；v1 request/response/error hook 与 metadata | 需要显式包装 chat client |
+| Fallback | `FallbackChatClient` / `AsyncFallbackChatClient`；按顺序、按 capability 路由 | 流式只在建立阶段或首个可见 chunk 前切换 |
+| Retry | `RetryPolicy` 与同步/异步执行器；错误分类、`Retry-After`、退避、jitter、deadline | 默认不重试认证和无效请求错误 |
+| 确定性测试 | Scripted client、vendored protocol fixture、unit tests | 不访问网络；在线检查必须显式 opt-in |
+| Chat provider | Anthropic 原生 adapter；15 个 OpenAI-compatible adapter；Local adapter | 同步/异步和流式统一；tool、结构化输出、多模态、thinking 由模型/provider 决定 |
+| Embedding | 同步/异步配置型 client | 支持 OpenAI embeddings、SiliconFlow、Cohere、Voyage、自定义 JSON HTTP protocol |
+| Rerank | 同步/异步配置型 client | 支持 OpenAI-compatible、Cohere、Jina、Voyage、SiliconFlow、自定义 JSON HTTP protocol |
+
+### Chat Provider 矩阵
+
+| Adapter | Provider | 传输与共同行为 |
+|---|---|---|
+| Native | Anthropic | 原生同步/异步 chat、stream、tools、vision、thinking、prompt cache 处理 |
+| OpenAI-compatible | OpenAI、DeepSeek、Gemini、Groq、MiniMax、Mistral、Moonshot、Qwen、Yi、ZhiPuAI、Baichuan、StepFun、xAI、Xiaomi、Ernie | 共用同步/异步请求与 stream 标准化；tools、结构化输出、多模态、reasoning 以 vendored model catalog 和 provider endpoint 为准 |
+| Local | Local | 同样的同步/异步与 stream adapter 形状；具体能力由部署 endpoint 决定 |
+
 ## 使用示例
 
-[`examples/`](examples/README.md) 提供类型化 thinking、同步/异步流式输出、
-middleware metadata 和显式 fallback 的可运行示例。
+可运行示例位于 [`examples/`](examples/README.md)：`basic_chat.py`、
+`streaming.py`、`tools.py`、`multimodal.py` 和 `contract_json.py` 覆盖主要的
+类型化请求路径；`async_streaming.py`、`typed_thinking.py`、
+`middleware_metadata.py` 与 `registry_fallback.py` 覆盖扩展能力，其中最后一个
+完全离线且使用确定性 scripted client。
 
 ## 缓存 Usage 语义
 
@@ -317,6 +358,7 @@ pip install 'vv-llm[bedrock]'    # AWS Bedrock
 
 ```
 src/vv_llm/
+  _contract/      # 版本化 schema、fixture、catalog 与 consumer lock
   chat_clients/    # 各后端 client + 工厂
   embedding_clients/  # embedding client + 工厂
   rerank_clients/     # rerank client + 工厂
@@ -330,16 +372,46 @@ tests/unit/        # 单元测试
 tests/live/        # 在线连通测试（需要真实 API key）
 ```
 
-## 开发
+## 用户、维护者与发布流程
+
+### 用户
+
+安装包后通过公开 `Settings` API 配置 endpoint。contract artifact 从已安装包
+内资源读取，运行时不要求额外源码来源。
+
+### 维护者
 
 ```bash
 pdm install -d          # 安装开发依赖
+pdm run contract-check  # 只校验包内 vendored contract lock
+pdm run contract-sync --source PATH  # 从显式 source tree 同步
+# 或：VV_LLM_CONTRACT_SOURCE=PATH pdm run contract-sync
+# 比较显式 source 与包内 vendor：
+python scripts/sync_contract.py --check --source PATH
 pdm run lint            # Ruff 检查
 pdm run format-check    # Ruff 格式检查
 pdm run type-check      # Ty 类型检查
 pdm run test            # 单元测试
-pdm run test-live       # 在线测试（需要真实端点）
 ```
+
+如需有意执行在线 smoke，可通过现有 `tests/dev_settings.py` 机制提供私有配置，
+并显式 opt-in：
+
+```bash
+VV_LLM_RUN_LIVE_TESTS=1 python tests/live/run_live_tests.py test_deepseek_contract_smoke.py
+```
+
+smoke 只输出 provider/model、响应形状、usage 计数和退出状态，不输出凭据或响应正文。
+
+### 发布者
+
+```bash
+pdm build
+python scripts/smoke_wheel.py
+```
+
+发布 CI 会执行 contract-check、单元测试、lint、构建和隔离 wheel smoke 后才
+发布。在线 API 检查不属于发布 CI。
 
 ## 许可证
 
