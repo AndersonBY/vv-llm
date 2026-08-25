@@ -1,6 +1,6 @@
 # @Author: Bi Ying
 # @Date:   2024-07-26 14:48:55
-from collections.abc import Generator, AsyncGenerator, Iterable
+from collections.abc import Generator, AsyncGenerator, Iterable, Mapping
 from typing import Any, TYPE_CHECKING, overload, Literal, cast
 
 import httpx2
@@ -67,6 +67,21 @@ def _build_anthropic_request_options(
     if not isinstance(timeout, OpenAINotGiven):
         request_options["timeout"] = timeout
     return request_options
+
+
+def _merge_anthropic_sampling_parameters(
+    extra_body: Body | None,
+    *,
+    temperature: object,
+    top_p: object,
+) -> Body | None:
+    """Map OpenAI-style sampling fields into Anthropic's extra request body."""
+    merged = dict(cast(Mapping[str, Any], extra_body)) if extra_body is not None else {}
+    if isinstance(temperature, (int, float)) and not isinstance(temperature, bool) and "temperature" not in merged:
+        merged["temperature"] = temperature
+    if isinstance(top_p, (int, float)) and not isinstance(top_p, bool) and "top_p" not in merged:
+        merged["top_p"] = top_p
+    return cast(Body, merged) if merged else extra_body
 
 
 class AnthropicChatClient(BaseChatClient):
@@ -471,7 +486,6 @@ class AnthropicChatClient(BaseChatClient):
 
         _tools = omit if isinstance(tools, NotGiven) else tools
         _tool_choice = omit if isinstance(tool_choice, NotGiven) else tool_choice
-        _top_p = omit if isinstance(top_p, NotGiven) or top_p is None else top_p
         if isinstance(self.temperature, NotGiven) or self.temperature is None:
             self.temperature = omit
         _thinking = omit if isinstance(thinking, NotGiven) or thinking is None else thinking
@@ -513,6 +527,7 @@ class AnthropicChatClient(BaseChatClient):
                 max_tokens = self.model_setting.context_length - token_counts
 
         self._acquire_rate_limit(self.endpoint, self.model, messages)
+        extra_body = _merge_anthropic_sampling_parameters(extra_body, temperature=self.temperature, top_p=top_p)
         request_options = _build_anthropic_request_options(
             extra_headers=extra_headers,
             extra_query=extra_query,
@@ -528,10 +543,8 @@ class AnthropicChatClient(BaseChatClient):
                     model=self.model_id,
                     stream=True,
                     system=system_prompt,
-                    temperature=self.temperature,
                     tools=tools_params,
                     tool_choice=tool_choice_param,
-                    top_p=_top_p,
                     thinking=_thinking,
                     **request_options,
                 )
@@ -555,11 +568,9 @@ class AnthropicChatClient(BaseChatClient):
                     messages=messages,
                     system=system_prompt,
                     stream=False,
-                    temperature=self.temperature,
                     max_tokens=max_tokens,
                     tools=tools_params,
                     tool_choice=tool_choice_param,
-                    top_p=_top_p,
                     thinking=_thinking,
                     **request_options,
                 )
@@ -973,7 +984,6 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
 
         _tools = omit if isinstance(tools, NotGiven) else tools
         _tool_choice = omit if isinstance(tool_choice, NotGiven) else tool_choice
-        _top_p = omit if isinstance(top_p, NotGiven) or top_p is None else top_p
         if isinstance(self.temperature, NotGiven) or self.temperature is None:
             self.temperature = omit
         _thinking = omit if isinstance(thinking, NotGiven) or thinking is None else thinking
@@ -1015,6 +1025,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                 max_tokens = self.model_setting.context_length - token_counts
 
         await self._acquire_rate_limit(self.endpoint, self.model, messages)
+        extra_body = _merge_anthropic_sampling_parameters(extra_body, temperature=self.temperature, top_p=top_p)
         request_options = _build_anthropic_request_options(
             extra_headers=extra_headers,
             extra_query=extra_query,
@@ -1029,11 +1040,9 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                     messages=messages,
                     system=system_prompt,
                     stream=True,
-                    temperature=self.temperature,
                     max_tokens=max_tokens,
                     tools=tools_params,
                     tool_choice=tool_choice_param,
-                    top_p=_top_p,
                     thinking=_thinking,
                     **request_options,
                 )
@@ -1057,11 +1066,9 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                     messages=messages,
                     system=system_prompt,
                     stream=False,
-                    temperature=self.temperature,
                     max_tokens=max_tokens,
                     tools=tools_params,
                     tool_choice=tool_choice_param,
-                    top_p=_top_p,
                     thinking=_thinking,
                     **request_options,
                 )
