@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from typing import Literal
 from typing_extensions import TypedDict, NotRequired
 
-import httpx
+import httpx2
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from anthropic._types import NotGiven as AnthropicNotGiven
@@ -103,7 +103,7 @@ class EndpointSetting(BaseModel):
         return value
 
     def model_list(self):
-        http_client = httpx.Client(proxy=self.proxy) if self.proxy is not None else None
+        http_client = httpx2.Client(proxy=self.proxy) if self.proxy is not None else None
 
         if self.is_azure:
             if self.api_base is None:
@@ -124,7 +124,7 @@ class EndpointSetting(BaseModel):
         return _client.models.list().model_dump()
 
     async def amodel_list(self):
-        http_client = httpx.AsyncClient(proxy=self.proxy) if self.proxy is not None else None
+        http_client = httpx2.AsyncClient(proxy=self.proxy) if self.proxy is not None else None
 
         if self.is_azure:
             if self.api_base is None:

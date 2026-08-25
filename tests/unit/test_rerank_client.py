@@ -3,7 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 import json
 
-import httpx
+import httpx2 as httpx
 import pytest
 
 import vv_llm.rerank_clients.base_client as rerank_base

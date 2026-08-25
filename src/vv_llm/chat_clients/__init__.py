@@ -1,6 +1,6 @@
 # @Author: Bi Ying
 # @Date:   2024-07-26 14:48:55
-import httpx
+import httpx2
 from typing import overload, Literal, TYPE_CHECKING
 
 from .base_client import BaseChatClient, BaseAsyncChatClient
@@ -86,7 +86,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AnthropicChatClient: ...
@@ -101,7 +101,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> DeepSeekChatClient: ...
@@ -116,7 +116,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> GeminiChatClient: ...
@@ -131,7 +131,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> GroqChatClient: ...
@@ -146,7 +146,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> LocalChatClient: ...
@@ -161,7 +161,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> MiniMaxChatClient: ...
@@ -176,7 +176,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> MistralChatClient: ...
@@ -191,7 +191,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> MoonshotChatClient: ...
@@ -206,7 +206,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> OpenAIChatClient: ...
@@ -221,7 +221,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> QwenChatClient: ...
@@ -236,7 +236,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> YiChatClient: ...
@@ -251,7 +251,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> ZhiPuAIChatClient: ...
@@ -266,7 +266,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> BaichuanChatClient: ...
@@ -281,7 +281,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> StepFunChatClient: ...
@@ -296,7 +296,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> XAIChatClient: ...
@@ -311,7 +311,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> XiaomiChatClient: ...
@@ -326,7 +326,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> ErnieChatClient: ...
@@ -341,7 +341,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> BaseChatClient: ...
@@ -355,7 +355,7 @@ def create_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> BaseChatClient:
@@ -387,7 +387,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncAnthropicChatClient: ...
@@ -402,7 +402,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncDeepSeekChatClient: ...
@@ -417,7 +417,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncGeminiChatClient: ...
@@ -432,7 +432,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncGroqChatClient: ...
@@ -447,7 +447,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncLocalChatClient: ...
@@ -462,7 +462,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncMiniMaxChatClient: ...
@@ -477,7 +477,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncMistralChatClient: ...
@@ -492,7 +492,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncMoonshotChatClient: ...
@@ -507,7 +507,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncOpenAIChatClient: ...
@@ -522,7 +522,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncQwenChatClient: ...
@@ -537,7 +537,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncYiChatClient: ...
@@ -552,7 +552,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncZhiPuAIChatClient: ...
@@ -567,7 +567,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncBaichuanChatClient: ...
@@ -582,7 +582,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncStepFunChatClient: ...
@@ -597,7 +597,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncXAIChatClient: ...
@@ -612,7 +612,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncXiaomiChatClient: ...
@@ -627,7 +627,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> AsyncErnieChatClient: ...
@@ -642,7 +642,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> BaseAsyncChatClient: ...
@@ -656,7 +656,7 @@ def create_async_chat_client(
     context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     **kwargs,
 ) -> BaseAsyncChatClient:

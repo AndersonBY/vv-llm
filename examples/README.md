@@ -35,3 +35,9 @@ pdm run python examples/registry_fallback.py
 `contract_json.py` is offline. `registry_fallback.py` uses scripted clients and
 is also offline. `multimodal.py` reads `VV_LLM_IMAGE_URL`; the default URL is a
 placeholder, so set it to an image URL accessible to the selected provider.
+
+Custom transports use HTTPX2 clients: pass `httpx2.Client` to sync
+`create_chat_client(..., http_client=...)` and `httpx2.AsyncClient` to
+`create_async_chat_client(..., http_client=...)`. Legacy `httpx` clients are
+rejected. Endpoint-level `proxy` settings let vv-llm construct the HTTPX2
+client automatically.

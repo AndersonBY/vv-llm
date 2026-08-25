@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
 
-import httpx
+import httpx2
 
 from ..settings import normalize_settings
 from ..types.enums import EmbeddingBackendType
@@ -250,7 +250,7 @@ class EmbeddingClient(BaseRetrievalClient):
         model: str | None = None,
         random_endpoint: bool = True,
         endpoint_id: str = "",
-        http_client: httpx.Client | None = None,
+        http_client: httpx2.Client | None = None,
         settings: Settings | SettingsDict | None = None,
     ):
         normalized_settings = normalize_settings(settings)
@@ -284,13 +284,13 @@ class EmbeddingClient(BaseRetrievalClient):
         headers: dict[str, str] | None,
         body: dict | list | str | None,
         query: dict | None,
-        timeout: float | httpx.Timeout | None,
+        timeout: float | httpx2.Timeout | None,
     ) -> dict[str, Any]:
         request_headers = {"Content-Type": "application/json", **_default_auth_headers(endpoint)}
         if headers:
             request_headers.update(headers)
 
-        client = self.http_client or httpx.Client(proxy=endpoint.proxy)
+        client = self.http_client or httpx2.Client(proxy=endpoint.proxy)
         should_close = self.http_client is None
 
         try:
@@ -350,7 +350,7 @@ class EmbeddingClient(BaseRetrievalClient):
         model: str | None = None,
         dimensions: int | None = None,
         extra_body: dict[str, Any] | None = None,
-        timeout: float | httpx.Timeout | None = None,
+        timeout: float | httpx2.Timeout | None = None,
     ) -> EmbeddingResponse:
         if model is not None:
             self._switch_model(model)
@@ -468,7 +468,7 @@ class EmbeddingClient(BaseRetrievalClient):
         model: str | None = None,
         dimensions: int | None = None,
         extra_body: dict[str, Any] | None = None,
-        timeout: float | httpx.Timeout | None = None,
+        timeout: float | httpx2.Timeout | None = None,
     ) -> list[float]:
         response = self.create_embeddings(
             input=text,
@@ -488,7 +488,7 @@ class EmbeddingClient(BaseRetrievalClient):
         model: str | None = None,
         dimensions: int | None = None,
         extra_body: dict[str, Any] | None = None,
-        timeout: float | httpx.Timeout | None = None,
+        timeout: float | httpx2.Timeout | None = None,
     ) -> list[list[float]]:
         response = self.create_embeddings(
             input=texts,
@@ -507,7 +507,7 @@ class AsyncEmbeddingClient(BaseAsyncRetrievalClient):
         model: str | None = None,
         random_endpoint: bool = True,
         endpoint_id: str = "",
-        http_client: httpx.AsyncClient | None = None,
+        http_client: httpx2.AsyncClient | None = None,
         settings: Settings | SettingsDict | None = None,
     ):
         normalized_settings = normalize_settings(settings)
@@ -541,13 +541,13 @@ class AsyncEmbeddingClient(BaseAsyncRetrievalClient):
         headers: dict[str, str] | None,
         body: dict | list | str | None,
         query: dict | None,
-        timeout: float | httpx.Timeout | None,
+        timeout: float | httpx2.Timeout | None,
     ) -> dict[str, Any]:
         request_headers = {"Content-Type": "application/json", **_default_auth_headers(endpoint)}
         if headers:
             request_headers.update(headers)
 
-        client = self.http_client or httpx.AsyncClient(proxy=endpoint.proxy)
+        client = self.http_client or httpx2.AsyncClient(proxy=endpoint.proxy)
         should_close = self.http_client is None
 
         try:
@@ -607,7 +607,7 @@ class AsyncEmbeddingClient(BaseAsyncRetrievalClient):
         model: str | None = None,
         dimensions: int | None = None,
         extra_body: dict[str, Any] | None = None,
-        timeout: float | httpx.Timeout | None = None,
+        timeout: float | httpx2.Timeout | None = None,
     ) -> EmbeddingResponse:
         if model is not None:
             self._switch_model(model)
@@ -725,7 +725,7 @@ class AsyncEmbeddingClient(BaseAsyncRetrievalClient):
         model: str | None = None,
         dimensions: int | None = None,
         extra_body: dict[str, Any] | None = None,
-        timeout: float | httpx.Timeout | None = None,
+        timeout: float | httpx2.Timeout | None = None,
     ) -> list[float]:
         response = await self.create_embeddings(
             input=text,
@@ -745,7 +745,7 @@ class AsyncEmbeddingClient(BaseAsyncRetrievalClient):
         model: str | None = None,
         dimensions: int | None = None,
         extra_body: dict[str, Any] | None = None,
-        timeout: float | httpx.Timeout | None = None,
+        timeout: float | httpx2.Timeout | None = None,
     ) -> list[list[float]]:
         response = await self.create_embeddings(
             input=texts,

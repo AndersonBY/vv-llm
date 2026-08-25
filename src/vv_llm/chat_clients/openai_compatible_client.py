@@ -5,8 +5,8 @@ from functools import cached_property
 from collections.abc import Generator, AsyncGenerator, Iterable, Mapping
 from typing import Any, TYPE_CHECKING, overload, Literal, cast
 
-import httpx
-from openai import OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI
+import httpx2
+from openai import OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI, DefaultHttpx2Client, DefaultAsyncHttpx2Client
 from openai._types import Headers, Query, Body
 from openai.types.shared_params.metadata import Metadata
 from openai.types.completion_usage import PromptTokensDetails
@@ -121,7 +121,7 @@ def _normalize_openai_compatible_usage(raw_usage: Any, backend_name: BackendType
     cached_tokens = _MISSING
     for candidate in (top_level_cached_tokens, nested_cached_tokens):
         if _is_valid_token_count(candidate):
-            cached_tokens = candidate
+            cached_tokens = cast(int, candidate)
             break
 
     if cached_tokens is _MISSING and backend_name == BackendType.Moonshot and top_level_cached_tokens is _MISSING and raw_prompt_tokens_details is _MISSING:
@@ -129,9 +129,9 @@ def _normalize_openai_compatible_usage(raw_usage: Any, backend_name: BackendType
 
     if cached_tokens is not _MISSING:
         if prompt_tokens_details is None:
-            prompt_tokens_details = PromptTokensDetails(cached_tokens=cached_tokens)
+            prompt_tokens_details = PromptTokensDetails(cached_tokens=cast(int, cached_tokens))
         else:
-            prompt_tokens_details = prompt_tokens_details.model_copy(update={"cached_tokens": cached_tokens})
+            prompt_tokens_details = prompt_tokens_details.model_copy(update={"cached_tokens": cast(int, cached_tokens)})
 
     return Usage(
         completion_tokens=raw_usage.completion_tokens or 0,
@@ -155,7 +155,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
         context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
         random_endpoint: bool = True,
         endpoint_id: str = "",
-        http_client: httpx.Client | None = None,
+        http_client: httpx2.Client | None = None,
         backend_name: str | None = None,
         settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     ):
@@ -175,10 +175,12 @@ class OpenAICompatibleChatClient(BaseChatClient):
 
     @cached_property
     def raw_client(self) -> OpenAI | AzureOpenAI:
+        if self.http_client is not None and not isinstance(self.http_client, httpx2.Client):
+            raise TypeError("http_client must be an httpx2.Client; legacy httpx.Client instances are not supported")
         self.endpoint, self.model_id = self._set_endpoint()
 
         if self.endpoint.proxy and self.http_client is None:
-            self.http_client = httpx.Client(proxy=self.endpoint.proxy)
+            self.http_client = DefaultHttpx2Client(proxy=self.endpoint.proxy)
 
         if self.endpoint.is_azure or self.endpoint.endpoint_type == "openai_azure":
             if self.endpoint.api_base is None:
@@ -250,7 +252,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> ChatCompletionMessage:
         pass
 
@@ -292,7 +294,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> Generator[ChatCompletionDeltaMessage, Any, None]:
         pass
 
@@ -334,7 +336,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> ChatCompletionMessage | Generator[ChatCompletionDeltaMessage, Any, None]:
         pass
 
@@ -375,7 +377,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ):
         if model is not None:
             self.model = model
@@ -858,7 +860,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
         context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
         random_endpoint: bool = True,
         endpoint_id: str = "",
-        http_client: httpx.AsyncClient | None = None,
+        http_client: httpx2.AsyncClient | None = None,
         backend_name: str | None = None,
         settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     ):
@@ -878,10 +880,12 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
 
     @cached_property
     def raw_client(self):
+        if self.http_client is not None and not isinstance(self.http_client, httpx2.AsyncClient):
+            raise TypeError("http_client must be an httpx2.AsyncClient; legacy httpx.AsyncClient instances are not supported")
         self.endpoint, self.model_id = self._set_endpoint()
 
         if self.endpoint.proxy and self.http_client is None:
-            self.http_client = httpx.AsyncClient(proxy=self.endpoint.proxy)
+            self.http_client = DefaultAsyncHttpx2Client(proxy=self.endpoint.proxy)
 
         if self.endpoint.is_azure or self.endpoint.endpoint_type == "openai_azure":
             if self.endpoint.api_base is None:
@@ -953,7 +957,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> ChatCompletionMessage:
         pass
 
@@ -995,7 +999,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> AsyncGenerator[ChatCompletionDeltaMessage, Any]:
         pass
 
@@ -1037,7 +1041,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
         pass
 
@@ -1078,7 +1082,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
         if model is not None:
             self.model = model

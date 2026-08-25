@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-import httpx
+import httpx2 as httpx
 import pytest
 
 import vv_llm.retrieval_clients.common as retrieval_common

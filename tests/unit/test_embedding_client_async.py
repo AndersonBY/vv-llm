@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-import httpx
+import httpx2 as httpx
 import pytest
 
 from vv_llm.embedding_clients import create_async_embedding_client

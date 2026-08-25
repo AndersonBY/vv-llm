@@ -60,7 +60,7 @@ def refactor_tool_choice(tool_choice: ToolChoice) -> AnthropicToolChoice:
             return {"type": "any"}
         raise ValueError(f"Anthropic does not support tool_choice={tool_choice!r}")
     if isinstance(tool_choice, dict) and "function" in tool_choice:
-        function_data = tool_choice["function"]
+        function_data = cast(dict[str, Any], tool_choice)["function"]
         if isinstance(function_data, dict) and isinstance(function_data.get("name"), str) and function_data["name"]:
             return {"type": "tool", "name": function_data["name"]}
         raise ValueError("Anthropic named tool_choice requires function.name")

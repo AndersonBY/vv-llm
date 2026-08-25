@@ -9,7 +9,7 @@ import time
 from typing import cast
 from pathlib import Path
 
-import httpx
+import httpx2
 
 TOKEN_URI = "https://oauth2.googleapis.com/token"
 
@@ -17,7 +17,7 @@ TOKEN_URI = "https://oauth2.googleapis.com/token"
 def _refresh_user_token_with_expiry(creds: dict, client_kwargs: dict) -> tuple[str, int]:
     """刷新用户 token，返回 (token, expires_in)"""
     token_uri = creds.get("token_uri", TOKEN_URI)
-    with httpx.Client(**client_kwargs) as client:
+    with httpx2.Client(**client_kwargs) as client:
         resp = client.post(
             token_uri,
             data={
@@ -65,7 +65,7 @@ def _get_sa_token_with_expiry(sa: dict, client_kwargs: dict) -> tuple[str, int]:
 
     jwt = f"{h}.{p}.{b64(sig)}"
 
-    with httpx.Client(**client_kwargs) as client:
+    with httpx2.Client(**client_kwargs) as client:
         resp = client.post(
             token_uri,
             data={

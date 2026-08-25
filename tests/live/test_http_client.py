@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import httpx
+import httpx2 as httpx
 
 from vv_llm.chat_clients import create_chat_client
 from vv_llm.settings import settings

@@ -9,7 +9,7 @@ from math import ceil
 from collections.abc import Iterable
 from typing import Any, cast
 
-import httpx
+import httpx2
 import tiktoken
 from anthropic import Anthropic, AnthropicVertex
 from anthropic._types import NOT_GIVEN as ANTHROPIC_NOT_GIVEN
@@ -118,7 +118,7 @@ def _get_first_enabled_endpoint(backend_setting, settings):
 def get_token_counts(text: str | dict, model: str = "", use_token_server_first: bool = True) -> int:
     if use_token_server_first and settings.token_server is not None:
         base_url = settings.token_server.url if settings.token_server.url is not None else f"http://{settings.token_server.host}:{settings.token_server.port}"
-        _, response = Retry(httpx.post).args(url=f"{base_url}/count_tokens", json={"text": text, "model": model}, timeout=None).retry_times(5).sleep_time(1).run()
+        _, response = Retry(httpx2.post).args(url=f"{base_url}/count_tokens", json={"text": text, "model": model}, timeout=None).retry_times(5).sleep_time(1).run()
         if response is not None:
             try:
                 result = response.json()
@@ -151,7 +151,7 @@ def get_token_counts(text: str | dict, model: str = "", use_token_server_first: 
         }
 
         _, response = (
-            Retry(httpx.post)
+            Retry(httpx2.post)
             .args(
                 url=tokenize_url,
                 headers=headers,
@@ -183,7 +183,7 @@ def get_token_counts(text: str | dict, model: str = "", use_token_server_first: 
             ],
         }
         _, response = (
-            Retry(httpx.post)
+            Retry(httpx2.post)
             .args(
                 url=tokenize_url,
                 headers=headers,
@@ -222,7 +222,7 @@ def get_token_counts(text: str | dict, model: str = "", use_token_server_first: 
             },
         }
         _, response = (
-            Retry(httpx.post)
+            Retry(httpx2.post)
             .args(
                 base_url,
                 json=request_body,
@@ -257,7 +257,7 @@ def get_token_counts(text: str | dict, model: str = "", use_token_server_first: 
                 except ValueError:
                     continue
 
-                http_client = httpx.Client(proxy=endpoint.proxy) if endpoint.proxy else None
+                http_client = httpx2.Client(proxy=endpoint.proxy) if endpoint.proxy else None
 
                 if endpoint.is_bedrock or endpoint.endpoint_type == "anthropic_bedrock":
                     try:
@@ -366,7 +366,7 @@ def get_token_counts(text: str | dict, model: str = "", use_token_server_first: 
             ],
         }
         _, response = (
-            Retry(httpx.post)
+            Retry(httpx2.post)
             .args(
                 url=tokenize_url,
                 headers=headers,
@@ -400,7 +400,7 @@ def get_token_counts(text: str | dict, model: str = "", use_token_server_first: 
             ],
         }
         _, response = (
-            Retry(httpx.post)
+            Retry(httpx2.post)
             .args(
                 url=tokenize_url,
                 headers=headers,

@@ -6,7 +6,7 @@ from email.utils import parsedate_to_datetime
 from enum import Enum
 from typing import Any
 
-import httpx
+import httpx2
 from anthropic import APIConnectionError as AnthropicAPIConnectionError
 from anthropic import APIStatusError as AnthropicAPIStatusError
 from anthropic import APITimeoutError as AnthropicAPITimeoutError
@@ -73,7 +73,7 @@ def classify_exception(
     if isinstance(exception, VvLlmError):
         return exception
 
-    if isinstance(exception, (APITimeoutError, AnthropicAPITimeoutError, httpx.TimeoutException)):
+    if isinstance(exception, (APITimeoutError, AnthropicAPITimeoutError, httpx2.TimeoutException)):
         return VvLlmError(
             str(exception),
             kind=ErrorKind.TIMEOUT,
@@ -81,7 +81,7 @@ def classify_exception(
             model=model,
             source=exception,
         )
-    if isinstance(exception, (APIConnectionError, AnthropicAPIConnectionError, httpx.NetworkError)):
+    if isinstance(exception, (APIConnectionError, AnthropicAPIConnectionError, httpx2.NetworkError)):
         return VvLlmError(
             str(exception),
             kind=ErrorKind.NETWORK,

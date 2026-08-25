@@ -176,6 +176,27 @@ async def main():
 asyncio.run(main())
 ```
 
+### HTTP 传输 client
+
+`http_client` 参数同步调用接受 `httpx2.Client`，异步调用接受
+`httpx2.AsyncClient`。应用可以注入自定义传输（例如离线
+`MockTransport`），同时让 OpenAI 3.x 与 Anthropic 1.x 使用同一套 HTTPX2
+运行时：
+
+```python
+import httpx2
+from vv_llm.chat_clients import BackendType, create_chat_client
+
+transport = httpx2.MockTransport(
+    lambda request: httpx2.Response(200, json={"choices": []}, request=request)
+)
+http_client = httpx2.Client(transport=transport)
+client = create_chat_client(BackendType.OpenAI, model="gpt-4o", http_client=http_client)
+```
+
+需要由 vv-llm 自动创建传输 client 时，在 endpoint 中配置 `proxy`。旧版
+`httpx.Client` 与 `httpx.AsyncClient` 不再接受，请改用对应的 HTTPX2 类型。
+
 ### Embedding 与 Rerank
 
 ```python

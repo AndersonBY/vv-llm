@@ -9,7 +9,7 @@ import time
 from collections import defaultdict
 from typing import Any, cast
 
-import httpx
+import httpx2
 
 from ..settings import Settings, normalize_settings
 from ..types.llm_parameters import EndpointSetting, RetrievalBackendSettings
@@ -20,9 +20,9 @@ from ..utilities.rate_limiter import SyncDiskCacheRateLimiter, SyncMemoryRateLim
 _PLACEHOLDER_RE = re.compile(r"\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
 _RETRIABLE_STATUS_CODES = frozenset({408, 429, 502, 503, 504})
 _RETRIABLE_REQUEST_EXCEPTIONS = (
-    httpx.ConnectError,
-    httpx.ConnectTimeout,
-    httpx.PoolTimeout,
+    httpx2.ConnectError,
+    httpx2.ConnectTimeout,
+    httpx2.PoolTimeout,
 )
 _RETRIEVAL_HTTP_MAX_RETRIES = 2
 _RETRIEVAL_HTTP_BASE_BACKOFF_SECONDS = 0.5
@@ -72,14 +72,16 @@ def _compute_retry_delay_seconds(attempt: int, retry_after: str | None = None) -
 
 def request_json_with_retry(
     *,
-    client: httpx.Client,
+    client: httpx2.Client,
     method: str,
     url: str,
     headers: dict[str, str],
     params: dict | None,
     json_body: dict | list | str | None,
-    timeout: float | httpx.Timeout | None,
+    timeout: float | httpx2.Timeout | None,
 ) -> dict[str, Any]:
+    if not isinstance(client, httpx2.Client):
+        raise TypeError("client must be an httpx2.Client; legacy httpx.Client instances are not supported")
     for attempt in range(_RETRIEVAL_HTTP_MAX_RETRIES + 1):
         try:
             response = client.request(
@@ -108,14 +110,16 @@ def request_json_with_retry(
 
 async def async_request_json_with_retry(
     *,
-    client: httpx.AsyncClient,
+    client: httpx2.AsyncClient,
     method: str,
     url: str,
     headers: dict[str, str],
     params: dict | None,
     json_body: dict | list | str | None,
-    timeout: float | httpx.Timeout | None,
+    timeout: float | httpx2.Timeout | None,
 ) -> dict[str, Any]:
+    if not isinstance(client, httpx2.AsyncClient):
+        raise TypeError("client must be an httpx2.AsyncClient; legacy httpx.AsyncClient instances are not supported")
     for attempt in range(_RETRIEVAL_HTTP_MAX_RETRIES + 1):
         try:
             response = await client.request(
@@ -151,7 +155,7 @@ class BaseRetrievalClient:
         backend_settings: RetrievalBackendSettings,
         random_endpoint: bool = True,
         endpoint_id: str = "",
-        http_client: httpx.Client | None = None,
+        http_client: httpx2.Client | None = None,
         settings: Settings | SettingsDict | None = None,
     ):
         self.model = model or self._resolve_default_model(backend_settings)
@@ -315,7 +319,7 @@ class BaseAsyncRetrievalClient:
         backend_settings: RetrievalBackendSettings,
         random_endpoint: bool = True,
         endpoint_id: str = "",
-        http_client: httpx.AsyncClient | None = None,
+        http_client: httpx2.AsyncClient | None = None,
         settings: Settings | SettingsDict | None = None,
     ):
         self.model = model or self._resolve_default_model(backend_settings)

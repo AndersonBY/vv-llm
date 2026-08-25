@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import httpx
+import httpx2
 from typing import TYPE_CHECKING
 
 from .base_client import EmbeddingClient, AsyncEmbeddingClient
@@ -16,7 +16,7 @@ def create_embedding_client(
     model: str | None = None,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.Client | None = None,
+    http_client: httpx2.Client | None = None,
     settings: Settings | SettingsDict | None = None,
 ) -> EmbeddingClient:
     return EmbeddingClient(
@@ -34,7 +34,7 @@ def create_async_embedding_client(
     model: str | None = None,
     random_endpoint: bool = True,
     endpoint_id: str = "",
-    http_client: httpx.AsyncClient | None = None,
+    http_client: httpx2.AsyncClient | None = None,
     settings: Settings | SettingsDict | None = None,
 ) -> AsyncEmbeddingClient:
     return AsyncEmbeddingClient(

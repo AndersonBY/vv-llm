@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Literal
 from functools import cached_property
 
-import httpx
+import httpx2
 from PIL import Image
 from PIL.ImageFile import ImageFile
 
@@ -52,7 +52,7 @@ class ImageProcessor:
                 return Image.open(BytesIO(image_data))
             elif not self.is_local:
                 image_url = self.image_source
-                response = httpx.get(image_url)
+                response = httpx2.get(image_url)
                 return Image.open(BytesIO(response.content))
             else:
                 return Image.open(self.image_source)

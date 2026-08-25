@@ -7,7 +7,7 @@ from collections.abc import Iterable, Generator, AsyncGenerator
 from functools import cached_property
 from typing import Any, overload, Literal, cast
 
-import httpx
+import httpx2
 from openai import OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI
 from openai._types import Headers, Query, Body
 from openai.types.shared_params.metadata import Metadata
@@ -99,7 +99,7 @@ class BaseChatClient(ABC):
         context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
         random_endpoint: bool = True,
         endpoint_id: str = "",
-        http_client: httpx.Client | None = None,
+        http_client: httpx2.Client | None = None,
         backend_name: str | None = None,
         settings: Settings | SettingsDict | None = None,  # Use default settings if not provided
     ):
@@ -291,7 +291,7 @@ class BaseChatClient(ABC):
     @abstractmethod
     def raw_client(
         self,
-    ) -> OpenAI | AzureOpenAI | Anthropic | AnthropicVertex | AnthropicBedrock | httpx.Client | None:
+    ) -> OpenAI | AzureOpenAI | Anthropic | AnthropicVertex | AnthropicBedrock | httpx2.Client | None:
         pass
 
     @overload
@@ -332,7 +332,7 @@ class BaseChatClient(ABC):
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> ChatCompletionMessage:
         pass
 
@@ -374,7 +374,7 @@ class BaseChatClient(ABC):
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> Generator[ChatCompletionDeltaMessage, Any, None]:
         pass
 
@@ -416,7 +416,7 @@ class BaseChatClient(ABC):
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> ChatCompletionMessage | Generator[ChatCompletionDeltaMessage, Any, None]:
         pass
 
@@ -457,7 +457,7 @@ class BaseChatClient(ABC):
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> ChatCompletionMessage | Generator[ChatCompletionDeltaMessage, Any, None]:
         pass
 
@@ -497,7 +497,7 @@ class BaseChatClient(ABC):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> Generator[ChatCompletionDeltaMessage, Any, None]:
         create_completion = cast(Any, self.create_completion)
         return cast(
@@ -581,7 +581,7 @@ class BaseAsyncChatClient(ABC):
         context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
         random_endpoint: bool = True,
         endpoint_id: str = "",
-        http_client: httpx.AsyncClient | None = None,
+        http_client: httpx2.AsyncClient | None = None,
         backend_name: str | None = None,
         settings: Settings | SettingsDict | None = None,  # Use default settings if not provided
     ):
@@ -780,7 +780,7 @@ class BaseAsyncChatClient(ABC):
     @abstractmethod
     def raw_client(
         self,
-    ) -> AsyncOpenAI | AsyncAzureOpenAI | AsyncAnthropic | AsyncAnthropicVertex | AsyncAnthropicBedrock | httpx.AsyncClient | None:
+    ) -> AsyncOpenAI | AsyncAzureOpenAI | AsyncAnthropic | AsyncAnthropicVertex | AsyncAnthropicBedrock | httpx2.AsyncClient | None:
         pass
 
     @overload
@@ -821,7 +821,7 @@ class BaseAsyncChatClient(ABC):
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> ChatCompletionMessage:
         pass
 
@@ -863,7 +863,7 @@ class BaseAsyncChatClient(ABC):
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> AsyncGenerator[ChatCompletionDeltaMessage, Any]:
         pass
 
@@ -905,7 +905,7 @@ class BaseAsyncChatClient(ABC):
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
         pass
 
@@ -946,7 +946,7 @@ class BaseAsyncChatClient(ABC):
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
         pass
 
@@ -986,7 +986,7 @@ class BaseAsyncChatClient(ABC):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
     ) -> AsyncGenerator[ChatCompletionDeltaMessage, Any]:
         create_completion = cast(Any, self.create_completion)
         return cast(

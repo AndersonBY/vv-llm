@@ -180,6 +180,28 @@ async def main():
 asyncio.run(main())
 ```
 
+### HTTP transport clients
+
+The `http_client` argument accepts `httpx2.Client` for sync calls and
+`httpx2.AsyncClient` for async calls. This lets applications provide a custom
+transport (for example, an offline `MockTransport`) while keeping OpenAI 3.x
+and Anthropic 1.x clients on the same HTTPX2 runtime:
+
+```python
+import httpx2
+from vv_llm.chat_clients import BackendType, create_chat_client
+
+transport = httpx2.MockTransport(
+    lambda request: httpx2.Response(200, json={"choices": []}, request=request)
+)
+http_client = httpx2.Client(transport=transport)
+client = create_chat_client(BackendType.OpenAI, model="gpt-4o", http_client=http_client)
+```
+
+Use an endpoint `proxy` setting when vv-llm should construct the transport
+client itself. Legacy `httpx.Client` and `httpx.AsyncClient` instances are not
+accepted; use the matching HTTPX2 client type instead.
+
 ### Embedding & Rerank
 
 ```python

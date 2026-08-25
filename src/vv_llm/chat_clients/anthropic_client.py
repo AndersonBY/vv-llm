@@ -3,7 +3,7 @@
 from collections.abc import Generator, AsyncGenerator, Iterable
 from typing import Any, TYPE_CHECKING, overload, Literal, cast
 
-import httpx
+import httpx2
 from openai._types import NotGiven as OpenAINotGiven
 from openai._types import NOT_GIVEN as OPENAI_NOT_GIVEN
 from openai._types import Headers, Query, Body
@@ -21,6 +21,8 @@ from anthropic import (
     AsyncAnthropicVertex,
     AnthropicBedrock,
     AsyncAnthropicBedrock,
+    DefaultHttpxClient,
+    DefaultAsyncHttpxClient,
 )
 from anthropic._types import NOT_GIVEN, omit, Omit
 from anthropic._exceptions import APIStatusError as AnthropicAPIStatusError
@@ -55,7 +57,7 @@ def _build_anthropic_request_options(
     extra_headers: Headers | None,
     extra_query: Query | None,
     extra_body: Body | None,
-    timeout: float | httpx.Timeout | None | OpenAINotGiven,
+    timeout: float | httpx2.Timeout | None | OpenAINotGiven,
 ) -> dict[str, Any]:
     request_options: dict[str, Any] = {
         "extra_headers": extra_headers,
@@ -79,7 +81,7 @@ class AnthropicChatClient(BaseChatClient):
         context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
         random_endpoint: bool = True,
         endpoint_id: str = "",
-        http_client: httpx.Client | None = None,
+        http_client: httpx2.Client | None = None,
         backend_name: str | None = None,
         settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     ):
@@ -100,10 +102,12 @@ class AnthropicChatClient(BaseChatClient):
 
     @property
     def raw_client(self):
+        if self.http_client is not None and not isinstance(self.http_client, httpx2.Client):
+            raise TypeError("http_client must be an httpx2.Client; legacy httpx.Client instances are not supported")
         self.endpoint, self.model_id = self._set_endpoint()
 
         if self.endpoint.proxy and self.http_client is None:
-            self.http_client = httpx.Client(proxy=self.endpoint.proxy)
+            self.http_client = DefaultHttpxClient(proxy=self.endpoint.proxy)
 
         if self.endpoint.is_vertex or self.endpoint.endpoint_type == "anthropic_vertex":
             # Vertex needs token refresh on each access
@@ -203,7 +207,7 @@ class AnthropicChatClient(BaseChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
     ) -> ChatCompletionMessage:
         pass
 
@@ -245,7 +249,7 @@ class AnthropicChatClient(BaseChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
     ) -> Generator[ChatCompletionDeltaMessage, None, None]:
         pass
 
@@ -287,7 +291,7 @@ class AnthropicChatClient(BaseChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
     ) -> ChatCompletionMessage | Generator[ChatCompletionDeltaMessage, Any, None]:
         pass
 
@@ -328,7 +332,7 @@ class AnthropicChatClient(BaseChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
     ):
         if model is not None:
             self.model = model
@@ -496,7 +500,7 @@ class AnthropicChatClient(BaseChatClient):
         tools_params: list[AnthropicToolParam] | Omit = refactor_tool_use_params(_tools) if _tools else omit
         tool_choice_param = omit
         if _tool_choice is not omit:
-            tool_choice_param = refactor_tool_choice(_tool_choice)
+            tool_choice_param = refactor_tool_choice(cast(ToolChoice, _tool_choice))
 
         if not max_tokens:
             max_output_tokens = self.model_setting.max_output_tokens
@@ -579,7 +583,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         context_length_control: ContextLengthControlType = defs.CONTEXT_LENGTH_CONTROL,
         random_endpoint: bool = True,
         endpoint_id: str = "",
-        http_client: httpx.AsyncClient | None = None,
+        http_client: httpx2.AsyncClient | None = None,
         backend_name: str | None = None,
         settings: "Settings | SettingsDict | None" = None,  # Use default settings if not provided
     ):
@@ -600,10 +604,12 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
 
     @property
     def raw_client(self):
+        if self.http_client is not None and not isinstance(self.http_client, httpx2.AsyncClient):
+            raise TypeError("http_client must be an httpx2.AsyncClient; legacy httpx.AsyncClient instances are not supported")
         self.endpoint, self.model_id = self._set_endpoint()
 
         if self.endpoint.proxy and self.http_client is None:
-            self.http_client = httpx.AsyncClient(proxy=self.endpoint.proxy)
+            self.http_client = DefaultAsyncHttpxClient(proxy=self.endpoint.proxy)
 
         if self.endpoint.is_vertex or self.endpoint.endpoint_type == "anthropic_vertex":
             # Vertex needs token refresh on each access
@@ -702,7 +708,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
     ) -> ChatCompletionMessage:
         pass
 
@@ -744,7 +750,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
     ) -> AsyncGenerator[ChatCompletionDeltaMessage, Any]:
         pass
 
@@ -786,7 +792,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
     ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
         pass
 
@@ -827,7 +833,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         header_context: dict[str, Any] | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
+        timeout: float | httpx2.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
     ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
         if model is not None:
             self.model = model
@@ -996,7 +1002,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         tools_params: list[AnthropicToolParam] | Omit = refactor_tool_use_params(_tools) if _tools else omit
         tool_choice_param = omit
         if _tool_choice is not omit:
-            tool_choice_param = refactor_tool_choice(_tool_choice)
+            tool_choice_param = refactor_tool_choice(cast(ToolChoice, _tool_choice))
 
         if not max_tokens:
             max_output_tokens = self.model_setting.max_output_tokens
