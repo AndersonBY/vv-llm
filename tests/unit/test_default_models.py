@@ -113,6 +113,23 @@ def test_zhipuai_glm_53_defaults_match_documented_capabilities():
     }
 
 
+def test_zhipuai_glm_53_flash_defaults_match_documented_capabilities():
+    model = ZHIPUAI_MODELS["glm-5.3-flash"]
+
+    assert model["id"] == "glm-5.3-flash"
+    assert model["context_length"] == 1_000_000
+    assert model["max_output_tokens"] == 128_000
+    assert model["function_call_available"] is True
+    assert model["response_format_available"] is True
+    assert model["native_multimodal"] is True
+    assert model["capabilities"] == {
+        "tools": True,
+        "structured_output": "json_schema",
+        "input_modalities": ["text", "image", "video"],
+        "thinking": "always_enabled",
+    }
+
+
 def test_qwen_38_models_match_hosted_api_capabilities():
     for model_name in ("qwen3.8-max", "qwen3.8-27b"):
         model = QWEN_MODELS[model_name]
