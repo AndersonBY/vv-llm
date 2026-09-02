@@ -1,6 +1,7 @@
 # @Author: Bi Ying
 # @Date:   2024-07-26 14:48:55
 import json
+import re
 from functools import cached_property
 from collections.abc import Generator, AsyncGenerator, Iterable, Mapping
 from typing import Any, TYPE_CHECKING, overload, Literal, cast
@@ -57,6 +58,14 @@ if TYPE_CHECKING:
 
 
 _MISSING = object()
+_REASONING_MODEL_RE = re.compile(r"^(?:gpt-5(?:[.-]|$)|o(?:1|3|4)(?:[.-]|$))", re.IGNORECASE)
+
+
+def _uses_max_completion_tokens(model_id: str | None) -> bool:
+    """Return whether a Chat Completions model requires the completion-token field."""
+    if not model_id:
+        return False
+    return _REASONING_MODEL_RE.match(model_id.rsplit("/", 1)[-1]) is not None
 
 
 def _get_explicit_field(value: Any, field_name: str) -> Any:
@@ -444,8 +453,9 @@ class OpenAICompatibleChatClient(BaseChatClient):
             else:
                 max_tokens = self.model_setting.context_length - token_counts - 64
 
-        if "o3-mini" in self.model_id or "o4-mini" in self.model_id or "gpt-5" in self.model_id:
-            max_completion_tokens = max_tokens
+        if _uses_max_completion_tokens(self.model_id):
+            if max_completion_tokens is NOT_GIVEN:
+                max_completion_tokens = max_tokens
             max_tokens = NOT_GIVEN
 
         if self.endpoint is None:
@@ -1149,8 +1159,9 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
             else:
                 max_tokens = self.model_setting.context_length - token_counts - 64
 
-        if "o3-mini" in self.model_id or "o4-mini" in self.model_id or "gpt-5" in self.model_id:
-            max_completion_tokens = max_tokens
+        if _uses_max_completion_tokens(self.model_id):
+            if max_completion_tokens is NOT_GIVEN:
+                max_completion_tokens = max_tokens
             max_tokens = NOT_GIVEN
 
         if self.endpoint is None:
