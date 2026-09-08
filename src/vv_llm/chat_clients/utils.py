@@ -15,7 +15,7 @@ from anthropic import Anthropic, AnthropicVertex
 from anthropic._types import NOT_GIVEN as ANTHROPIC_NOT_GIVEN
 from openai.types.chat import ChatCompletionMessageParam
 
-from ..settings import settings
+from ..settings import settings, order_endpoints
 from ..utilities.retry import Retry
 from ..utilities.gcp_token import get_token_with_cache
 from ..types.enums import BackendType
@@ -97,7 +97,7 @@ class ToolCallContentProcessor:
 
 def _get_first_enabled_endpoint(backend_setting, settings):
     """Get the first enabled endpoint from backend settings"""
-    for endpoint_choice in backend_setting.endpoints:
+    for endpoint_choice in order_endpoints(backend_setting.endpoints):
         if not _endpoint_choice_enabled(endpoint_choice):
             continue
         if isinstance(endpoint_choice, dict):

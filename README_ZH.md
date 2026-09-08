@@ -289,7 +289,7 @@ asyncio.run(main())
 - **统一接口** — 所有后端共享规范化 `ChatRequest` 执行入口，同时兼容 `create_completion` / `create_stream`
 - **Embedding 与 rerank** — 提供统一的同步/异步检索客户端与标准化输出
 - **类型安全的工厂** — `create_chat_client(BackendType.X)` 返回对应的客户端类型
-- **多端点管理** — 每个后端可配置多个端点，支持随机选择和故障转移
+- **多端点管理** — 按优先级数值升序选择可用端点，同级保持配置顺序
 - **工具调用** — 跨后端标准化的 tool/function calling
 - **多模态** — 支持文本 + 图片输入
 - **思维链/推理** — 获取 Claude、DeepSeek Reasoner 等模型的推理过程
@@ -303,13 +303,19 @@ asyncio.run(main())
 - **显式 fallback** — 只按注册顺序执行 capability-aware route，不隐式切换 provider
 - **Scripted 测试** — 用确定性的响应、错误和 stream 脚本进行契约测试
 
-包内包含 `vv-llm-contract` 1.0.1。通过 `vv_llm.contract` 读取 contract
+模型端点绑定支持可选 `priority`，必须为大于等于 1 的整数，默认按 1 处理。
+显式指定 `endpoint_id` 时使用指定端点。
+`from vv_llm.settings import order_endpoints` 提供统一排序函数：
+`order_endpoints(endpoints, preferred_endpoint_id=None)` 返回新列表，
+偏好端点仅在同优先级内提前。
+
+包内包含 `vv-llm-contract` 1.1.0。通过 `vv_llm.contract` 读取 contract
 metadata、模型目录和完整性状态：
 
 ```python
 from vv_llm.contract import contract_info, load_catalog, verify_contract
 
-assert contract_info().contract_version == "1.0.1"
+assert contract_info().contract_version == "1.1.0"
 assert verify_contract().ok
 catalog = load_catalog()
 ```

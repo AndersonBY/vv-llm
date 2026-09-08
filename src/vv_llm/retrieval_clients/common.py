@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import random
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-import random
 import re
 import time
 from collections import defaultdict
@@ -11,7 +11,7 @@ from typing import Any, cast
 
 import httpx2
 
-from ..settings import Settings, normalize_settings
+from ..settings import Settings, normalize_settings, order_endpoints
 from ..types.llm_parameters import EndpointSetting, RetrievalBackendSettings
 from ..types.settings import EndpointOptionDict, SettingsDict
 from ..utilities.rate_limiter import AsyncDiskCacheRateLimiter, AsyncMemoryRateLimiter, AsyncRedisRateLimiter
@@ -279,7 +279,7 @@ class BaseRetrievalClient:
                 if not available_endpoints:
                     raise ValueError(f"No enabled endpoints available for model {self.model}")
 
-                endpoint_option = random.choice(available_endpoints)
+                endpoint_option = order_endpoints(available_endpoints)[0]
                 if isinstance(endpoint_option, dict):
                     self.endpoint_id = endpoint_option["endpoint_id"]
                     self.model_id = endpoint_option.get("model_id", self.model_setting.id)
@@ -443,7 +443,7 @@ class BaseAsyncRetrievalClient:
                 if not available_endpoints:
                     raise ValueError(f"No enabled endpoints available for model {self.model}")
 
-                endpoint_option = random.choice(available_endpoints)
+                endpoint_option = order_endpoints(available_endpoints)[0]
                 if isinstance(endpoint_option, dict):
                     self.endpoint_id = endpoint_option["endpoint_id"]
                     self.model_id = endpoint_option.get("model_id", self.model_setting.id)

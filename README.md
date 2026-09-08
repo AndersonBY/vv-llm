@@ -294,7 +294,7 @@ asyncio.run(main())
 - **Unified interface** — canonical `ChatRequest` execution across all providers, with `create_completion` / `create_stream` retained for compatibility
 - **Embedding & rerank** — unified sync/async retrieval clients with normalized outputs
 - **Type-safe factory** — `create_chat_client(BackendType.X)` returns the correct client type
-- **Multi-endpoint** — configure multiple endpoints per backend with random selection and failover
+- **Multi-endpoint** — select enabled endpoints by ascending priority, preserving configuration order within each tier
 - **Tool calling** — normalized tool/function calling across providers
 - **Multimodal** — text + image inputs where supported
 - **Thinking/reasoning** — access chain-of-thought from Claude, DeepSeek Reasoner, etc.
@@ -308,14 +308,20 @@ asyncio.run(main())
 - **Explicit fallback** — registered, ordered, capability-aware routes with no hidden provider switching
 - **Scripted testing** — deterministic completion/error/stream scripts for conformance tests
 
-The package includes `vv-llm-contract` 1.0.1. Read contract metadata, the model
+Model endpoint bindings accept an optional `priority` integer of at least 1
+(default: 1). Explicit `endpoint_id` selection takes precedence.
+`from vv_llm.settings import order_endpoints` exposes the same stable ordering:
+`order_endpoints(endpoints, preferred_endpoint_id=None)` returns a new list.
+A preferred endpoint moves ahead only within its priority tier.
+
+The package includes `vv-llm-contract` 1.1.0. Read contract metadata, the model
 catalog, and integrity status through `vv_llm.contract`:
 
 ```python
 from vv_llm.contract import contract_info, load_catalog, verify_contract
 
 info = contract_info()
-assert info.contract_version == "1.0.1"
+assert info.contract_version == "1.1.0"
 assert verify_contract().ok
 catalog = load_catalog()
 ```

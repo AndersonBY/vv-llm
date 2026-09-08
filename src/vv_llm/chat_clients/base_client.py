@@ -1,5 +1,4 @@
 import time
-import random
 import asyncio
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -28,7 +27,7 @@ from anthropic import (
 )
 from anthropic.types.thinking_config_param import ThinkingConfigParam
 
-from ..settings import Settings, normalize_settings
+from ..settings import Settings, normalize_settings, order_endpoints
 from ..types import defaults as defs
 from ..types.settings import EndpointOptionDict, SettingsDict
 from ..types.enums import ContextLengthControlType, BackendType
@@ -230,7 +229,7 @@ class BaseChatClient(ABC):
                 if not available_endpoints:
                     raise ValueError(f"No enabled endpoints available for model {self.model}")
 
-                endpoint = random.choice(available_endpoints)
+                endpoint = order_endpoints(available_endpoints)[0]
                 if isinstance(endpoint, dict):
                     self.endpoint_id = endpoint["endpoint_id"]
                     self.model_id = endpoint["model_id"]
@@ -717,7 +716,7 @@ class BaseAsyncChatClient(ABC):
                 if not available_endpoints:
                     raise ValueError(f"No enabled endpoints available for model {self.model}")
 
-                endpoint = random.choice(available_endpoints)
+                endpoint = order_endpoints(available_endpoints)[0]
                 if isinstance(endpoint, dict):
                     self.endpoint_id = endpoint["endpoint_id"]
                     self.model_id = endpoint["model_id"]

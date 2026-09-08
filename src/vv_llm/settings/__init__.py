@@ -7,8 +7,19 @@ from pydantic import BaseModel, Field
 
 from ..types import defaults as defs
 from ..types.enums import BackendType, EmbeddingBackendType, RerankBackendType
-from ..types.settings import SettingsDict
+from ..types.settings import EndpointOptionDict, SettingsDict
 from ..types.llm_parameters import BackendSettings, EndpointSetting, RetrievalBackendSettings
+
+
+def order_endpoints(endpoints: list[str | EndpointOptionDict], preferred_endpoint_id: str | None = None) -> list[str | EndpointOptionDict]:
+    """Order bindings by priority, preferring an endpoint only within its tier."""
+    return sorted(
+        endpoints,
+        key=lambda endpoint: (
+            endpoint.get("priority", 1) if isinstance(endpoint, dict) else 1,
+            (endpoint["endpoint_id"] if isinstance(endpoint, dict) else endpoint) != preferred_endpoint_id,
+        ),
+    )
 
 
 class RedisConfig(BaseModel):
