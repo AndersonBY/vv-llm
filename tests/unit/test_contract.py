@@ -40,12 +40,20 @@ def test_vendored_contract_matches_consumer_lock():
     assert info.contract_version == "1.0.1"
     assert info.schema_version == 2
     assert info.fixture_version == 2
-    assert info.catalog_revision == 2
+    assert info.catalog_revision == 3
     assert info.consumer_lock_sha256 == CONSUMER_LOCK_SHA256
 
 
 def test_runtime_defaults_are_exactly_the_locked_catalog():
     catalog = load_catalog()
+    assert catalog["backends"]["openai"]["models"]["gpt-6-astra"] == {
+        "id": "gpt-6-astra",
+        "context_length": 1050000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+    }
     for backend in BACKENDS:
         assert getattr(defaults, f"{backend.upper()}_DEFAULT_MODEL") == catalog["default_models"][backend]
         assert getattr(defaults, f"{backend.upper()}_MODELS") == catalog["backends"][backend]["models"]

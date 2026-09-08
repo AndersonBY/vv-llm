@@ -19,7 +19,7 @@ _LOCK_NAME = "consumer-lock.v1.json"
 _MANIFEST_NAME = "manifest.json"
 _CHECKSUMS_NAME = "checksums.sha256"
 _DEFAULT_CATALOG = "default-chat-catalog.json"
-CONSUMER_LOCK_SHA256: Final[str] = "3407cc7d398885284f32c453a8e71c6dbb2f40a10eb0cc9f2d21a0a7c7dc6b49"
+CONSUMER_LOCK_SHA256: Final[str] = "2b72cec499a3766bfe0fb3bb612576cf984b11ebbfefe5086a094d840f5734ad"
 
 
 class ContractIntegrityError(RuntimeError):
