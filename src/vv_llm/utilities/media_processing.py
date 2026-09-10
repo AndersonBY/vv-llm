@@ -52,7 +52,8 @@ class ImageProcessor:
                 return Image.open(BytesIO(image_data))
             elif not self.is_local:
                 image_url = self.image_source
-                response = httpx2.get(image_url)
+                response = httpx2.get(image_url, follow_redirects=True)
+                response.raise_for_status()
                 return Image.open(BytesIO(response.content))
             else:
                 return Image.open(self.image_source)
