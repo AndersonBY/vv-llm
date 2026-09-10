@@ -19,7 +19,7 @@ _LOCK_NAME = "consumer-lock.v1.json"
 _MANIFEST_NAME = "manifest.json"
 _CHECKSUMS_NAME = "checksums.sha256"
 _DEFAULT_CATALOG = "default-chat-catalog.json"
-CONSUMER_LOCK_SHA256: Final[str] = "88040f2f41e84c45bad0e7ff70239df4ba33424246db2305dcf411babdcb7396"
+CONSUMER_LOCK_SHA256: Final[str] = "6302abb901f91d05db75f4970e7102d426217d003d772f4364c4126f2e350fa9"
 
 
 class ContractIntegrityError(RuntimeError):
@@ -67,7 +67,7 @@ class ContractVerification:
 CONTRACT_VERSION: Final[str] = "1.1.0"
 SCHEMA_VERSION: Final[int] = 2
 FIXTURE_VERSION: Final[int] = 2
-CATALOG_REVISION: Final[int] = 2
+CATALOG_REVISION: Final[int] = 4
 
 
 def _resource(name: str):

@@ -40,7 +40,7 @@ def test_vendored_contract_matches_consumer_lock():
     assert info.contract_version == "1.1.0"
     assert info.schema_version == 2
     assert info.fixture_version == 2
-    assert info.catalog_revision == 3
+    assert info.catalog_revision == 4
     assert info.consumer_lock_sha256 == CONSUMER_LOCK_SHA256
 
 

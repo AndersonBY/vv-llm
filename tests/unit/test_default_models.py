@@ -73,6 +73,12 @@ def test_anthropic_claude_opus_5_is_available():
     assert model["native_multimodal"] is True
 
 
+def test_deepseek_flash_models_match_vision_parameters():
+    vision = DEEPSEEK_MODELS["deepseek-v4-flash-vision-exp"]
+    for model_name in ("deepseek-v4.1-flash", "deepseek-flash"):
+        assert DEEPSEEK_MODELS[model_name] == {**vision, "id": model_name}
+
+
 def test_deepseek_v4_models_expose_configurable_thinking_capability():
     for model_name in ("deepseek-v4-flash", "deepseek-v4-pro"):
         capabilities = DEEPSEEK_MODELS[model_name]["capabilities"]
