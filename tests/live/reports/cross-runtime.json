@@ -1,0 +1,74 @@
+{
+  "recorded_at": "2026-09-28T19:29:07.115Z",
+  "prompt": "Reply only OK.",
+  "results": [
+    {
+      "runtime": "typescript",
+      "model": "deepseek-flash",
+      "effort": "xhigh",
+      "transport": "chat_completions",
+      "catalog_efforts_inherited": true,
+      "result": "ACCEPTED",
+      "content_present": true,
+      "reasoning_present": true,
+      "prompt_tokens": 34,
+      "output_tokens": 30,
+      "total_tokens": 64
+    },
+    {
+      "runtime": "typescript",
+      "model": "deepseek-flash",
+      "effort": "xhigh",
+      "transport": "stream",
+      "catalog_efforts_inherited": true,
+      "result": "ACCEPTED",
+      "content_present": true,
+      "reasoning_present": true,
+      "prompt_tokens": 34,
+      "output_tokens": 18,
+      "total_tokens": 52
+    },
+    {
+      "runtime": "typescript",
+      "model": "deepseek-flash",
+      "effort": "none",
+      "transport": "chat_completions",
+      "result": "ACCEPTED",
+      "content_present": true,
+      "reasoning_present": false,
+      "prompt_tokens": 8,
+      "output_tokens": 1,
+      "total_tokens": 9
+    },
+    {
+      "runtime": "typescript",
+      "model": "deepseek-flash",
+      "effort": "none",
+      "transport": "stream",
+      "result": "ACCEPTED",
+      "content_present": true,
+      "reasoning_present": false,
+      "prompt_tokens": 8,
+      "output_tokens": 1,
+      "total_tokens": 9
+    },
+    {
+      "runtime": "rust",
+      "model": "deepseek-flash",
+      "effort": "none",
+      "transport": "chat_completions",
+      "result": "ACCEPTED",
+      "content_present": true,
+      "reasoning_present": false
+    },
+    {
+      "runtime": "rust",
+      "model": "deepseek-flash",
+      "effort": "xhigh",
+      "transport": "chat_completions",
+      "result": "ACCEPTED",
+      "content_present": true,
+      "reasoning_present": true
+    }
+  ]
+}

@@ -15,6 +15,7 @@ class ProviderRegistration:
     name: str
     factory: Callable[[], Any]
     capabilities: ModelCapabilities
+    model_capabilities: Mapping[str, ModelCapabilities] | None = None
 
 
 @dataclass(frozen=True)
@@ -33,11 +34,12 @@ class ProviderRegistry:
         factory: Callable[[], Any],
         *,
         capabilities: ModelCapabilities,
+        model_capabilities: Mapping[str, ModelCapabilities] | None = None,
         replace: bool = False,
     ) -> None:
         if name in self._providers and not replace:
             raise ValueError(f"provider is already registered: {name}")
-        self._providers[name] = ProviderRegistration(name, factory, capabilities)
+        self._providers[name] = ProviderRegistration(name, factory, capabilities, model_capabilities)
 
     def get(self, name: str) -> ProviderRegistration:
         try:
@@ -101,7 +103,11 @@ class FallbackChatClient:
                 last_error = capability_error
                 continue
             try:
-                return registration.factory().create(routed), index, route
+                client = registration.factory()
+                if routed.options.provider_options and (capability_error := _capability_error(registration, routed, client)) is not None:
+                    last_error = capability_error
+                    continue
+                return client.create(routed), index, route
             except Exception as exception:
                 error = classify_exception(
                     exception,
@@ -126,7 +132,11 @@ class FallbackChatClient:
                 last_error = capability_error
                 continue
             try:
-                iterator = iter(registration.factory().create(routed))
+                client = registration.factory()
+                if routed.options.provider_options and (capability_error := _capability_error(registration, routed, client)) is not None:
+                    last_error = capability_error
+                    continue
+                iterator = iter(client.create(routed))
                 prelude: list[Any] = []
                 while True:
                     try:
@@ -199,7 +209,11 @@ class AsyncFallbackChatClient:
                 last_error = capability_error
                 continue
             try:
-                return await registration.factory().create(routed), index, route
+                client = registration.factory()
+                if routed.options.provider_options and (capability_error := _capability_error(registration, routed, client)) is not None:
+                    last_error = capability_error
+                    continue
+                return await client.create(routed), index, route
             except Exception as exception:
                 error = classify_exception(
                     exception,
@@ -227,7 +241,11 @@ class AsyncFallbackChatClient:
                 last_error = capability_error
                 continue
             try:
-                iterator = await registration.factory().create(routed)
+                client = registration.factory()
+                if routed.options.provider_options and (capability_error := _capability_error(registration, routed, client)) is not None:
+                    last_error = capability_error
+                    continue
+                iterator = await client.create(routed)
                 prelude: list[Any] = []
                 while True:
                     try:
@@ -259,11 +277,15 @@ class AsyncFallbackChatClient:
 def _capability_error(
     registration: ProviderRegistration,
     request: ChatRequest,
+    client: Any = None,
 ) -> VvLlmError | None:
+    backend = getattr(client, "backend_name", "")
+    backend_name = getattr(backend, "value", backend)
     try:
         request.validate_capabilities(
-            registration.capabilities,
+            (registration.model_capabilities or {}).get(request.model, registration.capabilities),
             CapabilityPolicy.STRICT,
+            backend_name=backend_name,
         )
     except ValueError as exception:
         return VvLlmError(

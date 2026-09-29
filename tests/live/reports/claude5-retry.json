@@ -1,0 +1,42 @@
+{
+  "checked_at": "2026-09-28T18:49:08.755898+00:00",
+  "runtime": "python",
+  "prompt": "Reply only OK.",
+  "max_tokens": 256,
+  "configured_timeout_seconds": 25,
+  "request_limit": 2,
+  "truncated_cases": 0,
+  "results": [
+    {
+      "backend": "anthropic",
+      "model": "claude-fable-5",
+      "wire_model": "global.anthropic.claude-fable-5",
+      "transport": "anthropic_bedrock",
+      "effort": "low",
+      "probe": false,
+      "result": "ACCEPTED",
+      "content_present": true,
+      "reasoning_present": false,
+      "output_tokens": 4,
+      "reasoning_tokens": null,
+      "output_limit_reached": false,
+      "latency_ms": 4781
+    },
+    {
+      "backend": "anthropic",
+      "model": "claude-fable-5",
+      "wire_model": "global.anthropic.claude-fable-5",
+      "transport": "anthropic_bedrock",
+      "effort": "max",
+      "probe": false,
+      "result": "ACCEPTED",
+      "content_present": true,
+      "reasoning_present": false,
+      "output_tokens": 136,
+      "reasoning_tokens": null,
+      "output_limit_reached": false,
+      "latency_ms": 4907
+    }
+  ],
+  "skipped": []
+}

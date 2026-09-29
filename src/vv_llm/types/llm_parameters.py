@@ -167,6 +167,12 @@ class ModelSetting(BaseModel):
             )
             return self
 
+        inherited = ModelCapabilities.from_legacy(
+            function_call_available=self.function_call_available,
+            response_format_available=self.response_format_available,
+            native_multimodal=self.native_multimodal,
+        ).model_dump()
+        self.capabilities = ModelCapabilities.model_validate({**inherited, **self.capabilities.model_dump(exclude_unset=True)})
         self.function_call_available = self.capabilities.tools
         self.response_format_available = self.capabilities.structured_output is not StructuredOutputCapability.NONE
         self.native_multimodal = Modality.IMAGE in self.capabilities.input_modalities
@@ -191,8 +197,13 @@ class BackendSettings(BaseModel):
         for model_name, model_data in default_models.items():
             user_model_data = input_models.get(model_name, {})
             merged_model_data = {**model_data, **user_model_data}
-            if "capabilities" not in user_model_data and "capabilities" in merged_model_data:
-                capabilities = ModelCapabilities.model_validate(merged_model_data["capabilities"])
+            if "capabilities" in merged_model_data and ("capabilities" not in user_model_data or isinstance(user_model_data["capabilities"], dict)):
+                inherited = ModelCapabilities.from_legacy(
+                    function_call_available=bool(merged_model_data.get("function_call_available")),
+                    response_format_available=bool(merged_model_data.get("response_format_available")),
+                    native_multimodal=bool(merged_model_data.get("native_multimodal")),
+                ).model_dump()
+                capabilities = ModelCapabilities.model_validate({**inherited, **(model_data.get("capabilities") or {})})
                 if "function_call_available" in user_model_data:
                     capabilities.tools = bool(user_model_data["function_call_available"])
                 if "response_format_available" in user_model_data:
@@ -202,7 +213,7 @@ class BackendSettings(BaseModel):
                         capabilities.input_modalities.add(Modality.IMAGE)
                     else:
                         capabilities.input_modalities.discard(Modality.IMAGE)
-                merged_model_data["capabilities"] = capabilities
+                merged_model_data["capabilities"] = ModelCapabilities.model_validate({**capabilities.model_dump(), **user_model_data.get("capabilities", {})})
             updated_models[model_name] = ModelSetting(**merged_model_data)
 
         # Add any new models from input that weren't in defaults

@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import BaseModel, Field, PrivateAttr, field_validator
 
 
 class CapabilityPolicy(str, Enum):
@@ -84,6 +84,36 @@ class ModelCapabilities(BaseModel):
     streaming: bool = True
     parallel_tool_calls: bool = False
     thinking: ThinkingCapability = ThinkingCapability.UNKNOWN
+    reasoning_efforts: list[str] | None = None
+    reasoning_effort_aliases: dict[str, str] | None = None
+
+    @field_validator("reasoning_efforts")
+    @classmethod
+    def validate_reasoning_efforts(cls, values: list[str] | None) -> list[str] | None:
+        if values is not None and (any(not value.strip() for value in values) or len(set(values)) != len(values)):
+            raise ValueError("reasoning_efforts must contain unique non-empty strings")
+        return values
+
+    @field_validator("reasoning_effort_aliases")
+    @classmethod
+    def validate_reasoning_effort_aliases(cls, aliases: dict[str, str] | None) -> dict[str, str] | None:
+        if aliases is not None and any(not alias.strip() or not target.strip() for alias, target in aliases.items()):
+            raise ValueError("reasoning_effort_aliases must map non-empty strings to non-empty strings")
+        return aliases
+
+    def validate_reasoning_effort(self, effort: str | None, model: str | None, policy: CapabilityPolicy = CapabilityPolicy.WARN) -> None:
+        policy = CapabilityPolicy(policy)
+        if effort is None or policy is CapabilityPolicy.PASSTHROUGH:
+            return
+        if self.reasoning_efforts is None:
+            message = f"Model {model!r} reasoning_effort support is unknown"
+        elif effort not in self.reasoning_efforts and (self.reasoning_effort_aliases or {}).get(effort) not in self.reasoning_efforts:
+            message = f"Model {model!r} does not support reasoning_effort={effort!r}. Supported values: {', '.join(self.reasoning_efforts) or '(none)'}"
+        else:
+            return
+        if policy is CapabilityPolicy.STRICT:
+            raise ValueError(message)
+        warnings.warn(message, UserWarning, stacklevel=2)
 
     @classmethod
     def from_legacy(
@@ -260,10 +290,17 @@ class ChatRequest(BaseModel):
         self,
         capabilities: ModelCapabilities,
         policy: CapabilityPolicy = CapabilityPolicy.WARN,
+        *,
+        backend_name: str = "",
     ) -> None:
+        from ..chat_clients.reasoning import resolve_reasoning_effort
+
+        policy = CapabilityPolicy(policy)
+        body = self.to_completion_kwargs(backend_name).get("extra_body")
+        effort, _ = resolve_reasoning_effort(self.options.reasoning_effort, body, "validation", backend_name)
+        capabilities.validate_reasoning_effort(effort, self.model, policy)
         if policy is CapabilityPolicy.PASSTHROUGH:
             return
-
         conflicts: list[str] = []
         thinking = self.options.thinking
         if isinstance(thinking, ThinkingPreference) and thinking.mode is not ThinkingMode.DEFAULT:
@@ -324,7 +361,13 @@ class ChatRequest(BaseModel):
         # body by the SDK, so retaining it here keeps the field on the wire
         # without adding an SDK-version-specific keyword argument.
         extra_body.update(self.options._contract_passthrough_options)
-        extra_body.update(self.options.provider_options.get(backend_name, {}))
+        from ..chat_clients.reasoning import merge_reasoning_body
+
+        for key, value in self.options.provider_options.get(backend_name, {}).items():
+            if key in {"reasoning_effort", "reasoning", "output_config", "thinking", "google"}:
+                extra_body = merge_reasoning_body(extra_body, {key: value})
+            else:
+                extra_body[key] = value
         if extra_body:
             kwargs["extra_body"] = extra_body
         return kwargs

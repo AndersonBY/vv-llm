@@ -76,7 +76,10 @@ def test_anthropic_claude_opus_5_is_available():
 def test_deepseek_flash_models_match_vision_parameters():
     vision = DEEPSEEK_MODELS["deepseek-v4-flash-vision-exp"]
     for model_name in ("deepseek-v4.1-flash", "deepseek-flash"):
-        assert DEEPSEEK_MODELS[model_name] == {**vision, "id": model_name}
+        expected = {**vision, "id": model_name, "capabilities": dict(vision["capabilities"])}
+        expected["capabilities"]["reasoning_efforts"] = ["none", "low", "high", "max"]
+        expected["capabilities"]["reasoning_effort_aliases"] = {"minimal": "low", "medium": "high", "xhigh": "high", "ultra": "max"}
+        assert DEEPSEEK_MODELS[model_name] == expected
 
 
 def test_deepseek_v4_models_expose_configurable_thinking_capability():
@@ -116,6 +119,7 @@ def test_zhipuai_glm_53_defaults_match_documented_capabilities():
         "tools": True,
         "structured_output": "json_schema",
         "thinking": "always_enabled",
+        "reasoning_efforts": ["low", "high", "max"],
     }
 
 
@@ -133,6 +137,7 @@ def test_zhipuai_glm_53_flash_defaults_match_documented_capabilities():
         "structured_output": "json_schema",
         "input_modalities": ["text", "image", "video"],
         "thinking": "always_enabled",
+        "reasoning_efforts": ["low", "high", "max"],
     }
 
 
@@ -185,4 +190,5 @@ def test_xai_grok_46_matches_documented_capabilities():
         "structured_output": "json_schema",
         "input_modalities": ["text", "image"],
         "thinking": "configurable",
+        "reasoning_efforts": ["low", "medium", "high", "xhigh"],
     }

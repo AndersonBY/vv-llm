@@ -289,6 +289,81 @@ async def main():
 asyncio.run(main())
 ```
 
+## Reasoning effort
+
+Model capabilities expose `reasoning_efforts`: omitted/null means unknown, `[]`
+means unsupported, and a list declares effective choices. Unspecified effort uses
+the provider default; `none` is an explicit model-dependent value.
+
+Select a different model through the request `model` or an endpoint binding's
+`model_id`. A conflicting `extra_body.model` is rejected even with passthrough.
+
+Use `client.create(request, capability_policy=CapabilityPolicy.STRICT)` or
+`client.create_completion(..., capability_policy=CapabilityPolicy.STRICT)`
+for validation before sending. The default is `WARN`; `PASSTHROUGH` skips model
+support checks. Conflicting controls still fail. Responses maps effort to
+`reasoning.effort` and Anthropic maps it to `output_config.effort`.
+
+Endpoint binding `capabilities` partially override model metadata; lists replace
+inherited lists. Registry `model_capabilities` supplies per-model fallback
+metadata. Each route preserves the requested effort and skips incompatible models.
+
+Existing keyword and typed calls remain valid. Leaving effort unspecified still
+uses the provider default. Calls that previously sent an unrecognized value can
+now emit a warning under the default policy; opting into strict validation rejects
+both unsupported values and unknown model support before a provider request.
+This applies to sync/async and completion/streaming paths.
+
+After configuring a DeepSeek Flash endpoint binding:
+
+```python
+from vv_llm import CapabilityPolicy, ChatRequest, ChatRequestOptions
+from vv_llm.chat_clients import BackendType, create_chat_client
+
+client = create_chat_client(BackendType.DeepSeek, model="deepseek-flash")
+print(client.capabilities.reasoning_efforts)
+print(client.capabilities.reasoning_effort_aliases)
+
+response = client.create(
+    ChatRequest(
+        model=client.model,
+        messages=[{"role": "user", "content": "Compute 37 * 19."}],
+        options=ChatRequestOptions(reasoning_effort="xhigh", max_tokens=256),
+    ),
+    capability_policy=CapabilityPolicy.STRICT,
+)
+# The provider receives xhigh unchanged; its documented effective target is high.
+```
+
+The keyword API uses the same policy and model-specific validation:
+
+```python
+response = client.create_completion(
+    messages=[{"role": "user", "content": "Compute 37 * 19."}],
+    reasoning_effort="high",
+    capability_policy=CapabilityPolicy.STRICT,
+    max_tokens=256,
+)
+```
+
+Use effective choices for a model selector; compatibility aliases are additional
+accepted inputs, not separate intensities. An included `none` is an explicit off
+control. Effort omission does not enable or disable thinking: use
+`ThinkingPreference` for that separate model capability. GLM-5.3/FLASH reject
+xhigh in strict mode and require thinking; GLM-5.2 permits explicit disabled
+thinking. In the recorded GLM-5.2 live checks, none/minimal still returned reasoning
+content, while explicit disabled thinking did not.
+
+[Offline capabilities/validation/fallback](examples/reasoning_capabilities.py)
+and [configured effort/thinking/streaming](examples/reasoning_effort.py) examples
+are described in [the examples guide](examples/README.md#reasoning-effort).
+
+`reasoning_effort_aliases` maps documented compatibility inputs to effective choices.
+Aliases are accepted only when their target remains in `reasoning_efforts`; requests
+retain the original input. Both lists and alias maps on bindings replace inherited
+fields. DeepSeek exposes low/high/max, plus none for off, with minimal → low,
+medium/xhigh → high and ultra → max. Aliases are not extra selectable intensities.
+
 ## Features
 
 - **Unified interface** — canonical `ChatRequest` execution across all providers, with `create_completion` / `create_stream` retained for compatibility
@@ -314,14 +389,14 @@ Model endpoint bindings accept an optional `priority` integer of at least 1
 `order_endpoints(endpoints, preferred_endpoint_id=None)` returns a new list.
 A preferred endpoint moves ahead only within its priority tier.
 
-The package includes `vv-llm-contract` 1.1.0. Read contract metadata, the model
+The package includes `vv-llm-contract` 1.2.0. Read contract metadata, the model
 catalog, and integrity status through `vv_llm.contract`:
 
 ```python
 from vv_llm.contract import contract_info, load_catalog, verify_contract
 
 info = contract_info()
-assert info.contract_version == "1.1.0"
+assert info.contract_version == "1.2.0"
 assert verify_contract().ok
 catalog = load_catalog()
 ```
@@ -356,7 +431,8 @@ Runnable examples are in [`examples/`](examples/README.md): `basic_chat.py`,
 `streaming.py`, `tools.py`, `multimodal.py`, and `contract_json.py` cover the
 main typed request paths. `async_streaming.py`, `typed_thinking.py`,
 `middleware_metadata.py`, and `registry_fallback.py` cover focused extensions;
-the last one is deterministic and offline.
+the last one is deterministic and offline. `reasoning_capabilities.py` is also
+offline; `reasoning_effort.py` sends one configured request with optional streaming.
 
 ## Cache Usage Semantics
 
@@ -436,6 +512,23 @@ VV_LLM_RUN_LIVE_TESTS=1 python tests/live/run_live_tests.py test_deepseek_contra
 
 The smoke output contains only provider/model, response shape, usage counters,
 and exit status; it does not print credentials or response content.
+
+#### Reasoning effort live checks
+
+For an opt-in transport smoke using an explicit private settings file:
+
+```bash
+python tests/live/reasoning_effort_smoke.py --settings /secure/path/llm_settings.json \
+  --backend deepseek --aliases --invalid-probe --limit 18
+```
+
+The smoke tests each declared value on credentialed model/transport routes, up to
+80 requests by default. `--aliases` includes compatibility inputs; `--invalid-probe`
+tests an invalid value; `--model backend:model` selects a model; `--report` saves
+sanitized observations. `--include-catalog` opts into default-endpoint bindings
+absent from the local model list. Acceptance alone does not prove intensity behavior.
+The SDK timeout is configured per request, not a total wall-clock limit.
+See [the recorded live results](tests/live/reasoning-effort-report.md).
 
 ### Release publishers
 

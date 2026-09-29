@@ -13,7 +13,6 @@ from openai.types.shared_params.metadata import Metadata
 from openai.types.chat.completion_create_params import ResponseFormat
 from openai.types.chat.chat_completion_modality import ChatCompletionModality
 from openai.types.chat.chat_completion_audio_param import ChatCompletionAudioParam
-from openai.types.chat.chat_completion_reasoning_effort import ChatCompletionReasoningEffort
 from openai.types.chat.chat_completion_stream_options_param import ChatCompletionStreamOptionsParam
 from openai.types.chat.chat_completion_prediction_content_param import ChatCompletionPredictionContentParam
 
@@ -80,6 +79,32 @@ def _build_header_context(
     if header_context:
         context.update(header_context)
     return context
+
+
+def _prepare_model(client: Any, model: str | None) -> None:
+    if model is not None and model != client.model:
+        client.model = model
+        if client.random_endpoint:
+            client.endpoint = None
+            client.__dict__.pop("raw_client", None)
+    client.model_setting = client.backend_settings.get_model_setting(client.model)
+    client.model_id = client.model_setting.id
+    client.endpoint, client.model_id = client._set_endpoint()
+
+
+def _effective_capabilities(client: Any) -> ModelCapabilities:
+    model_setting = client.backend_settings.get_model_setting(client.model)
+    capabilities = model_setting.capabilities or ModelCapabilities()
+    endpoint = getattr(client, "endpoint", None)
+    endpoint_id = getattr(endpoint, "id", None) or getattr(client, "endpoint_id", None)
+    bindings = order_endpoints(client._get_available_endpoints(model_setting.endpoints))
+    for binding in bindings:
+        binding_id = binding["endpoint_id"] if isinstance(binding, dict) else binding
+        if not endpoint_id or binding_id == endpoint_id:
+            if isinstance(binding, dict):
+                return ModelCapabilities.model_validate({**capabilities.model_dump(), **binding.get("capabilities", {})})
+            return capabilities
+    return capabilities
 
 
 def _endpoint_option_enabled(endpoint_option: str | EndpointOptionDict | dict[str, Any]) -> bool:
@@ -208,17 +233,15 @@ class BaseChatClient(ABC):
         return available_endpoints
 
     def _model_endpoint_binding_enabled(self, endpoint_id: str) -> bool:
-        for endpoint_option in self.backend_settings.models[self.model].endpoints:
-            if isinstance(endpoint_option, dict) and endpoint_option.get("endpoint_id") == endpoint_id:
-                return _endpoint_option_enabled(endpoint_option)
-            if endpoint_option == endpoint_id:
-                return True
-        return True
+        bindings = [
+            binding for binding in self.backend_settings.models[self.model].endpoints if (binding.get("endpoint_id") if isinstance(binding, dict) else binding) == endpoint_id
+        ]
+        return not bindings or any(_endpoint_option_enabled(binding) for binding in bindings)
 
     def set_model_id_by_endpoint_id(self, endpoint_id: str):
-        for endpoint_option in self.backend_settings.models[self.model].endpoints:
+        for endpoint_option in order_endpoints(self._get_available_endpoints(self.backend_settings.models[self.model].endpoints)):
             if isinstance(endpoint_option, dict) and endpoint_id == endpoint_option["endpoint_id"]:
-                self.model_id = endpoint_option["model_id"]
+                self.model_id = endpoint_option.get("model_id") or self.backend_settings.models[self.model].id
                 break
         return self.model_id
 
@@ -232,7 +255,7 @@ class BaseChatClient(ABC):
                 endpoint = order_endpoints(available_endpoints)[0]
                 if isinstance(endpoint, dict):
                     self.endpoint_id = endpoint["endpoint_id"]
-                    self.model_id = endpoint["model_id"]
+                    self.model_id = endpoint.get("model_id") or self.backend_settings.models[self.model].id
                     self.rpm = endpoint.get("rpm", None)
                     self.tpm = endpoint.get("tpm", None)
                     self.concurrent_requests = endpoint.get("concurrent_requests", None)
@@ -320,7 +343,8 @@ class BaseChatClient(ABC):
         parallel_tool_calls: bool | OpenAINotGiven = NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = NOT_GIVEN,
@@ -362,7 +386,8 @@ class BaseChatClient(ABC):
         parallel_tool_calls: bool | OpenAINotGiven = NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = NOT_GIVEN,
@@ -404,7 +429,8 @@ class BaseChatClient(ABC):
         parallel_tool_calls: bool | OpenAINotGiven = NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = NOT_GIVEN,
@@ -445,7 +471,8 @@ class BaseChatClient(ABC):
         parallel_tool_calls: bool | OpenAINotGiven = NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = NOT_GIVEN,
@@ -484,7 +511,8 @@ class BaseChatClient(ABC):
         parallel_tool_calls: bool | OpenAINotGiven = NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = NOT_GIVEN,
@@ -525,6 +553,7 @@ class BaseChatClient(ABC):
                 prediction=prediction,
                 presence_penalty=presence_penalty,
                 reasoning_effort=reasoning_effort,
+                capability_policy=capability_policy,
                 thinking=thinking,
                 seed=seed,
                 service_tier=service_tier,
@@ -542,8 +571,7 @@ class BaseChatClient(ABC):
 
     @property
     def capabilities(self) -> ModelCapabilities:
-        capabilities = self.backend_settings.get_model_setting(self.model).capabilities
-        return capabilities or ModelCapabilities()
+        return _effective_capabilities(self)
 
     def create(
         self,
@@ -551,11 +579,13 @@ class BaseChatClient(ABC):
         *,
         capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
     ) -> ChatCompletionMessage | Generator[ChatCompletionDeltaMessage, Any, None]:
-        request.validate_capabilities(self.capabilities, capability_policy)
+        _prepare_model(self, request.model)
+        capabilities = self.capabilities
+        request.validate_capabilities(capabilities, capability_policy, backend_name=self.backend_name.value)
         create_completion = cast(Any, self.create_completion)
         return cast(
             ChatCompletionMessage | Generator[ChatCompletionDeltaMessage, Any, None],
-            create_completion(**request.to_completion_kwargs(self.backend_name.value)),
+            create_completion(**request.to_completion_kwargs(self.backend_name.value), capability_policy=CapabilityPolicy.PASSTHROUGH),
         )
 
     def model_list(self):
@@ -694,17 +724,15 @@ class BaseAsyncChatClient(ABC):
         return available_endpoints
 
     def _model_endpoint_binding_enabled(self, endpoint_id: str) -> bool:
-        for endpoint_option in self.backend_settings.models[self.model].endpoints:
-            if isinstance(endpoint_option, dict) and endpoint_option.get("endpoint_id") == endpoint_id:
-                return _endpoint_option_enabled(endpoint_option)
-            if endpoint_option == endpoint_id:
-                return True
-        return True
+        bindings = [
+            binding for binding in self.backend_settings.models[self.model].endpoints if (binding.get("endpoint_id") if isinstance(binding, dict) else binding) == endpoint_id
+        ]
+        return not bindings or any(_endpoint_option_enabled(binding) for binding in bindings)
 
     def set_model_id_by_endpoint_id(self, endpoint_id: str):
-        for endpoint_option in self.backend_settings.models[self.model].endpoints:
+        for endpoint_option in order_endpoints(self._get_available_endpoints(self.backend_settings.models[self.model].endpoints)):
             if isinstance(endpoint_option, dict) and endpoint_id == endpoint_option["endpoint_id"]:
-                self.model_id = endpoint_option["model_id"]
+                self.model_id = endpoint_option.get("model_id") or self.backend_settings.models[self.model].id
                 break
         return self.model_id
 
@@ -719,7 +747,7 @@ class BaseAsyncChatClient(ABC):
                 endpoint = order_endpoints(available_endpoints)[0]
                 if isinstance(endpoint, dict):
                     self.endpoint_id = endpoint["endpoint_id"]
-                    self.model_id = endpoint["model_id"]
+                    self.model_id = endpoint.get("model_id") or self.backend_settings.models[self.model].id
                     self.rpm = endpoint.get("rpm", None)
                     self.tpm = endpoint.get("tpm", None)
                     self.concurrent_requests = endpoint.get("concurrent_requests", None)
@@ -809,7 +837,8 @@ class BaseAsyncChatClient(ABC):
         parallel_tool_calls: bool | OpenAINotGiven = NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = NOT_GIVEN,
@@ -851,7 +880,8 @@ class BaseAsyncChatClient(ABC):
         parallel_tool_calls: bool | OpenAINotGiven = NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = NOT_GIVEN,
@@ -893,7 +923,8 @@ class BaseAsyncChatClient(ABC):
         parallel_tool_calls: bool | OpenAINotGiven = NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = NOT_GIVEN,
@@ -934,7 +965,8 @@ class BaseAsyncChatClient(ABC):
         parallel_tool_calls: bool | OpenAINotGiven = NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = NOT_GIVEN,
@@ -973,7 +1005,8 @@ class BaseAsyncChatClient(ABC):
         parallel_tool_calls: bool | OpenAINotGiven = NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = NOT_GIVEN,
@@ -1014,6 +1047,7 @@ class BaseAsyncChatClient(ABC):
                 prediction=prediction,
                 presence_penalty=presence_penalty,
                 reasoning_effort=reasoning_effort,
+                capability_policy=capability_policy,
                 thinking=thinking,
                 seed=seed,
                 service_tier=service_tier,
@@ -1031,8 +1065,7 @@ class BaseAsyncChatClient(ABC):
 
     @property
     def capabilities(self) -> ModelCapabilities:
-        capabilities = self.backend_settings.get_model_setting(self.model).capabilities
-        return capabilities or ModelCapabilities()
+        return _effective_capabilities(self)
 
     async def create(
         self,
@@ -1040,11 +1073,13 @@ class BaseAsyncChatClient(ABC):
         *,
         capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
     ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
-        request.validate_capabilities(self.capabilities, capability_policy)
+        _prepare_model(self, request.model)
+        capabilities = self.capabilities
+        request.validate_capabilities(capabilities, capability_policy, backend_name=self.backend_name.value)
         create_completion = cast(Any, self.create_completion)
         return cast(
             ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any],
-            await create_completion(**request.to_completion_kwargs(self.backend_name.value)),
+            await create_completion(**request.to_completion_kwargs(self.backend_name.value), capability_policy=CapabilityPolicy.PASSTHROUGH),
         )
 
     async def model_list(self):

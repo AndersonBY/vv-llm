@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from .middleware import _request_from_completion_kwargs
-from .types.chat_request import ChatRequest, ModelCapabilities
+from .types.chat_request import CapabilityPolicy, ChatRequest, ModelCapabilities
 
 
 @dataclass(frozen=True)
@@ -52,8 +52,8 @@ class ScriptedChatClient:
             return self._stream(step)
         return step
 
-    def create_completion(self, **kwargs: Any) -> Any:
-        return self.create(_request_from_completion_kwargs(kwargs))
+    def create_completion(self, *, capability_policy: CapabilityPolicy = CapabilityPolicy.WARN, **kwargs: Any) -> Any:
+        return self.create(_request_from_completion_kwargs(kwargs), capability_policy=capability_policy)
 
     def create_stream(self, **kwargs: Any) -> Generator[Any, None, None]:
         return self.create_completion(**kwargs, stream=True)
@@ -99,8 +99,8 @@ class AsyncScriptedChatClient:
             return self._async_stream(step)
         return step
 
-    async def create_completion(self, **kwargs: Any) -> Any:
-        return await self.create(_request_from_completion_kwargs(kwargs))
+    async def create_completion(self, *, capability_policy: CapabilityPolicy = CapabilityPolicy.WARN, **kwargs: Any) -> Any:
+        return await self.create(_request_from_completion_kwargs(kwargs), capability_policy=capability_policy)
 
     async def create_stream(self, **kwargs: Any) -> AsyncGenerator[Any, None]:
         return await self.create_completion(**kwargs, stream=True)

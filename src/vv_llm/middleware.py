@@ -111,8 +111,8 @@ class MiddlewareChatClient:
         )
         return response, context
 
-    def create_completion(self, **kwargs: Any) -> Any:
-        return self.create(_request_from_completion_kwargs(kwargs))
+    def create_completion(self, *, capability_policy: CapabilityPolicy = CapabilityPolicy.WARN, **kwargs: Any) -> Any:
+        return self.create(_request_from_completion_kwargs(kwargs), capability_policy=capability_policy)
 
     def create_stream(self, **kwargs: Any) -> Any:
         return self.create_completion(**kwargs, stream=True)
@@ -215,8 +215,8 @@ class AsyncMiddlewareChatClient:
         )
         return response, context
 
-    async def create_completion(self, **kwargs: Any) -> Any:
-        return await self.create(_request_from_completion_kwargs(kwargs))
+    async def create_completion(self, *, capability_policy: CapabilityPolicy = CapabilityPolicy.WARN, **kwargs: Any) -> Any:
+        return await self.create(_request_from_completion_kwargs(kwargs), capability_policy=capability_policy)
 
     async def create_stream(self, **kwargs: Any) -> Any:
         return await self.create_completion(**kwargs, stream=True)

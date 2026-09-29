@@ -284,6 +284,62 @@ async def main():
 asyncio.run(main())
 ```
 
+## 推理强度
+
+模型能力的 `reasoning_efforts` 缺省或为 null 表示未知，空列表表示不支持，非空列表声明实际选项。请求省略 `reasoning_effort` 使用服务端默认值；`none` 是显式值。
+
+切换模型请使用请求的 `model` 或端点绑定的 `model_id`。`extra_body.model`
+与选中的实际模型冲突时，即使使用 passthrough 也会报错。
+
+`create` 和旧 `create_completion` 都支持 `capability_policy=CapabilityPolicy.STRICT`，默认 WARN，PASSTHROUGH 跳过模型范围校验，参数冲突始终报错。Responses 映射为 `reasoning.effort`，Anthropic 映射为 `output_config.effort`。绑定中的 `capabilities` 局部覆盖模型能力；registry 的 `model_capabilities` 按模型声明 fallback 能力，不自动降档。
+
+现有关键字调用和类型化调用可以继续使用，不传 effort 仍使用服务端默认值。以前传入
+未确认或不支持的档位，现在默认会发出警告并继续请求；显式选用 STRICT 后，未知
+能力和非法档位都会在发送前报错。同步、异步、普通响应和流式响应使用同一套规则。
+
+在 settings 中绑定 DeepSeek Flash 端点后：
+
+```python
+from vv_llm import CapabilityPolicy, ChatRequest, ChatRequestOptions
+from vv_llm.chat_clients import BackendType, create_chat_client
+
+client = create_chat_client(BackendType.DeepSeek, model="deepseek-flash")
+print(client.capabilities.reasoning_efforts)
+print(client.capabilities.reasoning_effort_aliases)
+
+response = client.create(
+    ChatRequest(
+        model=client.model,
+        messages=[{"role": "user", "content": "计算 37 * 19。"}],
+        options=ChatRequestOptions(reasoning_effort="xhigh", max_tokens=256),
+    ),
+    capability_policy=CapabilityPolicy.STRICT,
+)
+# 请求仍传 xhigh，由服务商按文档映射为 high。
+```
+
+原来的关键字参数 API 同样支持严格校验：
+
+```python
+response = client.create_completion(
+    messages=[{"role": "user", "content": "计算 37 * 19。"}],
+    reasoning_effort="high",
+    capability_policy=CapabilityPolicy.STRICT,
+    max_tokens=256,
+)
+```
+
+模型选择器展示实际档位，兼容输入不作为额外档位展示；列表中的 none 单独表示
+关闭。effort 和 thinking 是两个控制：省略 effort 不会自动开启或关闭 thinking，
+使用 `ThinkingPreference` 控制开关。GLM-5.3/FLASH 的 xhigh 会被严格校验拒绝，
+这两个型号也不支持关闭 thinking；GLM-5.2 支持显式关闭。已记录的 GLM-5.2 实测中，
+none/minimal 仍返回推理内容，而显式 disabled 没有返回推理内容。
+
+新增的[离线能力/校验/fallback 示例](examples/reasoning_capabilities.py)和
+[真实请求/开关/流式示例](examples/reasoning_effort.py)见[示例指南](examples/README.md#reasoning-effort)。
+
+`reasoning_effort_aliases` 单独记录兼容输入及其实际目标。只有目标仍在 `reasoning_efforts` 中时才接受别名，请求原值由服务商映射。绑定中的档位列表和别名映射均整体替换。DeepSeek 实际为 low/high/max 三档，none 表示关闭；minimal → low，medium/xhigh → high，ultra → max。兼容别名不作为独立档位展示。
+
 ## 核心特性
 
 - **统一接口** — 所有后端共享规范化 `ChatRequest` 执行入口，同时兼容 `create_completion` / `create_stream`
@@ -309,13 +365,13 @@ asyncio.run(main())
 `order_endpoints(endpoints, preferred_endpoint_id=None)` 返回新列表，
 偏好端点仅在同优先级内提前。
 
-包内包含 `vv-llm-contract` 1.1.0。通过 `vv_llm.contract` 读取 contract
+包内包含 `vv-llm-contract` 1.2.0。通过 `vv_llm.contract` 读取 contract
 metadata、模型目录和完整性状态：
 
 ```python
 from vv_llm.contract import contract_info, load_catalog, verify_contract
 
-assert contract_info().contract_version == "1.1.0"
+assert contract_info().contract_version == "1.2.0"
 assert verify_contract().ok
 catalog = load_catalog()
 ```
@@ -349,7 +405,8 @@ catalog = load_catalog()
 `streaming.py`、`tools.py`、`multimodal.py` 和 `contract_json.py` 覆盖主要的
 类型化请求路径；`async_streaming.py`、`typed_thinking.py`、
 `middleware_metadata.py` 与 `registry_fallback.py` 覆盖扩展能力，其中最后一个
-完全离线且使用确定性 scripted client。
+完全离线且使用确定性 scripted client。新增的 `reasoning_capabilities.py` 也完全
+离线；`reasoning_effort.py` 使用本地配置发送一次请求，并支持流式输出。
 
 ## 缓存 Usage 语义
 
@@ -427,6 +484,19 @@ VV_LLM_RUN_LIVE_TESTS=1 python tests/live/run_live_tests.py test_deepseek_contra
 ```
 
 smoke 只输出 provider/model、响应形状、usage 计数和退出状态，不输出凭据或响应正文。
+
+#### 推理强度在线检查
+
+显式选择私有配置进行推理参数在线烟测：
+
+```bash
+python tests/live/reasoning_effort_smoke.py --settings /secure/path/llm_settings.json \
+  --backend deepseek --aliases --invalid-probe --limit 18
+```
+
+按有凭据的模型/协议路由逐档调用，默认最多 80 个请求。`--aliases` 包含兼容输入，`--invalid-probe` 探测非法值，`--model backend:model` 筛选模型，`--report` 保存脱敏结果。`--include-catalog` 才会包含本地未列出、通过默认端点绑定的目录模型。返回成功只能证明请求被接受；SDK timeout 不代表整个流程的墙钟时限。
+
+[已记录的在线结果](tests/live/reasoning-effort-report.md) 区分接受、拒绝、未验证和网络/配置失败。
 
 ### 发布者
 

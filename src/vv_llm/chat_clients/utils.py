@@ -5,8 +5,10 @@ import json
 import uuid
 import warnings
 import logging
+from collections import OrderedDict
 from math import ceil
 from collections.abc import Iterable
+from threading import RLock
 from typing import Any, cast
 
 import httpx2
@@ -31,6 +33,14 @@ from ..types.settings import EndpointOptionDict
 
 gpt_35_encoding = None
 gpt_4o_encoding = None
+_encoding_cache_lock = RLock()
+
+# Qwen's factory loads its vocabulary file, so constructing a tokenizer for
+# every count is unnecessarily expensive. Keep only the tokenizer object;
+# tokenized text is deliberately not retained.
+_QWEN_TOKENIZER_CACHE_MAX_SIZE = 1
+_qwen_tokenizer_cache: OrderedDict[str, Any] = OrderedDict()
+_qwen_tokenizer_cache_lock = RLock()
 logger = logging.getLogger(__name__)
 
 
@@ -40,16 +50,40 @@ def _endpoint_choice_enabled(endpoint_choice: str | EndpointOptionDict | dict[st
 
 def get_gpt_35_encoding():
     global gpt_35_encoding
-    if gpt_35_encoding is None:
-        gpt_35_encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+    with _encoding_cache_lock:
+        if gpt_35_encoding is None:
+            gpt_35_encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
     return gpt_35_encoding
 
 
 def get_gpt_4o_encoding():
     global gpt_4o_encoding
-    if gpt_4o_encoding is None:
-        gpt_4o_encoding = tiktoken.encoding_for_model("gpt-4o")
+    with _encoding_cache_lock:
+        if gpt_4o_encoding is None:
+            gpt_4o_encoding = tiktoken.encoding_for_model("gpt-4o")
     return gpt_4o_encoding
+
+
+def _get_qwen_tokenizer(model: str):
+    """Return the shared cached Qwen tokenizer instance."""
+    # qwen-tokenizer currently maps every supported model id to the same
+    # bundled vocabulary.  Use one canonical key so aliases do not retain
+    # duplicate tokenizer instances in memory.
+    cache_key = "qwen"
+    with _qwen_tokenizer_cache_lock:
+        tokenizer = _qwen_tokenizer_cache.get(cache_key)
+        if tokenizer is not None:
+            _qwen_tokenizer_cache.move_to_end(cache_key)
+            return tokenizer
+
+        from qwen_tokenizer import get_tokenizer
+
+        tokenizer = get_tokenizer(model)
+        _qwen_tokenizer_cache[cache_key] = tokenizer
+        _qwen_tokenizer_cache.move_to_end(cache_key)
+        if len(_qwen_tokenizer_cache) > _QWEN_TOKENIZER_CACHE_MAX_SIZE:
+            _qwen_tokenizer_cache.popitem(last=False)
+        return tokenizer
 
 
 class ToolCallContentProcessor:
@@ -346,9 +380,7 @@ def get_token_counts(text: str | dict, model: str = "", use_token_server_first: 
 
         return len(deepseek_tokenizer.encode(text))
     elif model.startswith("qwen"):
-        from qwen_tokenizer import get_tokenizer
-
-        qwen_tokenizer = get_tokenizer(model)
+        qwen_tokenizer = _get_qwen_tokenizer(model)
         return len(qwen_tokenizer.encode(text))
     elif model.startswith("stepfun"):
         backend_setting = settings.get_backend(BackendType.StepFun).models[model]

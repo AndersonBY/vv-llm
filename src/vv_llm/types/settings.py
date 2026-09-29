@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Any, Annotated, Literal
 from pydantic import Field
 from typing_extensions import TypedDict, NotRequired  # Required by pydantic under Python < 3.12
 
@@ -40,7 +40,8 @@ class EndpointOptionDict(TypedDict):
     """TypedDict representing the model endpoint option structure."""
 
     endpoint_id: str
-    model_id: str
+    capabilities: NotRequired[dict[str, Any]]
+    model_id: NotRequired[str | None]
     priority: NotRequired[Annotated[int, Field(strict=True, ge=1)]]
     enabled: NotRequired[bool]
     rpm: NotRequired[int]

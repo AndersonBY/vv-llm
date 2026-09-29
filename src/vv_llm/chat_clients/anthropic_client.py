@@ -11,7 +11,6 @@ from openai.types.shared_params.metadata import Metadata
 from openai.types.chat.completion_create_params import ResponseFormat
 from openai.types.chat.chat_completion_modality import ChatCompletionModality
 from openai.types.chat.chat_completion_audio_param import ChatCompletionAudioParam
-from openai.types.chat.chat_completion_reasoning_effort import ChatCompletionReasoningEffort
 from openai.types.chat.chat_completion_stream_options_param import ChatCompletionStreamOptionsParam
 from openai.types.chat.chat_completion_prediction_content_param import ChatCompletionPredictionContentParam
 from anthropic import (
@@ -33,7 +32,9 @@ from anthropic.types import (
 
 from ..types import defaults as defs
 from .utils import cutoff_messages, get_message_token_counts
-from .base_client import BaseChatClient, BaseAsyncChatClient
+from ..types.chat_request import CapabilityPolicy
+from .reasoning import merge_reasoning_body, resolve_reasoning_effort
+from .base_client import _prepare_model, BaseChatClient, BaseAsyncChatClient
 from .message_normalizer import format_messages_alternate, refactor_into_openai_messages
 from .openai_compatible_client import OpenAICompatibleChatClient, AsyncOpenAICompatibleChatClient
 from .stream_event_adapter import (
@@ -210,7 +211,8 @@ class AnthropicChatClient(BaseChatClient):
         parallel_tool_calls: bool | OpenAINotGiven = OPENAI_NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = OPENAI_NOT_GIVEN,
         seed: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
@@ -252,7 +254,8 @@ class AnthropicChatClient(BaseChatClient):
         parallel_tool_calls: bool | OpenAINotGiven = OPENAI_NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
@@ -294,7 +297,8 @@ class AnthropicChatClient(BaseChatClient):
         parallel_tool_calls: bool | OpenAINotGiven = OPENAI_NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
@@ -335,7 +339,8 @@ class AnthropicChatClient(BaseChatClient):
         parallel_tool_calls: bool | OpenAINotGiven = OPENAI_NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
@@ -349,8 +354,7 @@ class AnthropicChatClient(BaseChatClient):
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
     ):
-        if model is not None:
-            self.model = model
+        _prepare_model(self, model)
         if stream is not None:
             self.stream = stream
         if temperature is not None:
@@ -415,6 +419,8 @@ class AnthropicChatClient(BaseChatClient):
                         prediction=prediction,
                         presence_penalty=presence_penalty,
                         reasoning_effort=reasoning_effort,
+                        capability_policy=capability_policy,
+                        thinking=thinking,
                         seed=seed,
                         service_tier=service_tier,
                         stop=stop,
@@ -468,6 +474,8 @@ class AnthropicChatClient(BaseChatClient):
                     prediction=prediction,
                     presence_penalty=presence_penalty,
                     reasoning_effort=reasoning_effort,
+                    capability_policy=capability_policy,
+                    thinking=thinking,
                     seed=seed,
                     service_tier=service_tier,
                     stop=stop,
@@ -480,6 +488,12 @@ class AnthropicChatClient(BaseChatClient):
                     extra_body=extra_body,
                     timeout=timeout,
                 )
+
+        effort, extra_body = resolve_reasoning_effort(reasoning_effort, extra_body, "anthropic", self.backend_name.value, self.model_id)
+        self.capabilities.validate_reasoning_effort(effort, self.model, capability_policy)
+        if thinking is not None and not isinstance(thinking, (OpenAINotGiven, NotGiven)):
+            extra_body = merge_reasoning_body(extra_body, {"thinking": thinking})
+            thinking = extra_body.pop("thinking")
 
         raw_client = self.raw_client  # 调用完 self.raw_client 后，self.model_id 会被赋值
         assert isinstance(raw_client, Anthropic | AnthropicVertex | AnthropicBedrock)
@@ -707,7 +721,8 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         parallel_tool_calls: bool | OpenAINotGiven = OPENAI_NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
@@ -749,7 +764,8 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         parallel_tool_calls: bool | OpenAINotGiven = OPENAI_NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
@@ -791,7 +807,8 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         parallel_tool_calls: bool | OpenAINotGiven = OPENAI_NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
@@ -832,7 +849,8 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         parallel_tool_calls: bool | OpenAINotGiven = OPENAI_NOT_GIVEN,
         prediction: ChatCompletionPredictionContentParam | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         presence_penalty: float | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
-        reasoning_effort: ChatCompletionReasoningEffort | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        reasoning_effort: str | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
+        capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
         thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
         seed: int | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
         service_tier: Literal["auto", "default"] | OpenAINotGiven | None = OPENAI_NOT_GIVEN,
@@ -846,8 +864,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
     ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
-        if model is not None:
-            self.model = model
+        _prepare_model(self, model)
         if stream is not None:
             self.stream = stream
         if temperature is not None:
@@ -912,6 +929,8 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                         prediction=prediction,
                         presence_penalty=presence_penalty,
                         reasoning_effort=reasoning_effort,
+                        capability_policy=capability_policy,
+                        thinking=thinking,
                         seed=seed,
                         service_tier=service_tier,
                         stop=stop,
@@ -966,6 +985,8 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                     prediction=prediction,
                     presence_penalty=presence_penalty,
                     reasoning_effort=reasoning_effort,
+                    capability_policy=capability_policy,
+                    thinking=thinking,
                     seed=seed,
                     service_tier=service_tier,
                     stop=stop,
@@ -978,6 +999,12 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                     extra_body=extra_body,
                     timeout=timeout,
                 )
+
+        effort, extra_body = resolve_reasoning_effort(reasoning_effort, extra_body, "anthropic", self.backend_name.value, self.model_id)
+        self.capabilities.validate_reasoning_effort(effort, self.model, capability_policy)
+        if thinking is not None and not isinstance(thinking, (OpenAINotGiven, NotGiven)):
+            extra_body = merge_reasoning_body(extra_body, {"thinking": thinking})
+            thinking = extra_body.pop("thinking")
 
         raw_client = self.raw_client  # 调用完 self.raw_client 后，self.model_id 会被赋值
         assert isinstance(raw_client, AsyncAnthropic | AsyncAnthropicVertex | AsyncAnthropicBedrock)
