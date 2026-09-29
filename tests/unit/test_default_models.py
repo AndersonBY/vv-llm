@@ -73,6 +73,10 @@ def test_anthropic_claude_opus_5_is_available():
     assert model["native_multimodal"] is True
 
 
+def test_anthropic_claude_opus_5_5_matches_opus_5():
+    assert ANTHROPIC_MODELS["claude-opus-5-5"] == {**ANTHROPIC_MODELS["claude-opus-5"], "id": "claude-opus-5-5"}
+
+
 def test_deepseek_flash_models_match_vision_parameters():
     vision = DEEPSEEK_MODELS["deepseek-v4-flash-vision-exp"]
     for model_name in ("deepseek-v4.1-flash", "deepseek-flash"):
@@ -174,6 +178,10 @@ def test_gemini_37_flash_matches_documented_limits_and_capabilities():
         "input_modalities": ["text", "image", "video", "audio"],
         "thinking": "configurable",
     }
+
+
+def test_gemini_38_flash_matches_37_flash():
+    assert GEMINI_MODELS["gemini-3.8-flash"] == {**GEMINI_MODELS["gemini-3.7-flash"], "id": "gemini-3.8-flash"}
 
 
 def test_xai_grok_46_matches_documented_capabilities():

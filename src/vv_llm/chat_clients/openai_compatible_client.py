@@ -59,7 +59,7 @@ if TYPE_CHECKING:
 
 
 _MISSING = object()
-_REASONING_MODEL_RE = re.compile(r"^(?:gpt-5(?:[.-]|$)|o(?:1|3|4)(?:[.-]|$))", re.IGNORECASE)
+_REASONING_MODEL_RE = re.compile(r"^(?:gpt-[56](?:[.-]|$)|o(?:1|3|4)(?:[.-]|$))", re.IGNORECASE)
 
 
 def _uses_max_completion_tokens(model_id: str | None) -> bool:

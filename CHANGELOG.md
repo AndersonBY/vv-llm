@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.1 - 2026-09-29
+
+- Adopt catalog revision 13 with `claude-opus-5-5`, `claude-sonnet-5-5`, `gemini-3.8-flash`, `gpt-6-sol`, and `gpt-6-luna`.
+- Send `max_completion_tokens` for the GPT-6 family, which rejects `max_tokens` on Chat Completions.
+
 ## 0.7.0 - 2026-09-29
 
 - Adopt vv-llm-contract 1.2.0, catalog revision 10, with documented per-model reasoning effort choices and compatibility aliases.
