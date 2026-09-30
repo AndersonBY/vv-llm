@@ -1,5 +1,7 @@
+import json
 import re
 from collections.abc import Iterable
+from typing import Any
 
 from anthropic.types import (
     MessageParam,
@@ -172,3 +174,61 @@ def refactor_into_openai_messages(messages: Iterable[MessageParam]):
         else:
             formatted_messages.append(message)
     return formatted_messages
+
+
+def _response_api_content(content: Any) -> Any:
+    """Convert Chat Completions content parts into Responses API input parts."""
+
+    if not isinstance(content, list):
+        return content
+    converted: list[Any] = []
+    for part in content:
+        if isinstance(part, dict) and part.get("type") == "text":
+            converted.append({"type": "input_text", "text": part.get("text", "")})
+        elif isinstance(part, dict) and part.get("type") == "image_url":
+            image_url = part.get("image_url")
+            url = image_url.get("url") if isinstance(image_url, dict) else image_url
+            converted.append({"type": "input_image", "image_url": url})
+        else:
+            converted.append(part)
+    return converted
+
+
+def messages_for_response_api(messages: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Convert Chat Completions messages into Responses API input items.
+
+    Assistant ``tool_calls`` become ``function_call`` items and ``tool`` results
+    become ``function_call_output`` items, both correlated by ``call_id``.
+    """
+
+    items: list[dict[str, Any]] = []
+    for message in messages:
+        role = message.get("role")
+        content = message.get("content")
+        if role == "tool":
+            output = content if isinstance(content, str) else json.dumps(content, ensure_ascii=False)
+            items.append(
+                {
+                    "type": "function_call_output",
+                    "call_id": message.get("tool_call_id"),
+                    "output": output,
+                }
+            )
+            continue
+        if role == "assistant" and message.get("tool_calls"):
+            if content:
+                items.append({"role": "assistant", "content": _response_api_content(content)})
+            for tool_call in message["tool_calls"]:
+                function = tool_call.get("function") or {}
+                arguments = function.get("arguments")
+                items.append(
+                    {
+                        "type": "function_call",
+                        "call_id": tool_call.get("id"),
+                        "name": function.get("name"),
+                        "arguments": arguments if isinstance(arguments, str) else json.dumps(arguments or {}, ensure_ascii=False),
+                    }
+                )
+            continue
+        items.append({"role": role, "content": _response_api_content("" if content is None else content)})
+    return items

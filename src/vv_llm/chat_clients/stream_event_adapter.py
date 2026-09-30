@@ -18,8 +18,58 @@ from ..types.llm_parameters import ChatCompletionDeltaMessage, ChatCompletionMes
 from .tool_call_parser import refactor_tool_calls
 
 
+def _response_tool_call_id(item: Any) -> str | None:
+    """Prefer the provider ``call_id`` so tool results can be correlated."""
+
+    return getattr(item, "call_id", None) or getattr(item, "id", None)
+
+
+def _response_tool_call_delta(
+    output_index: int,
+    tool_call: dict[str, Any],
+    arguments: str,
+    *,
+    include_header: bool,
+    raw_content: dict[str, Any] | None = None,
+) -> ChatCompletionDeltaMessage:
+    """Emit one incremental tool-call delta; only the first delta carries id/name."""
+
+    function: dict[str, Any] = {"arguments": arguments}
+    call: dict[str, Any] = {"index": output_index, "type": "function", "function": function}
+    if include_header:
+        function["name"] = tool_call.get("name")
+        call["id"] = tool_call.get("id")
+    tool_call["started"] = True
+    return ChatCompletionDeltaMessage(tool_calls=cast(Any, [call]), raw_content=raw_content)
+
+
+def _response_tool_call_remainder(tool_call: dict[str, Any], full_arguments: str | None) -> str:
+    """Return the arguments that were not streamed incrementally."""
+
+    streamed = tool_call.get("arguments") or ""
+    full = full_arguments or ""
+    if not full or full == streamed:
+        return ""
+    remainder = full[len(streamed) :] if streamed and full.startswith(streamed) else full
+    tool_call["arguments"] = streamed + remainder
+    return remainder
+
+
+def _gemini3_tool_call_raw_content(tool_call: dict[str, Any]) -> dict[str, Any] | None:
+    extra_content = tool_call.get("extra_content")
+    if isinstance(extra_content, dict) and extra_content.get("google"):
+        return {"google": extra_content["google"]}
+    return None
+
+
 def adapt_response_api_stream_event(event: Any, final_tool_calls: dict[int, dict[str, Any]], is_gemini3: bool) -> tuple[list[ChatCompletionDeltaMessage], Usage | None]:
-    """Convert a Responses API stream event into ChatCompletionDeltaMessage objects."""
+    """Convert a Responses API stream event into ChatCompletionDeltaMessage objects.
+
+    Tool-call arguments are emitted exactly once: the first delta carries the
+    call header, argument deltas carry their own fragment, and the terminal
+    ``*.done`` events only append a fragment that was never streamed.
+    """
+
     event_type = event.type
 
     if event_type == "response.output_text.delta":
@@ -31,30 +81,19 @@ def adapt_response_api_stream_event(event: Any, final_tool_calls: dict[int, dict
         item = event.item
         output_index = event.output_index
         if item and item.type == "function_call" and output_index is not None:
-            extra_content = getattr(item, "extra_content", None)
-            final_tool_calls[output_index] = {
-                "id": item.id,
-                "call_id": item.call_id,
+            tool_call = final_tool_calls[output_index] = {
+                "id": _response_tool_call_id(item),
                 "name": item.name,
-                "arguments": item.arguments or "",
-                "extra_content": extra_content,
+                "arguments": getattr(item, "arguments", None) or "",
+                "extra_content": getattr(item, "extra_content", None),
+                "started": False,
             }
             return [
-                ChatCompletionDeltaMessage(
-                    tool_calls=cast(
-                        Any,
-                        [
-                            {
-                                "index": output_index,
-                                "id": item.id,
-                                "type": "function",
-                                "function": {
-                                    "name": item.name,
-                                    "arguments": "",
-                                },
-                            }
-                        ],
-                    ),
+                _response_tool_call_delta(
+                    output_index,
+                    tool_call,
+                    tool_call["arguments"],
+                    include_header=True,
                 )
             ], None
         return [], None
@@ -63,80 +102,62 @@ def adapt_response_api_stream_event(event: Any, final_tool_calls: dict[int, dict
         output_index = event.output_index
         delta = event.delta
         if output_index is not None and delta is not None:
-            if output_index in final_tool_calls:
-                final_tool_calls[output_index]["arguments"] += delta
-                call_id = final_tool_calls[output_index].get("id")
-            else:
-                call_id = None
+            tool_call = final_tool_calls.setdefault(output_index, {"id": None, "name": None, "arguments": "", "extra_content": None, "started": False})
+            tool_call["arguments"] += delta
             return [
-                ChatCompletionDeltaMessage(
-                    tool_calls=cast(
-                        Any,
-                        [
-                            {
-                                "index": output_index,
-                                "id": call_id,
-                                "type": "function",
-                                "function": {"arguments": delta},
-                            }
-                        ],
-                    ),
+                _response_tool_call_delta(
+                    output_index,
+                    tool_call,
+                    delta,
+                    include_header=not tool_call["started"],
                 )
             ], None
         return [], None
 
     if event_type == "response.function_call_arguments.done":
         output_index = event.output_index
-        if output_index is not None and output_index in final_tool_calls:
-            tool_call = final_tool_calls[output_index]
-            raw_content = None
-            if is_gemini3:
-                extra_content = tool_call.get("extra_content")
-                if isinstance(extra_content, dict) and extra_content.get("google"):
-                    raw_content = {"google": extra_content["google"]}
-            return [
-                ChatCompletionDeltaMessage(
-                    tool_calls=cast(
-                        Any,
-                        [
-                            {
-                                "index": output_index,
-                                "id": tool_call.get("id"),
-                                "type": "function",
-                                "function": {
-                                    "name": tool_call.get("name"),
-                                    "arguments": tool_call.get("arguments", ""),
-                                },
-                            }
-                        ],
-                    ),
-                    raw_content=raw_content,
-                )
-            ], None
+        if output_index is not None:
+            tool_call = final_tool_calls.setdefault(output_index, {"id": None, "name": None, "arguments": "", "extra_content": None, "started": False})
+            raw_content = _gemini3_tool_call_raw_content(tool_call) if is_gemini3 else None
+            remainder = _response_tool_call_remainder(tool_call, getattr(event, "arguments", None))
+            if remainder:
+                return [
+                    _response_tool_call_delta(
+                        output_index,
+                        tool_call,
+                        remainder,
+                        include_header=not tool_call["started"],
+                        raw_content=raw_content,
+                    )
+                ], None
+            if raw_content is not None:
+                return [ChatCompletionDeltaMessage(raw_content=raw_content)], None
         return [], None
 
     if event_type == "response.output_item.done":
         item = event.item
         output_index = event.output_index
         if item and item.type == "function_call" and output_index is not None:
-            return [
-                ChatCompletionDeltaMessage(
-                    tool_calls=cast(
-                        Any,
-                        [
-                            {
-                                "index": output_index,
-                                "id": item.id,
-                                "type": "function",
-                                "function": {
-                                    "name": item.name,
-                                    "arguments": item.arguments,
-                                },
-                            }
-                        ],
-                    ),
-                )
-            ], None
+            tool_call = final_tool_calls.setdefault(
+                output_index,
+                {
+                    "id": _response_tool_call_id(item),
+                    "name": item.name,
+                    "arguments": "",
+                    "extra_content": getattr(item, "extra_content", None),
+                    "started": False,
+                },
+            )
+            remainder = _response_tool_call_remainder(tool_call, getattr(item, "arguments", None))
+            if remainder:
+                return [
+                    _response_tool_call_delta(
+                        output_index,
+                        tool_call,
+                        remainder,
+                        include_header=not tool_call["started"],
+                    )
+                ], None
         return [], None
 
     if event_type == "response.completed":

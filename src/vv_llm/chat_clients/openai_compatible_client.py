@@ -31,6 +31,7 @@ from .message_normalizer import (
     extract_reasoning_tagged_content,
     get_thinking_tags,
     is_gemini_3_model,
+    messages_for_response_api,
     process_reasoning_content,
     process_thinking_content,
     strip_reasoning_tags,
@@ -477,6 +478,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
 
         # When endpoint is configured to use the new Responses API
         if endpoint.response_api:
+            response_input = messages_for_response_api(messages)
             # Compute max_output_tokens for Responses API
             req_max_output_tokens = None
             if max_completion_tokens is not NOT_GIVEN and max_completion_tokens is not None:
@@ -492,7 +494,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                 def generator():
                     stream_ctx = raw_client.responses.stream(
                         model=model_id,
-                        input=messages,
+                        input=response_input,
                         temperature=None if self.temperature is NOT_GIVEN else self.temperature,
                         top_p=None if top_p is NOT_GIVEN else top_p,
                         max_output_tokens=req_max_output_tokens,
@@ -521,7 +523,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                 # Non-streaming via Responses API
                 response = raw_client.responses.create(
                     model=model_id,
-                    input=messages,
+                    input=response_input,
                     temperature=None if self.temperature is NOT_GIVEN else self.temperature,
                     top_p=None if top_p is NOT_GIVEN else top_p,
                     max_output_tokens=req_max_output_tokens,
@@ -1192,6 +1194,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
 
         # When endpoint is configured to use the new Responses API
         if endpoint.response_api:
+            response_input = messages_for_response_api(messages)
             req_max_output_tokens = None
             if max_completion_tokens is not NOT_GIVEN and max_completion_tokens is not None:
                 req_max_output_tokens = cast(int, max_completion_tokens)
@@ -1213,7 +1216,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                         # Async streaming via Responses API
                         async with raw_client.responses.stream(
                             model=model_id,
-                            input=messages,
+                            input=response_input,
                             temperature=None if self.temperature is NOT_GIVEN else self.temperature,
                             top_p=None if top_p is NOT_GIVEN else top_p,
                             max_output_tokens=req_max_output_tokens,
@@ -1239,7 +1242,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
             else:
                 response = await raw_client.responses.create(
                     model=model_id,
-                    input=messages,
+                    input=response_input,
                     temperature=None if self.temperature is NOT_GIVEN else self.temperature,
                     top_p=None if top_p is NOT_GIVEN else top_p,
                     max_output_tokens=req_max_output_tokens,

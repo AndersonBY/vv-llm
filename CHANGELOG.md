@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.3 - 2026-09-30
+
+- Fix the Responses API adapter: assistant tool calls and tool results become
+  `function_call` and `function_call_output` input items keyed by `call_id`,
+  so a second tool turn no longer fails with `Unknown parameter: input[2].tool_calls`.
+- Emit tool-call arguments exactly once: terminal `*.done` events only append
+  fragments that were not streamed, and streamed tool calls expose the provider
+  `call_id` instead of the `fc_*` item id.
+
 ## 0.7.2 - 2026-09-30
 
 - Adopt catalog revision 14 with OpenAI `gpt-6.1-sol`.
