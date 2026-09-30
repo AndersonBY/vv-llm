@@ -40,7 +40,7 @@ def test_vendored_contract_matches_consumer_lock():
     assert info.contract_version == "1.2.0"
     assert info.schema_version == 2
     assert info.fixture_version == 2
-    assert info.catalog_revision == 13
+    assert info.catalog_revision == 14
     assert contract_api.CATALOG_REVISION == info.catalog_revision
     assert info.consumer_lock_sha256 == CONSUMER_LOCK_SHA256
 
@@ -63,6 +63,20 @@ def test_runtime_defaults_are_exactly_the_locked_catalog():
         },
     }
     assert openai_models["gpt-6-luna"] == {**openai_models["gpt-6-sol"], "id": "gpt-6-luna"}
+    assert openai_models["gpt-6.1-sol"] == {
+        "id": "gpt-6.1-sol",
+        "context_length": 1050000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": True,
+        "native_multimodal": True,
+        "capabilities": {
+            "tools": True,
+            "structured_output": "json_schema",
+            "input_modalities": ["text", "image"],
+            "reasoning_efforts": ["low", "medium", "high", "xhigh", "max"],
+        },
+    }
     anthropic_models = catalog["backends"]["anthropic"]["models"]
     assert anthropic_models["claude-sonnet-5-5"] == {**anthropic_models["claude-sonnet-5"], "id": "claude-sonnet-5-5"}
     assert catalog["backends"]["openai"]["models"]["gpt-6-astra"] == {

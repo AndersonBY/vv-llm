@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.2 - 2026-09-30
+
+- Adopt catalog revision 14 with OpenAI `gpt-6.1-sol`.
+
 ## 0.7.1 - 2026-09-29
 
 - Adopt catalog revision 13 with `claude-opus-5-5`, `claude-sonnet-5-5`, `gemini-3.8-flash`, `gpt-6-sol`, and `gpt-6-luna`.
