@@ -62,6 +62,21 @@ def _gemini3_tool_call_raw_content(tool_call: dict[str, Any]) -> dict[str, Any] 
     return None
 
 
+def normalize_response_api_usage(usage: Any) -> Usage | None:
+    """Map Responses usage to the shared Chat Completions usage shape."""
+    if usage is None:
+        return None
+
+    input_tokens_details = getattr(usage, "input_tokens_details", None)
+    cached_tokens = getattr(input_tokens_details, "cached_tokens", None)
+    return Usage(
+        completion_tokens=usage.output_tokens or 0,
+        prompt_tokens=usage.input_tokens or 0,
+        total_tokens=(usage.input_tokens or 0) + (usage.output_tokens or 0),
+        prompt_tokens_details=PromptTokensDetails(cached_tokens=cached_tokens) if cached_tokens is not None else None,
+    )
+
+
 def adapt_response_api_stream_event(event: Any, final_tool_calls: dict[int, dict[str, Any]], is_gemini3: bool) -> tuple[list[ChatCompletionDeltaMessage], Usage | None]:
     """Convert a Responses API stream event into ChatCompletionDeltaMessage objects.
 
@@ -162,14 +177,7 @@ def adapt_response_api_stream_event(event: Any, final_tool_calls: dict[int, dict
 
     if event_type == "response.completed":
         final_resp = event.response
-        if final_resp and final_resp.usage:
-            usage = final_resp.usage
-            return [], Usage(
-                completion_tokens=usage.output_tokens or 0,
-                prompt_tokens=usage.input_tokens or 0,
-                total_tokens=(usage.input_tokens or 0) + (usage.output_tokens or 0),
-            )
-        return [], None
+        return [], normalize_response_api_usage(final_resp.usage if final_resp else None)
 
     if event_type in ("response.error", "error"):
         raise RuntimeError(f"Responses stream error: {event.error}")

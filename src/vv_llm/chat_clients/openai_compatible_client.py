@@ -36,7 +36,7 @@ from .message_normalizer import (
     process_thinking_content,
     strip_reasoning_tags,
 )
-from .stream_event_adapter import adapt_response_api_stream_event
+from .stream_event_adapter import adapt_response_api_stream_event, normalize_response_api_usage
 from .tool_call_parser import tool_schema_for_response_api
 from ..types import defaults as defs
 from ..utilities.gcp_token import get_token_with_cache
@@ -547,14 +547,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                             }
                         )
 
-                usage = None
-                if response.usage:
-                    u = response.usage
-                    usage = Usage(
-                        completion_tokens=u.output_tokens or 0,
-                        prompt_tokens=u.input_tokens or 0,
-                        total_tokens=(u.input_tokens or 0) + (u.output_tokens or 0),
-                    )
+                usage = normalize_response_api_usage(response.usage)
 
                 result = {
                     "content": content_text,
@@ -1265,14 +1258,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                             }
                         )
 
-                usage = None
-                if response.usage:
-                    u = response.usage
-                    usage = Usage(
-                        completion_tokens=u.output_tokens or 0,
-                        prompt_tokens=u.input_tokens or 0,
-                        total_tokens=(u.input_tokens or 0) + (u.output_tokens or 0),
-                    )
+                usage = normalize_response_api_usage(response.usage)
 
                 result = {
                     "content": content_text,

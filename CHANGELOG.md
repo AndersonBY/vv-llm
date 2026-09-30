@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.4 - 2026-10-01
+
+- Preserve Responses API `input_tokens_details.cached_tokens` as
+  `prompt_tokens_details.cached_tokens` across synchronous, asynchronous,
+  streaming, and non-streaming calls. Keep explicit zero distinct from
+  missing cache statistics without changing token totals.
+
 ## 0.7.3 - 2026-09-30
 
 - Fix the Responses API adapter: assistant tool calls and tool results become

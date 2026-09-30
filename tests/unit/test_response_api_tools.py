@@ -1,4 +1,4 @@
-"""Regression tests for the Responses API tool-call adapter."""
+"""Regression tests for the Responses API tool-call and usage adapters."""
 
 from __future__ import annotations
 
@@ -6,6 +6,9 @@ import asyncio
 import json
 from types import SimpleNamespace
 from typing import Any
+
+import pytest
+from openai.types.responses import ResponseUsage
 
 from vv_llm.chat_clients.message_normalizer import messages_for_response_api
 from vv_llm.chat_clients.openai_client import AsyncOpenAIChatClient, OpenAIChatClient
@@ -155,6 +158,68 @@ class _FakeAsyncResponses(_FakeResponses):
     def stream(self, **kwargs: Any) -> _AsyncStreamContext:  # type: ignore[override]
         self.calls.append(kwargs)
         return _AsyncStreamContext(self._events)
+
+
+def _response_usage(cached_tokens: int) -> ResponseUsage:
+    return ResponseUsage(
+        input_tokens=16384,
+        input_tokens_details={"cached_tokens": cached_tokens, "cache_write_tokens": 0},
+        output_tokens=4,
+        output_tokens_details={"reasoning_tokens": 0},
+        total_tokens=16388,
+    )
+
+
+@pytest.mark.parametrize("is_async", [False, True], ids=["sync", "async"])
+@pytest.mark.parametrize("stream", [False, True], ids=["completion", "stream"])
+@pytest.mark.parametrize(
+    "raw_usage,expected_cached_tokens",
+    [
+        pytest.param(_response_usage(12288), 12288, id="cache-hit"),
+        pytest.param(_response_usage(0), 0, id="cache-miss"),
+        pytest.param(SimpleNamespace(input_tokens=16384, output_tokens=4), None, id="details-omitted"),
+        pytest.param(SimpleNamespace(input_tokens=16384, output_tokens=4, input_tokens_details=None), None, id="details-null"),
+        pytest.param(SimpleNamespace(input_tokens=16384, output_tokens=4, input_tokens_details=SimpleNamespace()), None, id="cached-omitted"),
+        pytest.param(SimpleNamespace(input_tokens=16384, output_tokens=4, input_tokens_details=SimpleNamespace(cached_tokens=None)), None, id="cached-null"),
+        pytest.param(None, None, id="usage-absent"),
+    ],
+)
+def test_responses_clients_preserve_cache_usage(is_async: bool, stream: bool, raw_usage: Any, expected_cached_tokens: int | None) -> None:
+    response = SimpleNamespace(output_text="ok", output=[], usage=raw_usage)
+    events = [_event("response.output_text.delta", delta="ok"), _event("response.completed", response=response)]
+    kwargs = {"messages": [{"role": "user", "content": "hello"}], "stream": stream, "skip_cutoff": True}
+
+    if is_async:
+
+        async def run() -> Any:
+            client = AsyncOpenAIChatClient(model=MODEL, stream=stream, settings=_settings())
+            _bind_raw_client(client, _FakeAsyncResponses(result=response, events=events))
+            result = await client.create_completion(**kwargs)
+            if stream:
+                return [message async for message in result][-1]
+            return result
+
+        result = asyncio.run(run())
+    else:
+        client = OpenAIChatClient(model=MODEL, stream=stream, settings=_settings())
+        _bind_raw_client(client, _FakeResponses(result=response, events=events))
+        result = client.create_completion(**kwargs)
+        if stream:
+            result = list(result)[-1]
+
+    if raw_usage is None:
+        assert result.usage is None
+        return
+
+    assert result.usage is not None
+    assert result.usage.prompt_tokens == 16384
+    assert result.usage.completion_tokens == 4
+    assert result.usage.total_tokens == 16388
+    if expected_cached_tokens is None:
+        assert result.usage.prompt_tokens_details is None
+    else:
+        serialized_usage = json.loads(result.model_dump_json())["usage"]
+        assert serialized_usage["prompt_tokens_details"]["cached_tokens"] == expected_cached_tokens
 
 
 def test_messages_for_response_api_rebuilds_tool_history() -> None:
