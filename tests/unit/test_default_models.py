@@ -163,6 +163,43 @@ def test_qwen_38_models_match_hosted_api_capabilities():
     assert QWEN_MODELS["qwen3.8-max"]["capabilities"]["parallel_tool_calls"] is True
 
 
+def test_qwen_flash_next_keeps_open_weight_limits_separate_from_hosted_flash():
+    model = QWEN_MODELS["qwen3.8-flash-next"]
+    assert model["id"] == "qwen3.8-flash-next"
+    assert "qwen3.8-flash" not in QWEN_MODELS
+    assert model["context_length"] == 262_144
+    assert "max_output_tokens" not in model
+    assert "response_format_available" not in model
+    assert "structured_output" not in model["capabilities"]
+    assert model["function_call_available"] is True
+    assert model["native_multimodal"] is True
+    assert model["capabilities"] == {
+        "tools": True,
+        "input_modalities": ["text", "image", "video"],
+        "thinking": "configurable",
+        "reasoning_efforts": ["low", "medium", "xhigh"],
+    }
+
+    from vv_llm.chat_clients.qwen_client import QwenChatClient
+    from vv_llm.settings import Settings
+
+    settings = Settings.load_from_dict({
+        "endpoints": [{"id": "dashscope-test", "api_base": "https://example.invalid/v1", "api_key": "test-key"}],
+        "backends": {"qwen": {"models": {"qwen3.8-flash-next": {
+            "id": "qwen3.8-flash-next",
+            "endpoints": [{"endpoint_id": "dashscope-test", "model_id": "qwen3.8-flash"}],
+        }}}},
+    })
+    client = QwenChatClient(model="qwen3.8-flash-next", settings=settings)
+    raw_client = client.raw_client
+    try:
+        assert client.model == "qwen3.8-flash-next"
+        assert client.model_id == "qwen3.8-flash"
+        assert client.backend_settings.models[client.model].id == "qwen3.8-flash-next"
+    finally:
+        raw_client.close()
+
+
 def test_gemini_37_flash_matches_documented_limits_and_capabilities():
     model = GEMINI_MODELS["gemini-3.7-flash"]
 

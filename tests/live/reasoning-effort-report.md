@@ -88,12 +88,15 @@ network, authentication, model availability or transport failures.
 
 ## Raw sanitized observations
 
-- [configured.json](reports/configured.json): 110 requests; 3 cases outside the request cap.
-- [native-extra.json](reports/native-extra.json): 26 requests; 0 cases outside the request cap.
-- [new-models.json](reports/new-models.json): 36 requests; 0 cases outside the request cap.
-- [claude5.json](reports/claude5.json): 18 requests; 0 cases outside the request cap.
-- [claude5-retry.json](reports/claude5-retry.json): 2 requests; 0 cases outside the request cap.
-- [cross-runtime.json](reports/cross-runtime.json): six representative TypeScript/Rust observations.
-- [deepseek-v41-flash.json](reports/deepseek-v41-flash.json): nine requests for the V4.1 Flash catalog alias bound to the official Flash request ID.
-- [zhipu-thinking-enabled.json](reports/zhipu-thinking-enabled.json): 16 requests for GLM-5.2/5.3/5.3-FLASH with explicit enabled thinking; 13 accepted, two confirmed effort rejections and one unclassified HTTP 400.
-- [zhipu-thinking-controls.json](reports/zhipu-thinking-controls.json): four accepted GLM-5.2 default/enabled/disabled control requests.
+Raw reports under `tests/live/reports/` are local run artifacts ignored by Git
+and are not included in repository checkouts.
+
+- `configured.json`: 110 requests; 3 cases outside the request cap.
+- `native-extra.json`: 26 requests; 0 cases outside the request cap.
+- `new-models.json`: 36 requests; 0 cases outside the request cap.
+- `claude5.json`: 18 requests; 0 cases outside the request cap.
+- `claude5-retry.json`: 2 requests; 0 cases outside the request cap.
+- `cross-runtime.json`: six representative TypeScript/Rust observations.
+- `deepseek-v41-flash.json`: nine requests for the V4.1 Flash catalog alias bound to the official Flash request ID.
+- `zhipu-thinking-enabled.json`: 16 requests for GLM-5.2/5.3/5.3-FLASH with explicit enabled thinking; 13 accepted, two confirmed effort rejections and one unclassified HTTP 400.
+- `zhipu-thinking-controls.json`: four accepted GLM-5.2 default/enabled/disabled control requests.

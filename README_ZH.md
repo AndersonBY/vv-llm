@@ -365,13 +365,13 @@ none/minimal 仍返回推理内容，而显式 disabled 没有返回推理内容
 `order_endpoints(endpoints, preferred_endpoint_id=None)` 返回新列表，
 偏好端点仅在同优先级内提前。
 
-包内包含 `vv-llm-contract` 1.2.0。通过 `vv_llm.contract` 读取 contract
+包内包含 `vv-llm-contract` 1.2.1。通过 `vv_llm.contract` 读取 contract
 metadata、模型目录和完整性状态：
 
 ```python
 from vv_llm.contract import contract_info, load_catalog, verify_contract
 
-assert contract_info().contract_version == "1.2.0"
+assert contract_info().contract_version == "1.2.1"
 assert verify_contract().ok
 catalog = load_catalog()
 ```

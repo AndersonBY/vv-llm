@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.5 - 2026-10-03
+
+- Adopt contract 1.2.1, catalog revision 16 with the single public ID `qwen3.8-flash-next`;
+  DashScope uses endpoint `model_id` to select `qwen3.8-flash`.
+- Keep live test reports as ignored local artifacts and remove tracked report files.
+
 ## 0.7.4 - 2026-10-01
 
 - Preserve Responses API `input_tokens_details.cached_tokens` as

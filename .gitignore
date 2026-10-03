@@ -21,6 +21,7 @@ tests/live/dev_settings*.py
 !tests/live/dev_settings.example.py
 
 # Local run artifacts
+tests/live/reports/
 messages.json
 tests/live/generated_*.png
 tests/live/*.tmp
