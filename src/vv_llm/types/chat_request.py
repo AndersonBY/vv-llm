@@ -3,7 +3,7 @@ from __future__ import annotations
 import warnings
 from collections.abc import Mapping
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, PrivateAttr, field_validator
 
@@ -84,8 +84,16 @@ class ModelCapabilities(BaseModel):
     streaming: bool = True
     parallel_tool_calls: bool = False
     thinking: ThinkingCapability = ThinkingCapability.UNKNOWN
+    decision_types: list[Literal["predicate", "choice", "score"]] | None = None
     reasoning_efforts: list[str] | None = None
     reasoning_effort_aliases: dict[str, str] | None = None
+
+    @field_validator("decision_types")
+    @classmethod
+    def validate_decision_types(cls, values):
+        if values is not None and len(set(values)) != len(values):
+            raise ValueError("decision_types must be unique")
+        return values
 
     @field_validator("reasoning_efforts")
     @classmethod

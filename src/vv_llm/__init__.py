@@ -1,3 +1,21 @@
+from .decision_clients import DecisionClient, AsyncDecisionClient, create_decision_client, create_async_decision_client
+from .types.decision import (
+    DecisionRequest,
+    DecisionResponse,
+    PredicateQuestion,
+    ChoiceQuestion,
+    ScoreQuestion,
+    DecisionLevel,
+    DecisionMessage,
+    DecisionText,
+    DecisionImage,
+    DecisionChoice,
+    PredicateAnswer,
+    ChoiceAnswer,
+    ScoreAnswer,
+    RefusalAnswer,
+    DecisionUsage,
+)
 from .types.chat_request import (
     CapabilityPolicy,
     ChatRequest,
@@ -32,6 +50,25 @@ from .registry import (
 )
 
 __all__ = [
+    "DecisionClient",
+    "AsyncDecisionClient",
+    "create_decision_client",
+    "create_async_decision_client",
+    "DecisionRequest",
+    "DecisionResponse",
+    "PredicateQuestion",
+    "ChoiceQuestion",
+    "ScoreQuestion",
+    "DecisionLevel",
+    "DecisionMessage",
+    "DecisionText",
+    "DecisionImage",
+    "DecisionChoice",
+    "PredicateAnswer",
+    "ChoiceAnswer",
+    "ScoreAnswer",
+    "RefusalAnswer",
+    "DecisionUsage",
     "CapabilityPolicy",
     "ChatRequest",
     "ChatRequestOptions",

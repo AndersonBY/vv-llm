@@ -99,6 +99,7 @@ class Settings(BaseModel):
         default=None,
         description="Embedding backend settings.",
     )
+    decision_backends: dict[str, BackendSettings] = Field(default_factory=dict, description="Decision model backends.")
     rerank_backends: dict[str, RetrievalBackendSettings] | None = Field(
         default=None,
         description="Rerank backend settings.",
@@ -155,6 +156,23 @@ class Settings(BaseModel):
 
         data["backends"] = backends
 
+        decision_backends = data.get("decision_backends", {})
+        for backend_name, catalog_models in model_types.items():
+            default_models = {name: model for name, model in catalog_models.items() if (model.get("capabilities") or {}).get("decision_types")}
+            if not default_models and backend_name not in decision_backends:
+                continue
+            supplied = decision_backends.get(backend_name, {})
+            if isinstance(supplied, BackendSettings):
+                supplied = supplied.model_dump()
+            for alias, entry in supplied.get("models", {}).items():
+                matching = next((candidate for candidate in default_models.values() if candidate["id"] == entry.get("id")), None)
+                if alias not in default_models and matching is not None:
+                    default_models[alias] = matching
+            resolved = BackendSettings(default_endpoint=supplied.get("default_endpoint"))
+            resolved.update_models(default_models, supplied.get("models", {}))
+            decision_backends[backend_name] = resolved
+        data["decision_backends"] = decision_backends
+
         for endpoint in data.get("endpoints", []):
             _normalize_endpoint_transport_flags(endpoint)
             if not endpoint.get("api_base"):
@@ -187,6 +205,12 @@ class Settings(BaseModel):
     def get_backend(self, backend: BackendType) -> BackendSettings:
         backend_name = backend.value.lower()
         return getattr(self.backends, backend_name)
+
+    def get_decision_backend(self, backend: BackendType | str) -> BackendSettings:
+        name = backend.value if isinstance(backend, BackendType) else str(backend).lower()
+        if name not in self.decision_backends:
+            raise ValueError(f"Decision backend {name} is not configured")
+        return self.decision_backends[name]
 
     def get_embedding_backend(self, backend: EmbeddingBackendType | str) -> RetrievalBackendSettings:
         backend_name = backend.value.lower() if isinstance(backend, EmbeddingBackendType) else str(backend).lower()

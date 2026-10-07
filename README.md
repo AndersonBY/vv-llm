@@ -389,14 +389,14 @@ Model endpoint bindings accept an optional `priority` integer of at least 1
 `order_endpoints(endpoints, preferred_endpoint_id=None)` returns a new list.
 A preferred endpoint moves ahead only within its priority tier.
 
-The package includes `vv-llm-contract` 1.2.2. Read contract metadata, the model
+The package includes `vv-llm-contract` 1.3.0. Read contract metadata, the model
 catalog, and integrity status through `vv_llm.contract`:
 
 ```python
 from vv_llm.contract import contract_info, load_catalog, verify_contract
 
 info = contract_info()
-assert info.contract_version == "1.2.2"
+assert info.contract_version == "1.3.0"
 assert verify_contract().ok
 catalog = load_catalog()
 ```
@@ -555,3 +555,42 @@ mapping is inferred. Use `reasoning_effort` or Google `thinking_config.thinking_
 for explicit control, but not both. Gemini 3.7 Flash and 3.8 Flash expose
 low/medium/high; minimal is unsupported. Gemini 2.5 retains its budget and sampling
 behavior. Input objects are not mutated.
+
+## Decisions
+
+Decision clients are independent from chat, embedding, and rerank clients. They
+use `decision_backends` and the same endpoint configuration. The pinned catalog
+declares `gpt-6-luna` support for predicate, choice, and score questions.
+
+```python
+from vv_llm import create_decision_client, DecisionRequest, PredicateQuestion
+from vv_llm.settings import settings
+
+settings.load({
+    "endpoints": [{"id": "openai", "api_base": "https://api.openai.com/v1", "api_key": "YOUR_KEY"}],
+    "decision_backends": {"openai": {"default_endpoint": "openai"}},
+})
+with create_decision_client(model="gpt-6-luna") as client:
+    result = client.create(DecisionRequest(
+        input="The screen arrived broken.",
+        questions=[PredicateQuestion(name="damaged", instructions="Does the customer report damage?")],
+    ))
+```
+
+`create_async_decision_client` has the same request/response types. Responses
+preserve probabilities, score levels, per-question refusals, and token usage;
+callers choose thresholds. Only inline base64 image inputs are accepted. Unknown
+or unsupported decision capabilities fail before network access. Requests and
+responses expose `from_contract`/`to_contract` for portable JSON. The adapter uses
+the OpenAI SDK's generic POST method; no SDK upgrade or new dependency is needed.
+
+Live smoke (requires an explicit local settings file and opt-in):
+
+```powershell
+$env:VV_LLM_RUN_LIVE_TESTS = "1"
+$env:VV_LLM_SETTINGS_JSON = "C:\secure\llm-settings.json"
+python tests/live/test_decisions.py
+```
+
+Choice questions use `choices`; score questions use `rubric` and return
+`score`, `confidence`, and `probabilities`. Choice IDs can be strings or booleans.

@@ -365,13 +365,13 @@ none/minimal 仍返回推理内容，而显式 disabled 没有返回推理内容
 `order_endpoints(endpoints, preferred_endpoint_id=None)` 返回新列表，
 偏好端点仅在同优先级内提前。
 
-包内包含 `vv-llm-contract` 1.2.2。通过 `vv_llm.contract` 读取 contract
+包内包含 `vv-llm-contract` 1.3.0。通过 `vv_llm.contract` 读取 contract
 metadata、模型目录和完整性状态：
 
 ```python
 from vv_llm.contract import contract_info, load_catalog, verify_contract
 
-assert contract_info().contract_version == "1.2.2"
+assert contract_info().contract_version == "1.3.0"
 assert verify_contract().ok
 catalog = load_catalog()
 ```
@@ -520,3 +520,41 @@ Gemini 3 及后续模型的请求会省略 `temperature`、`top_p`、`top_k` 和
 不会猜测数值到档位的映射。需要指定思考强度时使用 `reasoning_effort` 或
 Google 的 `thinking_config.thinking_level`，不要同时设置两者。3.7 Flash 和 3.8 Flash
 支持 low/medium/high，不支持 minimal；Gemini 2.5 保留原有预算与采样行为。
+
+## Decisions
+
+Decision 客户端与聊天、嵌入和重排客户端并列，使用独立的
+`decision_backends` 配置，并复用端点设置。共享目录声明 `gpt-6-luna`
+支持 predicate、choice 和 score 三种问题。
+
+```python
+from vv_llm import create_decision_client, DecisionRequest, PredicateQuestion
+from vv_llm.settings import settings
+
+settings.load({
+    "endpoints": [{"id": "openai", "api_base": "https://api.openai.com/v1", "api_key": "YOUR_KEY"}],
+    "decision_backends": {"openai": {"default_endpoint": "openai"}},
+})
+with create_decision_client(model="gpt-6-luna") as client:
+    result = client.create(DecisionRequest(
+        input="The screen arrived broken.",
+        questions=[PredicateQuestion(name="damaged", instructions="Does the customer report damage?")],
+    ))
+```
+
+`create_async_decision_client` 使用相同的请求和响应类型。choice 通过
+`choices` 提供选项，score 通过 `rubric` 提供评分标准，返回
+`score`、`confidence` 和 `probabilities`。客户端保留概率、拒答和
+token 用量，由调用方选择阈值。图片仅支持内联 base64；未知或不支持的能力
+会在发送请求前报错。`from_contract`/`to_contract` 支持跨语言 JSON。
+适配器复用 OpenAI SDK 的 POST 方法，无需升级 SDK 或增加依赖。
+
+真实测试需要显式指定本地配置并开启网络测试：
+
+```powershell
+$env:VV_LLM_RUN_LIVE_TESTS = "1"
+$env:VV_LLM_SETTINGS_JSON = "C:\secure\llm-settings.json"
+python tests/live/test_decisions.py
+```
+
+测试同时执行同步和异步调用，只输出结构、用量及错误类型。

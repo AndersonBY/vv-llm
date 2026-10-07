@@ -173,5 +173,6 @@ class SettingsDict(TypedDict):
     rate_limit: NotRequired[RateLimitConfigDict]
 
     backends: NotRequired[BackendsDict]
+    decision_backends: NotRequired[dict[str, BackendSettingsDict]]
     embedding_backends: NotRequired[dict[str, RetrievalBackendSettingsDict]]
     rerank_backends: NotRequired[dict[str, RetrievalBackendSettingsDict]]
