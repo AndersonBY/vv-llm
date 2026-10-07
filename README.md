@@ -389,14 +389,14 @@ Model endpoint bindings accept an optional `priority` integer of at least 1
 `order_endpoints(endpoints, preferred_endpoint_id=None)` returns a new list.
 A preferred endpoint moves ahead only within its priority tier.
 
-The package includes `vv-llm-contract` 1.2.1. Read contract metadata, the model
+The package includes `vv-llm-contract` 1.2.2. Read contract metadata, the model
 catalog, and integrity status through `vv_llm.contract`:
 
 ```python
 from vv_llm.contract import contract_info, load_catalog, verify_contract
 
 info = contract_info()
-assert info.contract_version == "1.2.1"
+assert info.contract_version == "1.2.2"
 assert verify_contract().ok
 catalog = load_catalog()
 ```
@@ -544,3 +544,14 @@ part of release CI.
 ## License
 
 MIT
+
+
+### Gemini generation parameters
+
+For Gemini 3 and later, chat adapters omit `temperature`, `top_p`, `top_k`,
+and `thinking_budget` (including camelCase spellings and nested provider
+overrides). Budget-only requests use the model default; no numeric budget-to-level
+mapping is inferred. Use `reasoning_effort` or Google `thinking_config.thinking_level`
+for explicit control, but not both. Gemini 3.7 Flash and 3.8 Flash expose
+low/medium/high; minimal is unsupported. Gemini 2.5 retains its budget and sampling
+behavior. Input objects are not mutated.

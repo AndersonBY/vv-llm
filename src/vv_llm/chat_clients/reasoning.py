@@ -1,5 +1,6 @@
 """Reasoning controls shared by the existing provider adapters."""
 
+import re
 from collections.abc import Mapping
 from typing import Any
 
@@ -40,13 +41,34 @@ def resolve_reasoning_effort(effort: Any, body: Mapping[str, Any] | None, protoc
         raise ValueError("Conflicting reasoning_effort values")
     effort = controls[0] if controls else None
     if effort is not None:
-        if backend == "gemini":
+        if backend == "gemini" or uses_gemini_thinking_levels(model):
             google = result.get("google", {})
             nested = result.get("extra_body", {})
             configs = [google, nested.get("google", {})] if isinstance(nested, Mapping) else [google]
             for config in configs:
                 thinking = config.get("thinking_config", {}) if isinstance(config, Mapping) else {}
-                if isinstance(thinking, Mapping) and ("thinking_level" in thinking or "thinking_budget" in thinking):
+                if isinstance(thinking, Mapping) and any(key in thinking for key in ("thinking_level", "thinking_budget", "thinkingLevel", "thinkingBudget")):
                     raise ValueError("reasoning_effort conflicts with Gemini thinking_level/thinking_budget")
         result = merge_reasoning_body(result, {container: {"effort": effort}} if container else {"reasoning_effort": effort})
     return effort, result
+
+
+def uses_gemini_thinking_levels(model: str | None) -> bool:
+    match = re.match(r"gemini-(\d+)(?:[.-]|$)", (model or "").rsplit("/", 1)[-1], re.IGNORECASE)
+    return bool(match and int(match[1]) >= 3)
+
+
+def normalize_gemini_body(body: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Use Gemini 3+ defaults instead of deprecated sampling and token budgets."""
+    result = dict(body or {})
+    for key in ("temperature", "top_p", "top_k", "topP", "topK", "thinking_budget", "thinkingBudget"):
+        result.pop(key, None)
+    if "thinkingLevel" in result:
+        level = result.pop("thinkingLevel")
+        if "thinking_level" in result and result["thinking_level"] != level:
+            raise ValueError("Conflicting Gemini thinking_level values")
+        result["thinking_level"] = level
+    for key in ("extra_body", "google", "thinking_config"):
+        if isinstance(result.get(key), Mapping):
+            result[key] = normalize_gemini_body(result[key])
+    return result

@@ -37,10 +37,10 @@ def test_vendored_contract_matches_consumer_lock():
 
     assert result.ok, result.mismatches
     assert result.artifact_count == 15
-    assert info.contract_version == "1.2.1"
+    assert info.contract_version == "1.2.2"
     assert info.schema_version == 2
     assert info.fixture_version == 2
-    assert info.catalog_revision == 16
+    assert info.catalog_revision == 17
     assert contract_api.CATALOG_REVISION == info.catalog_revision
     assert info.consumer_lock_sha256 == CONSUMER_LOCK_SHA256
 
@@ -127,7 +127,7 @@ def test_runtime_rejects_tampered_consumer_lock(monkeypatch):
 def test_sync_checker_rejects_tampered_consumer_lock(tmp_path):
     repository_root = Path(__file__).parents[2]
     source = tmp_path / "vv-llm-contract"
-    shutil.copytree(repository_root / "src" / "vv_llm" / "_contract" / "v1_2_1", source)
+    shutil.copytree(repository_root / "src" / "vv_llm" / "_contract" / "v1_2_2", source)
     lock = source / "consumer-lock.v1.json"
     lock.write_bytes(lock.read_bytes() + b"tampered")
 
@@ -157,7 +157,7 @@ def test_sync_checker_rejects_unsafe_artifact_paths(relative):
 def test_sync_checker_rejects_unlocked_vendor_files(tmp_path):
     repository_root = Path(__file__).parents[2]
     source = tmp_path / "contract"
-    shutil.copytree(repository_root / "src" / "vv_llm" / "_contract" / "v1_2_1", source)
+    shutil.copytree(repository_root / "src" / "vv_llm" / "_contract" / "v1_2_2", source)
     (source / "unexpected.json").write_text("{}", encoding="utf-8")
     sync_contract = runpy.run_path(str(repository_root / "scripts" / "sync_contract.py"))
     lock = sync_contract["_lock_at"](source)
@@ -169,7 +169,7 @@ def test_sync_checker_rejects_unlocked_vendor_files(tmp_path):
 
 def test_check_with_source_compares_vendor_and_source(tmp_path):
     repository_root = Path(__file__).parents[2]
-    vendor = repository_root / "src" / "vv_llm" / "_contract" / "v1_2_1"
+    vendor = repository_root / "src" / "vv_llm" / "_contract" / "v1_2_2"
     source = tmp_path / "contract"
     shutil.copytree(vendor, source)
     sync_contract = runpy.run_path(str(repository_root / "scripts" / "sync_contract.py"))

@@ -371,3 +371,63 @@ def test_keyword_entries_forward_capability_policy(asynchronous, wrapped, monkey
     assert response == "ok"
     assert policies == [CapabilityPolicy.STRICT]
     assert inner.requests[0].options.reasoning_effort == "high"
+
+
+@pytest.mark.parametrize("model", ["gemini-3.8-flash", "google/gemini-4-flash", "gemini-2.5-flash", "gpt-5.5"])
+@pytest.mark.parametrize("asynchronous", [False, True])
+@pytest.mark.parametrize("stream", [False, True])
+@pytest.mark.parametrize("nested", [False, True])
+def test_gemini_wire_parameters(model, asynchronous, stream, nested):
+    from copy import deepcopy
+    from vv_llm.types.llm_parameters import NOT_GIVEN
+
+    config = settings("chat")
+    config.backends.openai.models["test-model"].id = model
+    client = (OpenAIChatClient, AsyncOpenAIChatClient)[asynchronous](model="test-model", endpoint_id="test", random_endpoint=False, settings=config)
+    captured = {}
+    bind(client, "chat", asynchronous, captured)
+    google = {"google": {"thinking_config": {"thinkingBudget": 1024, "thinkingLevel": "high", "include_thoughts": True}}}
+    body = {"extra_body": google} if nested else google
+    body.update({"temperature": 0.4, "top_p": 0.8, "top_k": 20, "topP": 0.8, "topK": 20})
+    original = deepcopy(body)
+    kwargs = dict(messages=[{"role": "user", "content": "hello"}], temperature=0.3, top_p=0.7, extra_body=body, stream=stream, skip_cutoff=True, max_tokens=64)
+
+    async def run():
+        result = await client.create_completion(**kwargs)
+        if stream:
+            await anext(result)
+
+    with pytest.raises(Captured):
+        if asynchronous:
+            asyncio.run(run())
+        else:
+            result = client.create_completion(**kwargs)
+            if stream:
+                next(result)
+    modern = "gemini-3" in model or "gemini-4" in model
+    assert captured["temperature"] == (NOT_GIVEN if modern else 0.3)
+    assert captured["top_p"] == (NOT_GIVEN if modern else 0.7)
+    sent = captured["extra_body"]
+    for key in ("temperature", "top_p", "top_k", "topP", "topK"):
+        assert (key in sent) is (not modern)
+    thinking = (sent["extra_body"] if nested else sent)["google"]["thinking_config"]
+    assert thinking == ({"thinking_level": "high", "include_thoughts": True} if modern else original.get("extra_body", original)["google"]["thinking_config"])
+    assert body == original
+    assert client.temperature == 0.3
+
+
+def test_gemini_budget_uses_default_and_level_alias_conflicts_are_rejected():
+    from vv_llm.chat_clients.reasoning import normalize_gemini_body
+
+    assert normalize_gemini_body({"google": {"thinking_config": {"thinking_budget": 0, "include_thoughts": True}}}) == {"google": {"thinking_config": {"include_thoughts": True}}}
+    with pytest.raises(ValueError, match="Conflicting Gemini"):
+        normalize_gemini_body({"google": {"thinking_config": {"thinking_level": "low", "thinkingLevel": "high"}}})
+    for field in ("thinkingLevel", "thinkingBudget"):
+        with pytest.raises(ValueError, match="conflicts"):
+            resolve_reasoning_effort("high", {"google": {"thinking_config": {field: "high"}}}, "chat", "gemini", "gemini-3.8-flash")
+    for model in ("gemini-3.7-flash", "gemini-3.8-flash"):
+        from vv_llm.types.defaults import GEMINI_MODELS
+        capabilities = ModelCapabilities(**GEMINI_MODELS[model]["capabilities"])
+        assert capabilities.reasoning_efforts == ["low", "medium", "high"]
+        with pytest.raises(ValueError, match="reasoning_effort"):
+            capabilities.validate_reasoning_effort("minimal", model, CapabilityPolicy.STRICT)

@@ -142,7 +142,7 @@ def test_sync(model, stream: bool = False, use_tool: bool = False):
                 "extra_body": {
                         "google": {
                             "thinking_config": {
-                                "thinking_budget": 1024,
+                                **({"thinking_budget": 1024} if model.startswith("gemini-2.5") else {"thinking_level": "high"}),
                                 # Thinking off:
                                 # "thinking_budget": 0
                                 # Turn on dynamic thinking:
@@ -164,7 +164,7 @@ def test_sync(model, stream: bool = False, use_tool: bool = False):
                 "extra_body": {
                         "google": {
                             "thinking_config": {
-                                "thinking_budget": 1024,
+                                **({"thinking_budget": 1024} if model.startswith("gemini-2.5") else {"thinking_level": "high"}),
                                 # Thinking off:
                                 # "thinking_budget": 0
                                 # Turn on dynamic thinking:
@@ -205,7 +205,7 @@ async def test_async(model, stream: bool = False, use_tool: bool = False):
                 "extra_body": {
                         "google": {
                             "thinking_config": {
-                                "thinking_budget": 1024,
+                                **({"thinking_budget": 1024} if model.startswith("gemini-2.5") else {"thinking_level": "high"}),
                                 # Thinking off:
                                 # "thinking_budget": 0
                                 # Turn on dynamic thinking:
@@ -227,7 +227,7 @@ async def test_async(model, stream: bool = False, use_tool: bool = False):
                 "extra_body": {
                         "google": {
                             "thinking_config": {
-                                "thinking_budget": 1024,
+                                **({"thinking_budget": 1024} if model.startswith("gemini-2.5") else {"thinking_level": "high"}),
                                 # Thinking off:
                                 # "thinking_budget": 0
                                 # Turn on dynamic thinking:

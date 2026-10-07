@@ -19,7 +19,7 @@ from openai.types.chat.chat_completion_prediction_content_param import ChatCompl
 from anthropic.types.thinking_config_param import ThinkingConfigParam
 
 from ..types.chat_request import CapabilityPolicy
-from .reasoning import merge_reasoning_body, resolve_reasoning_effort
+from .reasoning import merge_reasoning_body, resolve_reasoning_effort, normalize_gemini_body, uses_gemini_thinking_levels
 from .base_client import _prepare_model, BaseChatClient, BaseAsyncChatClient
 from .utils import (
     cutoff_messages,
@@ -419,6 +419,10 @@ class OpenAICompatibleChatClient(BaseChatClient):
         self.model_setting = self.backend_settings.models[self.model]
         if self.model_id is None:
             self.model_id = self.model_setting.id
+        request_temperature = self.temperature
+        if uses_gemini_thinking_levels(self.model_id):
+            request_temperature = top_p = NOT_GIVEN
+            extra_body = normalize_gemini_body(extra_body)
         extra_headers = self._resolve_request_headers(
             extra_headers=extra_headers,
             header_context=header_context,
@@ -495,7 +499,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                     stream_ctx = raw_client.responses.stream(
                         model=model_id,
                         input=response_input,
-                        temperature=None if self.temperature is NOT_GIVEN else self.temperature,
+                        temperature=None if request_temperature is NOT_GIVEN else request_temperature,
                         top_p=None if top_p is NOT_GIVEN else top_p,
                         max_output_tokens=req_max_output_tokens,
                         extra_body=extra_body,
@@ -524,7 +528,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                 response = raw_client.responses.create(
                     model=model_id,
                     input=response_input,
-                    temperature=None if self.temperature is NOT_GIVEN else self.temperature,
+                    temperature=None if request_temperature is NOT_GIVEN else request_temperature,
                     top_p=None if top_p is NOT_GIVEN else top_p,
                     max_output_tokens=req_max_output_tokens,
                     extra_body=extra_body,
@@ -561,7 +565,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                 model=model_id,
                 messages=messages,
                 stream=True,
-                temperature=self.temperature,
+                temperature=request_temperature,
                 max_tokens=max_tokens,
                 top_p=top_p,
                 audio=audio,
@@ -790,7 +794,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                 model=model_id,
                 messages=messages,
                 stream=False,
-                temperature=self.temperature,
+                temperature=request_temperature,
                 max_tokens=max_tokens,
                 top_p=top_p,
                 audio=audio,
@@ -1128,6 +1132,10 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
         self.model_setting = self.backend_settings.models[self.model]
         if self.model_id is None:
             self.model_id = self.model_setting.id
+        request_temperature = self.temperature
+        if uses_gemini_thinking_levels(self.model_id):
+            request_temperature = top_p = NOT_GIVEN
+            extra_body = normalize_gemini_body(extra_body)
         extra_headers = self._resolve_request_headers(
             extra_headers=extra_headers,
             header_context=header_context,
@@ -1210,7 +1218,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                         async with raw_client.responses.stream(
                             model=model_id,
                             input=response_input,
-                            temperature=None if self.temperature is NOT_GIVEN else self.temperature,
+                            temperature=None if request_temperature is NOT_GIVEN else request_temperature,
                             top_p=None if top_p is NOT_GIVEN else top_p,
                             max_output_tokens=req_max_output_tokens,
                             extra_body=extra_body,
@@ -1236,7 +1244,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                 response = await raw_client.responses.create(
                     model=model_id,
                     input=response_input,
-                    temperature=None if self.temperature is NOT_GIVEN else self.temperature,
+                    temperature=None if request_temperature is NOT_GIVEN else request_temperature,
                     top_p=None if top_p is NOT_GIVEN else top_p,
                     max_output_tokens=req_max_output_tokens,
                     extra_body=extra_body,
@@ -1272,7 +1280,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                 model=model_id,
                 messages=messages,
                 stream=self.stream,
-                temperature=self.temperature,
+                temperature=request_temperature,
                 max_tokens=max_tokens,
                 top_p=top_p,
                 audio=audio,
@@ -1501,7 +1509,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                 model=model_id,
                 messages=messages,
                 stream=self.stream,
-                temperature=self.temperature,
+                temperature=request_temperature,
                 max_tokens=max_tokens,
                 top_p=top_p,
                 audio=audio,

@@ -365,13 +365,13 @@ none/minimal 仍返回推理内容，而显式 disabled 没有返回推理内容
 `order_endpoints(endpoints, preferred_endpoint_id=None)` 返回新列表，
 偏好端点仅在同优先级内提前。
 
-包内包含 `vv-llm-contract` 1.2.1。通过 `vv_llm.contract` 读取 contract
+包内包含 `vv-llm-contract` 1.2.2。通过 `vv_llm.contract` 读取 contract
 metadata、模型目录和完整性状态：
 
 ```python
 from vv_llm.contract import contract_info, load_catalog, verify_contract
 
-assert contract_info().contract_version == "1.2.1"
+assert contract_info().contract_version == "1.2.2"
 assert verify_contract().ok
 catalog = load_catalog()
 ```
@@ -511,3 +511,12 @@ python scripts/smoke_wheel.py
 ## 许可证
 
 MIT
+
+
+### Gemini 生成参数
+
+Gemini 3 及后续模型的请求会省略 `temperature`、`top_p`、`top_k` 和旧的
+`thinking_budget`，包括驼峰拼写与嵌套 provider 参数。只设置 budget 时使用模型默认值，
+不会猜测数值到档位的映射。需要指定思考强度时使用 `reasoning_effort` 或
+Google 的 `thinking_config.thinking_level`，不要同时设置两者。3.7 Flash 和 3.8 Flash
+支持 low/medium/high，不支持 minimal；Gemini 2.5 保留原有预算与采样行为。

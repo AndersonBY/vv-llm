@@ -214,6 +214,7 @@ def test_gemini_37_flash_matches_documented_limits_and_capabilities():
         "structured_output": "json_schema",
         "input_modalities": ["text", "image", "video", "audio"],
         "thinking": "configurable",
+        "reasoning_efforts": ["low", "medium", "high"],
     }
 
 
