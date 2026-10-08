@@ -73,6 +73,18 @@ def test_anthropic_claude_opus_5_is_available():
     assert model["native_multimodal"] is True
 
 
+def test_anthropic_claude_haiku_5_5_matches_documented_parameters():
+    assert ANTHROPIC_MODELS["claude-haiku-5-5"] == {
+        "id": "claude-haiku-5-5",
+        "context_length": 1000000,
+        "max_output_tokens": 128000,
+        "function_call_available": True,
+        "response_format_available": False,
+        "native_multimodal": True,
+        "capabilities": {"tools": True, "input_modalities": ["text", "image"], "thinking": "configurable", "reasoning_efforts": ["low", "medium", "high", "xhigh", "max"]},
+    }
+
+
 def test_anthropic_claude_opus_5_5_matches_opus_5():
     assert ANTHROPIC_MODELS["claude-opus-5-5"] == {**ANTHROPIC_MODELS["claude-opus-5"], "id": "claude-opus-5-5"}
 

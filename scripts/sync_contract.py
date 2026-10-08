@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 VENDOR_ROOT = ROOT / "src" / "vv_llm" / "_contract" / "v1_3_0"
 META_FILES = ("manifest.json", "checksums.sha256", "consumer-lock.v1.json")
 CONTRACT_VERSION = "1.3.0"
-CONSUMER_LOCK_SHA256 = "929679bd43f8092bae4171179cd405f664ae15fab52ce9a88c67e86c6027fdb9"
+CONSUMER_LOCK_SHA256 = "e2df07c360c71d0b6e2be3c73cef02150885c6a4cdaef5412e1a3ffcd696466d"
 ARTIFACT_ROOTS = frozenset({"catalog", "fixtures", "schemas"})
 ALLOWED_EXTRA_FILES = frozenset({"__init__.py"})
 
