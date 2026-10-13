@@ -1,5 +1,7 @@
 import importlib
 
+import pytest
+
 from vv_llm.types.defaults import ANTHROPIC_MODELS, DEEPSEEK_MODELS, GEMINI_MODELS, MINIMAX_MODELS, MOONSHOT_MODELS, OPENAI_MODELS, QWEN_MODELS, XAI_MODELS, ZHIPUAI_MODELS
 
 
@@ -232,6 +234,26 @@ def test_gemini_37_flash_matches_documented_limits_and_capabilities():
 
 def test_gemini_38_flash_matches_37_flash():
     assert GEMINI_MODELS["gemini-3.8-flash"] == {**GEMINI_MODELS["gemini-3.7-flash"], "id": "gemini-3.8-flash"}
+
+
+def test_gemini_4_argon_matches_documented_limits_and_capabilities():
+    from vv_llm.settings import Settings
+    from vv_llm.types.chat_request import CapabilityPolicy
+
+    model = Settings().backends.gemini.models["gemini-4-argon"]
+    assert model.id == "gemini-4-argon"
+    assert model.context_length == 1_048_576
+    assert model.max_output_tokens == 65_536
+    assert model.function_call_available and model.response_format_available and model.native_multimodal
+    assert model.capabilities.structured_output == "json_schema"
+    assert model.capabilities.input_modalities == {"text", "image", "video", "audio"}
+    assert model.capabilities.reasoning_efforts == ["low", "medium", "high"]
+    assert model.capabilities.reasoning_effort_aliases is None
+    for effort in ("low", "medium", "high"):
+        model.capabilities.validate_reasoning_effort(effort, model.id, CapabilityPolicy.STRICT)
+    for effort in ("minimal", "none"):
+        with pytest.raises(ValueError, match="does not support"):
+            model.capabilities.validate_reasoning_effort(effort, model.id, CapabilityPolicy.STRICT)
 
 
 def test_xai_grok_46_matches_documented_capabilities():
