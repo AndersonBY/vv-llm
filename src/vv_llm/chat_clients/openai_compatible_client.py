@@ -113,6 +113,17 @@ def _merge_thinking_into_extra_body(
     return cast(Body, merged_extra_body)
 
 
+def _cache_creation_tokens(raw_usage: Any, raw_prompt_tokens_details: Any) -> int | None:
+    """Return cache writes from the top level or from ``prompt_tokens_details.cache_write_tokens``."""
+    top_level = getattr(raw_usage, "cache_creation_tokens", None)  # noqa: B009
+    if top_level is not None:
+        return top_level
+    if raw_prompt_tokens_details is _MISSING or raw_prompt_tokens_details is None:
+        return None
+    nested = _get_explicit_field(raw_prompt_tokens_details, "cache_write_tokens")
+    return cast(int, nested) if _is_valid_token_count(nested) else None
+
+
 def _normalize_openai_compatible_usage(raw_usage: Any, backend_name: BackendType | str) -> Usage | None:
     """Normalize cache reads while preserving omitted versus observed-zero semantics."""
     if raw_usage is None:
@@ -135,7 +146,17 @@ def _normalize_openai_compatible_usage(raw_usage: Any, backend_name: BackendType
             cached_tokens = cast(int, candidate)
             break
 
-    if cached_tokens is _MISSING and backend_name == BackendType.Moonshot and top_level_cached_tokens is _MISSING and raw_prompt_tokens_details is _MISSING:
+    # Moonshot only reports cache reads on a hit; kimi-k3 also sends
+    # prompt_tokens_details with cache_write_tokens alone, so an omitted read
+    # count means zero unless the provider sent an explicit null/invalid value.
+    if (
+        cached_tokens is _MISSING
+        and backend_name == BackendType.Moonshot
+        and top_level_cached_tokens is _MISSING
+        and nested_cached_tokens is _MISSING
+        and raw_prompt_tokens_details is not None
+        and (raw_prompt_tokens_details is _MISSING or prompt_tokens_details is not None)
+    ):
         cached_tokens = 0
 
     if cached_tokens is not _MISSING:
@@ -148,7 +169,7 @@ def _normalize_openai_compatible_usage(raw_usage: Any, backend_name: BackendType
         completion_tokens=raw_usage.completion_tokens or 0,
         prompt_tokens=raw_usage.prompt_tokens or 0,
         total_tokens=raw_usage.total_tokens or 0,
-        cache_creation_tokens=getattr(raw_usage, "cache_creation_tokens", None),  # noqa: B009
+        cache_creation_tokens=_cache_creation_tokens(raw_usage, raw_prompt_tokens_details),
         completion_tokens_details=raw_usage.completion_tokens_details,
         prompt_tokens_details=prompt_tokens_details,
     )

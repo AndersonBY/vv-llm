@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.2 - 2026-10-18
+
+- Moonshot usage: treat an omitted cache-read count as zero even when
+  `prompt_tokens_details` is present (kimi-k3 sends it with only
+  `cache_write_tokens`); explicit null or invalid counts stay unknown.
+- OpenAI-compatible usage: promote `prompt_tokens_details.cache_write_tokens`
+  to `cache_creation_tokens` when no top-level value is reported.
+
 ## 0.8.1 - 2026-10-14
 
 - Add `gemini-4-argon` with a unified 1,048,576-token context, 65,536-token

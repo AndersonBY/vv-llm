@@ -140,14 +140,73 @@ def test_moonshot_omitted_cache_usage_is_normalized_to_zero() -> None:
         _completion_usage(cached_tokens="invalid"),
         _completion_usage(cached_tokens=-1),
         _completion_usage(prompt_tokens_details=None),
-        _completion_usage(prompt_tokens_details=PromptTokensDetails()),
         _completion_usage(prompt_tokens_details=PromptTokensDetails(cached_tokens=None)),
         _completion_usage(prompt_tokens_details=PromptTokensDetails(cached_tokens=-1)),
     ],
-    ids=["top-level-null", "top-level-string", "top-level-negative", "details-null", "nested-omitted", "nested-null", "nested-negative"],
+    ids=["top-level-null", "top-level-string", "top-level-negative", "details-null", "nested-null", "nested-negative"],
 )
 def test_moonshot_invalid_or_null_cache_usage_stays_unknown(usage: CompletionUsage) -> None:
     assert _cached_tokens(usage, BackendType.Moonshot) is None
+
+
+def test_generic_details_without_cache_read_stay_unknown() -> None:
+    usage = _completion_usage(prompt_tokens_details=PromptTokensDetails())
+    assert _cached_tokens(usage, BackendType.OpenAI) is None
+
+
+# kimi-k3 sends prompt_tokens_details carrying only cache_write_tokens.
+KIMI_K3_RAW_USAGE = {
+    "completion_tokens": 91,
+    "completion_tokens_details": {"reasoning_tokens": 75},
+    "prompt_tokens": 10617,
+    "prompt_tokens_details": {"cache_write_tokens": 10496},
+    "total_tokens": 10708,
+}
+
+
+@pytest.mark.parametrize(
+    "build",
+    [CompletionUsage.model_validate, lambda data: CompletionUsage.construct(**data)],
+    ids=["validated", "constructed"],
+)
+def test_moonshot_cache_write_only_details_report_zero_reads_and_writes(build: Callable[[dict[str, Any]], CompletionUsage]) -> None:
+    raw_usage = build(KIMI_K3_RAW_USAGE)
+
+    normalized = _normalize_openai_compatible_usage(raw_usage, BackendType.Moonshot)
+
+    assert normalized is not None
+    assert normalized.prompt_tokens == 10617
+    assert normalized.cache_creation_tokens == 10496
+    assert normalized.prompt_tokens_details is not None
+    assert normalized.prompt_tokens_details.cached_tokens == 0
+    assert normalized.model_dump(exclude_none=True)["prompt_tokens_details"] == {"cached_tokens": 0, "cache_write_tokens": 10496}
+
+
+def test_moonshot_cache_write_details_from_mapping_and_empty_details() -> None:
+    assert _cached_tokens(_completion_usage(prompt_tokens_details=PromptTokensDetails()), BackendType.Moonshot) == 0
+    raw_usage = SimpleNamespace(**{**KIMI_K3_RAW_USAGE, "completion_tokens_details": None})
+    normalized = _normalize_openai_compatible_usage(raw_usage, BackendType.Moonshot)
+    assert normalized is not None
+    assert normalized.cache_creation_tokens == 10496
+    assert normalized.prompt_tokens_details is not None
+    assert normalized.prompt_tokens_details.cached_tokens == 0
+
+
+@pytest.mark.parametrize("value", [None, -1], ids=["null", "negative"])
+def test_invalid_nested_cache_write_is_not_promoted(value: Any) -> None:
+    raw_usage = CompletionUsage.model_validate({**KIMI_K3_RAW_USAGE, "prompt_tokens_details": {"cache_write_tokens": value}})
+    normalized = _normalize_openai_compatible_usage(raw_usage, BackendType.Moonshot)
+    assert normalized is not None
+    assert normalized.cache_creation_tokens is None
+
+
+def test_top_level_cache_creation_wins_over_nested_cache_write() -> None:
+    raw_usage = CompletionUsage.model_validate({**KIMI_K3_RAW_USAGE, "cache_creation_tokens": 3})
+    normalized = _normalize_openai_compatible_usage(raw_usage, BackendType.OpenAI)
+    assert normalized is not None
+    assert normalized.cache_creation_tokens == 3
+    assert normalized.prompt_tokens_details is not None
+    assert normalized.prompt_tokens_details.cached_tokens is None
 
 
 def test_positive_top_level_cache_usage_is_projected_without_losing_details() -> None:
