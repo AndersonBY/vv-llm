@@ -42,6 +42,24 @@ def test_minimax_m3_defaults_match_m2_7_except_context_and_multimodal():
     assert model["native_multimodal"] is True
 
 
+def test_minimax_m31_flash_has_verified_agent_capabilities():
+    model = MINIMAX_MODELS["MiniMax-M3.1-Flash"]
+
+    assert model["id"] == "MiniMax-M3.1-Flash"
+    assert model["context_length"] == 1_000_000
+    assert model["max_output_tokens"] == 512_000
+    assert model["function_call_available"] is True
+    assert model["response_format_available"] is False
+    assert model["native_multimodal"] is True
+    assert model["capabilities"] == {
+        "tools": True,
+        "structured_output": "none",
+        "input_modalities": ["text", "image", "video"],
+        "thinking": "always_enabled",
+        "reasoning_efforts": ["low", "medium", "high", "xhigh", "max"],
+    }
+
+
 def test_openai_gpt_56_models_are_available():
     for model_name in ("gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"):
         model = OPENAI_MODELS[model_name]

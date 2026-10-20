@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.3 - 2026-10-20
+
+- Adopt shared contract 1.3.2 and catalog revision 21 with `MiniMax-M3.1-Flash`,
+  a 1M-context multimodal agent model with 512K output, tools, mandatory
+  thinking, and five reasoning-effort choices.
+
 ## 0.8.2 - 2026-10-18
 
 - Moonshot usage: treat an omitted cache-read count as zero even when
