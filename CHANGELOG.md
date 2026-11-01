@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.5 - 2026-11-01
+
+- Preserve provider tool-call indices across sync/async streaming chunks.
+- Keep native Anthropic tool IDs and incremental arguments associated with their
+  content-block indices, including interleaved sparse blocks.
+- Adopt the locally validated, unpublished shared contract 1.3.4 candidate with
+  sparse and reordered streaming tool-call conformance fixtures (no schema change).
+
 ## 0.8.4 - 2026-10-24
 
 - Adopt shared contract 1.3.3 and catalog revision 22 with `kimi-k3.1-pro`: 1,048,576-token
