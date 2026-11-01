@@ -289,3 +289,82 @@ def test_async_anthropic_sampling_parameters_are_nested_in_extra_body_without_ov
     assert "temperature" not in preserved
     assert "top_p" not in preserved
     assert preserved["extra_body"] == {"temperature": 0.9, "top_p": 0.8, "trace": "user"}
+
+
+def _tool_stream_events():
+    from anthropic.types import RawContentBlockDeltaEvent, RawContentBlockStartEvent
+
+    def start(index, call_id, name):
+        return RawContentBlockStartEvent(type="content_block_start", index=index, content_block={"type": "tool_use", "id": call_id, "name": name, "input": {}})
+
+    def delta(index, text):
+        return RawContentBlockDeltaEvent(type="content_block_delta", index=index, delta={"type": "input_json_delta", "partial_json": text})
+
+    return [
+        RawContentBlockStartEvent(type="content_block_start", index=3, content_block={"type": "text", "text": "preface"}),
+        start(7, "call_a", "f"),
+        RawContentBlockStartEvent(type="content_block_start", index=5, content_block={"type": "thinking", "thinking": "plan", "signature": "sig"}),
+        start(0, "call_b", "g"),
+        delta(7, '{"x":'),
+        delta(0, '{"y":'),
+        delta(7, "1}"),
+        delta(0, "2}"),
+    ]
+
+
+def _assert_tool_stream(messages):
+    calls = [call for message in messages if message is not None for call in message.tool_calls or []]
+    assert [call.index for call in calls] == [7, 0, 7, 0, 7, 0]
+    assert [call.id for call in calls] == ["call_a", "call_b", "call_a", "call_b", "call_a", "call_b"]
+    assert [call.function.name for call in calls] == ["f", "g", "f", "g", "f", "g"]
+    assert [call.function.arguments for call in calls] == ["", "", '{"x":', '{"y":', "1}", "2}"]
+
+
+def test_anthropic_adapter_tracks_interleaved_tool_blocks_by_provider_index():
+    state = init_anthropic_stream_state()
+    messages = [adapt_anthropic_stream_event(event, state) for event in _tool_stream_events()]
+    _assert_tool_stream(messages)
+    assert [block["input"] for block in state["raw_content"] if block["type"] == "tool_use"] == [{"x": 1}, {"y": 2}]
+
+
+def test_anthropic_adapter_does_not_attach_unknown_block_delta_to_last_tool():
+    from anthropic.types import RawContentBlockDeltaEvent
+
+    state = init_anthropic_stream_state()
+    adapt_anthropic_stream_event(_tool_stream_events()[1], state)
+    message = adapt_anthropic_stream_event(RawContentBlockDeltaEvent(type="content_block_delta", index=99, delta={"type": "input_json_delta", "partial_json": "{}"}), state)
+    assert not message.tool_calls
+    assert state["raw_content"][0]["input"] == {}
+    # A malformed missing/null index must not guess ownership from the last call.
+    anonymous = RawContentBlockDeltaEvent.construct(type="content_block_delta", index=None, delta={"type": "input_json_delta", "partial_json": "{}"})
+    assert not adapt_anthropic_stream_event(anonymous, state).tool_calls
+
+
+def _reject_real_sdk_client(*args, **kwargs):
+    raise AssertionError("offline streaming test must not construct a real SDK client")
+
+
+def test_sync_anthropic_client_preserves_interleaved_tool_identity(monkeypatch):
+    monkeypatch.setattr(Anthropic, "__init__", _reject_real_sdk_client)
+    client = AnthropicChatClient(model=TEST_MODEL, endpoint_id="anthropic-test", stream=True, settings=_anthropic_settings())
+    client._cached_raw_client = _FakeAnthropic(lambda **kwargs: iter(_tool_stream_events()))
+    _assert_tool_stream(list(client.create_completion(messages=[{"role": "user", "content": "hello"}], stream=True, max_tokens=16, skip_cutoff=True)))
+
+
+def test_async_anthropic_client_preserves_interleaved_tool_identity(monkeypatch):
+    monkeypatch.setattr(AsyncAnthropic, "__init__", _reject_real_sdk_client)
+
+    async def run():
+        async def chunks():
+            for event in _tool_stream_events():
+                yield event
+
+        async def create(**kwargs):
+            return chunks()
+
+        client = AsyncAnthropicChatClient(model=TEST_MODEL, endpoint_id="anthropic-test", stream=True, settings=_anthropic_settings())
+        client._cached_raw_client = _FakeAsyncAnthropic(create)
+        response = await client.create_completion(messages=[{"role": "user", "content": "hello"}], stream=True, max_tokens=16, skip_cutoff=True)
+        _assert_tool_stream([message async for message in response])
+
+    asyncio.run(run())

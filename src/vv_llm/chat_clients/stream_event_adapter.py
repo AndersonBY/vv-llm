@@ -190,7 +190,8 @@ def init_anthropic_stream_state() -> dict[str, Any]:
         "content": "",
         "reasoning_content": "",
         "usage": {},
-        "tool_calls": [],
+        "tool_calls": {},
+        "tool_use_blocks": {},
         "raw_content": [],
     }
 
@@ -222,17 +223,15 @@ def adapt_anthropic_stream_event(chunk: Any, stream_state: dict[str, Any]) -> Ch
         content_block = chunk.content_block.model_dump()
         stream_state["raw_content"].append(content_block)
         if chunk.content_block.type == "tool_use":
-            stream_state["tool_calls"] = message["tool_calls"] = [
-                {
-                    "index": 0,
-                    "id": chunk.content_block.id,
-                    "function": {
-                        "arguments": "",
-                        "name": chunk.content_block.name,
-                    },
-                    "type": "function",
-                }
-            ]
+            tool_call = {
+                "index": chunk.index,
+                "id": chunk.content_block.id,
+                "function": {"arguments": "", "name": chunk.content_block.name},
+                "type": "function",
+            }
+            stream_state["tool_calls"][chunk.index] = tool_call
+            stream_state["tool_use_blocks"][chunk.index] = content_block
+            message["tool_calls"] = [tool_call]
         elif chunk.content_block.type == "text":
             message["content"] = chunk.content_block.text
         elif chunk.content_block.type == "thinking":
@@ -266,26 +265,27 @@ def adapt_anthropic_stream_event(chunk: Any, stream_state: dict[str, Any]) -> Ch
                 if "citations" not in raw_content:
                     raw_content["citations"] = []
                 raw_content["citations"].append(citation_data)
-        elif chunk.delta.type == "input_json_delta" and stream_state["tool_calls"]:
-            stream_state["tool_calls"][0]["function"]["arguments"] += chunk.delta.partial_json
+        elif chunk.delta.type == "input_json_delta" and chunk.index is not None and chunk.index in stream_state["tool_calls"]:
+            tool_call = stream_state["tool_calls"][chunk.index]
+            tool_call["function"]["arguments"] += chunk.delta.partial_json
             message["tool_calls"] = [
                 {
-                    "index": 0,
-                    "id": stream_state["tool_calls"][0]["id"],
+                    "index": chunk.index,
+                    "id": tool_call["id"],
                     "function": {
                         "arguments": chunk.delta.partial_json,
-                        "name": stream_state["tool_calls"][0]["function"]["name"],
+                        "name": tool_call["function"]["name"],
                     },
                     "type": "function",
                 }
             ]
-            tool_use_block = _last_raw_content(stream_state, "tool_use")
+            tool_use_block = stream_state["tool_use_blocks"].get(chunk.index)
             if tool_use_block is not None:
                 if "input" not in tool_use_block:
                     tool_use_block["input"] = {}
                 try:
-                    if stream_state["tool_calls"][0]["function"]["arguments"]:
-                        tool_use_block["input"] = json.loads(stream_state["tool_calls"][0]["function"]["arguments"])
+                    if tool_call["function"]["arguments"]:
+                        tool_use_block["input"] = json.loads(tool_call["function"]["arguments"])
                     else:
                         tool_use_block["input"] = {}
                 except json.JSONDecodeError:

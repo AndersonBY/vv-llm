@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+
+    - name: Install PDM
+      run: python -m pip install --upgrade pip pdm
+
+    - name: Install dependencies
+      run: pdm install --dev
+
+    - name: Check vendored contract
+      run: pdm run contract-check
+
+    - name: Run tests
+      run: pdm run test
+
+    - name: Run linting
+      run: pdm run lint
+
+    - name: Run format check
+      run: pdm run format-check
+
+    - name: Build package
+      run: pdm build
+
+    - name: Smoke-test built wheel
+      run: python scripts/smoke_wheel.py

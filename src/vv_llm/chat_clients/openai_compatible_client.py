@@ -637,7 +637,9 @@ class OpenAICompatibleChatClient(BaseChatClient):
                     if self.model_setting.function_call_available:
                         if chunk.choices[0].delta.tool_calls:
                             for index, tool_call in enumerate(chunk.choices[0].delta.tool_calls):
-                                tool_call.index = index
+                                # Provider indices identify calls across chunks, not positions in this chunk.
+                                if tool_call.index is None:
+                                    tool_call.index = index
                                 tool_call.type = "function"  # 也是 MiniMax 的不规范导致的问题
 
                         # 即使支持 function call，也要处理思考标签
@@ -1352,7 +1354,9 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                     if self.model_setting.function_call_available:
                         if chunk.choices[0].delta.tool_calls:
                             for index, tool_call in enumerate(chunk.choices[0].delta.tool_calls):
-                                tool_call.index = index
+                                # Provider indices identify calls across chunks, not positions in this chunk.
+                                if tool_call.index is None:
+                                    tool_call.index = index
                                 tool_call.type = "function"
 
                         # 即使支持 function call，也要处理思考标签
