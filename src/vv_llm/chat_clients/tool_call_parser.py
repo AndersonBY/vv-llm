@@ -10,13 +10,13 @@ from ..types.llm_parameters import AnthropicToolChoice, AnthropicToolParam, Tool
 def tool_schema_for_response_api(tool: ToolParam) -> ResponsesFunctionToolParam:
     tool_data = cast(dict[str, Any], tool)
     function_data = cast(dict[str, Any], tool_data["function"])
-    return {
-        "name": function_data["name"],
-        "description": function_data.get("description", ""),
-        "parameters": function_data.get("parameters", {}),
-        "strict": function_data.get("strict", False),
-        "type": "function",
-    }
+    return ResponsesFunctionToolParam(
+        name=function_data["name"],
+        description=function_data.get("description", ""),
+        parameters=function_data.get("parameters", {}),
+        strict=function_data.get("strict", False),
+        type="function",
+    )
 
 
 def refactor_tool_use_params(tools: Iterable[ToolParam]) -> list[AnthropicToolParam]:

@@ -22,8 +22,8 @@ class RateLimitConfigDict(TypedDict):
 
     enabled: bool
     backend: Literal["memory", "redis", "diskcache"]
-    redis: NotRequired[RedisConfigDict]
-    diskcache: NotRequired[DiskCacheConfigDict]
+    redis: NotRequired[RedisConfigDict | None]
+    diskcache: NotRequired[DiskCacheConfigDict | None]
     default_rpm: int
     default_tpm: int
 
@@ -117,8 +117,8 @@ class EndpointSettingDict(TypedDict):
     id: str
     enabled: NotRequired[bool]
     api_base: NotRequired[str | None]
-    api_key: NotRequired[str]
-    region: NotRequired[str]
+    api_key: NotRequired[str | None]
+    region: NotRequired[str | None]
     response_api: NotRequired[bool]
     endpoint_type: NotRequired[
         Literal[
@@ -130,16 +130,19 @@ class EndpointSettingDict(TypedDict):
             "anthropic_vertex",
             "anthropic_bedrock",
         ]
+        | None
     ]
-    credentials: NotRequired[dict]
+    credentials: NotRequired[dict | None]
     is_azure: NotRequired[bool]
     is_vertex: NotRequired[bool]
     is_bedrock: NotRequired[bool]
     rpm: NotRequired[int]
     tpm: NotRequired[int]
     concurrent_requests: NotRequired[int]
-    proxy: NotRequired[str]
-    headers: NotRequired[dict[str, str]]
+    proxy: NotRequired[str | None]
+    headers: NotRequired[dict[str, str] | None]
+    access_token: NotRequired[str | None]
+    access_token_expires_at: NotRequired[float | None]
 
 
 class BackendsDict(TypedDict):
@@ -169,10 +172,10 @@ class SettingsDict(TypedDict):
 
     VERSION: NotRequired[str]
     endpoints: list[EndpointSettingDict]
-    token_server: NotRequired[ServerDict]
-    rate_limit: NotRequired[RateLimitConfigDict]
+    token_server: NotRequired[ServerDict | None]
+    rate_limit: NotRequired[RateLimitConfigDict | None]
 
     backends: NotRequired[BackendsDict]
     decision_backends: NotRequired[dict[str, BackendSettingsDict]]
-    embedding_backends: NotRequired[dict[str, RetrievalBackendSettingsDict]]
-    rerank_backends: NotRequired[dict[str, RetrievalBackendSettingsDict]]
+    embedding_backends: NotRequired[dict[str, RetrievalBackendSettingsDict] | None]
+    rerank_backends: NotRequired[dict[str, RetrievalBackendSettingsDict] | None]

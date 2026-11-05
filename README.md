@@ -4,6 +4,8 @@
 
 Universal LLM interface layer for Python. One API, 17 backends, sync & async.
 
+Requires Python 3.11 or newer.
+
 ```
 pip install vv-llm
 ```
@@ -184,8 +186,8 @@ asyncio.run(main())
 
 The `http_client` argument accepts `httpx2.Client` for sync calls and
 `httpx2.AsyncClient` for async calls. This lets applications provide a custom
-transport (for example, an offline `MockTransport`) while keeping OpenAI 3.x
-and Anthropic 1.x clients on the same HTTPX2 runtime:
+transport (for example, an offline `MockTransport`) while keeping OpenAI
+and Anthropic SDK clients on the same HTTPX2 runtime:
 
 ```python
 import httpx2

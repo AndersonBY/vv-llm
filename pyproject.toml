@@ -1,10 +1,10 @@
 [project]
 authors = [{name = "Anderson", email = "andersonby@163.com"}]
 dependencies = [
-  "openai>=3.0,<4",
+  "openai>=3.0",
   "tiktoken>=0.7.0",
-  "httpx2>=2.7,<3",
-  "anthropic>=1.0,<2",
+  "httpx2>=2.7",
+  "anthropic>=1.0",
   "pydantic>=2.8.2",
   "Pillow>=10.4.0",
   "deepseek-tokenizer>=0.1.0",
@@ -14,8 +14,8 @@ description = "Universal LLM interfaces for multi-provider chat and utilities"
 license = {text = "MIT"}
 name = "vv-llm"
 readme = "README.md"
-requires-python = ">=3.10"
-version = "0.8.5"
+requires-python = ">=3.11"
+version = "0.9.0"
 
 [project.optional-dependencies]
 bedrock = ["boto3 >= 1.28.57", "botocore >= 1.31.57"]

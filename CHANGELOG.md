@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.0 - 2026-11-05
+
+- Remove upper bounds on the OpenAI, Anthropic, and HTTPX2 dependencies.
+- Require Python 3.11 or newer.
+- Construct Responses function tools with the OpenAI SDK's updated typed dictionary.
+- Align settings dictionary types with nullable runtime fields and Vertex token cache fields.
+
 ## 0.8.5 - 2026-11-01
 
 - Preserve provider tool-call indices across sync/async streaming chunks.

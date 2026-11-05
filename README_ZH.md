@@ -4,6 +4,8 @@
 
 面向多模型场景的统一 LLM 接口层。一套 API，17 种后端，同步 & 异步。
 
+需要 Python 3.11 或更新版本。
+
 ```
 pip install vv-llm
 ```
@@ -180,7 +182,7 @@ asyncio.run(main())
 
 `http_client` 参数同步调用接受 `httpx2.Client`，异步调用接受
 `httpx2.AsyncClient`。应用可以注入自定义传输（例如离线
-`MockTransport`），同时让 OpenAI 3.x 与 Anthropic 1.x 使用同一套 HTTPX2
+`MockTransport`），同时让 OpenAI 与 Anthropic SDK 使用同一套 HTTPX2
 运行时：
 
 ```python
