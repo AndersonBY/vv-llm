@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.10.0 - 2026-11-07
+
+- Preserve raw and normalized provider finish reasons and explicit refusal text in optional response/chunk metadata across sync/async chat clients.
+- Expose per-call stream termination signals and iterator exhaustion, including `[DONE]`-only and empty streams, without adding, delaying, or removing chunks or changing provider exceptions.
+- Preserve live evidence through middleware, fallback routing, Anthropic native/compatible transports, and the Responses API. Evidence records provider facts; callers retain responsibility for deciding success.
+- Guard private SSE observation against SDK interface drift; select finish/refusal evidence by choice index 0 and count exhaustion after caller replay.
+- Classify Anthropic context-window exhaustion as length, and await owned SDK stream closure on asynchronous interruption or finalization.
+- Verify public finish-evidence exports and local sync/async consumption in the wheel smoke.
+- Keep canonical contract 1.3.4 unchanged: runtime metadata is separate from portable response JSON and can use the existing `x_*` extension mechanism at that boundary.
+
 ## 0.9.0 - 2026-11-05
 
 - Remove upper bounds on the OpenAI, Anthropic, and HTTPX2 dependencies.

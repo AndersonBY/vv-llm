@@ -1,0 +1,128 @@
+{
+  "openai/False": {
+    "chunks": [
+      {
+        "content": "answer",
+        "reasoning_content": null,
+        "raw_content": null,
+        "tool_calls": null,
+        "function_call_arguments": null,
+        "usage": null
+      }
+    ],
+    "error": {
+      "class": "APIError",
+      "message": "synthetic stream error"
+    }
+  },
+  "openai/True": {
+    "chunks": [
+      {
+        "content": "answer",
+        "reasoning_content": null,
+        "raw_content": null,
+        "tool_calls": null,
+        "function_call_arguments": null,
+        "usage": null
+      }
+    ],
+    "error": {
+      "class": "APIError",
+      "message": "synthetic stream error"
+    }
+  },
+  "anthropic/False": {
+    "chunks": [
+      {
+        "content": "",
+        "reasoning_content": null,
+        "raw_content": {
+          "citations": null,
+          "text": "",
+          "type": "text"
+        },
+        "tool_calls": [],
+        "function_call_arguments": null,
+        "usage": null
+      },
+      {
+        "content": "answer",
+        "reasoning_content": null,
+        "raw_content": {
+          "text": "answer",
+          "type": "text_delta"
+        },
+        "tool_calls": [],
+        "function_call_arguments": null,
+        "usage": null
+      }
+    ],
+    "error": {
+      "class": "APIStatusError",
+      "message": "{'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'synthetic stream error'}}"
+    }
+  },
+  "anthropic/True": {
+    "chunks": [
+      {
+        "content": "",
+        "reasoning_content": null,
+        "raw_content": {
+          "citations": null,
+          "text": "",
+          "type": "text"
+        },
+        "tool_calls": [],
+        "function_call_arguments": null,
+        "usage": null
+      },
+      {
+        "content": "answer",
+        "reasoning_content": null,
+        "raw_content": {
+          "text": "answer",
+          "type": "text_delta"
+        },
+        "tool_calls": [],
+        "function_call_arguments": null,
+        "usage": null
+      }
+    ],
+    "error": {
+      "class": "APIStatusError",
+      "message": "{'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'synthetic stream error'}}"
+    }
+  },
+  "responses/False": {
+    "chunks": [
+      {
+        "content": "answer",
+        "reasoning_content": null,
+        "raw_content": null,
+        "tool_calls": null,
+        "function_call_arguments": null,
+        "usage": null
+      }
+    ],
+    "error": {
+      "class": "APIError",
+      "message": "synthetic stream error"
+    }
+  },
+  "responses/True": {
+    "chunks": [
+      {
+        "content": "answer",
+        "reasoning_content": null,
+        "raw_content": null,
+        "tool_calls": null,
+        "function_call_arguments": null,
+        "usage": null
+      }
+    ],
+    "error": {
+      "class": "APIError",
+      "message": "synthetic stream error"
+    }
+  }
+}

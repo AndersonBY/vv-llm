@@ -381,6 +381,58 @@ catalog = load_catalog()
 维护者可用 `pdm run contract-check` 校验包内副本，并用
 `pdm run contract-sync --source PATH` 从已校验的 release 目录更新。
 
+## 结束和拒绝证据（0.10.0）
+
+Anthropic 原生路径和全部 OpenAI 兼容 chat client（包括 Gemini、Local）新增可选的
+`response.metadata`、`chunk.metadata`，复用 `ResponseMetadata`。同步和异步字段相同：
+
+| 字段 | 含义 |
+| --- | --- |
+| `finish_reason` | provider 原始 finish/stop reason；Responses 优先保留 `incomplete_details.reason`，缺失时保留 `status` |
+| `finish_reason_normalized` | `stop`、`length`、`tool_calls`、`content_filter`、`refusal`、`other`；没有原值时为 `None` |
+| `refusal` | provider 明确给出的拒绝文字；流中按顺序拼接，不根据结束原因或普通正文编造文字 |
+| `stream_terminated` | 是否观察到上游终结信号；非流式或没有此证据能力时为 `None` |
+| `stream_exhausted` | 正常迭代耗尽后为 True；迭代中、提前关闭、流异常时为 False；非流式为 `None` |
+| `termination_signals` | 实际观察到的信号，如 `finish_reason`、`[DONE]`、`message_delta.stop_reason`、`message_stop`、`response.completed` / `response.incomplete` / `response.failed` |
+
+```python
+stream = client.create_stream(messages=[{"role": "user", "content": "你好"}])
+for chunk in stream:
+    print(chunk.content or "", end="")
+evidence = stream.metadata  # 一个 chunk 都没输出时也能查询
+print(evidence.finish_reason, evidence.refusal, evidence.stream_terminated)
+```
+
+异步调用使用 `stream = await client.create_stream(...)` 和 `async for`。
+返回对象保留 generator 协议（`send` / `throw` / `close`，异步对应
+`asend` / `athrow` / `aclose`），新增 `metadata`；它不再是 Python 原生 generator 对象。
+已有 chunk 引用这份**共享、持续更新的 metadata**。应在完整消费 stream 后读取或序列化
+`stream.metadata`；循环内已经生成的字典不会包含后来到达的信号。不增发终结 chunk，
+也不缓存正文等待终结。middleware 和 fallback 的 `create_with_metadata()` 保留同一份证据对象。
+fallback 预读后的回放从未耗尽开始计数，调用方完整消费回放后才标为耗尽。
+异步适配器在关闭、抛入异常、取消及异步生成器回收时等待其所属 SDK 流关闭；
+GC 清理依赖仍在运行的事件循环。
+
+`stream_exhausted=True` 且 `stream_terminated=False` 表示 EOF 前没有观察到终结信号。
+终结不等于成功：长度限制、过滤、拒绝和 Responses 失败也能终结流。未知 reason 原样保留、
+归一为 `other`；原值缺失保持 `None`。Anthropic 的 `stop_reason="refusal"` 归一为
+`refusal`，不会虚构拒绝文字。`model_context_window_exceeded` 归为 `length`，
+`pause_turn` 继续归为 `other`。Responses 的 `status`、`incomplete_details`、`error`
+另存于 `metadata.attributes`。Chat Completions 的结束和拒绝证据固定按 **choice.index=0**
+选择，不受数组重排影响；provider 完全没有 index 字段时退回数组第一项。
+旧正文适配器仍取数组第一项，本次不增加多候选正文聚合。
+OpenAI 的 `[DONE]` 只在识别 SDK 内部 SSE decoder 接口后观察。不认识的接口保持原样，
+写一条 warning，并在 `metadata.attributes["openai_done_observer"]` 留下诊断值：
+`unsupported_stream`、`unsupported_decoder` 或 `observation_failed`。
+降级后仅依据 finish_reason 等仍可观察的信号；只有 DONE 的流可能无法观察到终结。
+observer 自身异常不中断 SDK 消费，SDK 原有网络、解析异常继续抛出，不重发请求。
+本地 HTTP 回归包含同步、异步接口缺失和签名变化。
+
+这些是 Python 运行时 metadata，与 vendored 1.3.4 的 canonical response JSON 分开。
+`model_dump()` 不是 canonical response 编码器。需要跨语言传递时，调用方可显式使用现有
+`x_*` 扩展（例如 `x_response_metadata`）保存 metadata dump；本次不改 schema、fixture、
+catalog、lock 或 contract 版本。
+
 ## Python 能力矩阵
 
 | 能力面 | Python 支持 | 边界 |

@@ -1,3 +1,4 @@
+from .chat_clients.finish_evidence import CompletionStream, AsyncCompletionStream
 from .decision_clients import DecisionClient, AsyncDecisionClient, create_decision_client, create_async_decision_client
 from .types.decision import (
     DecisionRequest,
@@ -28,7 +29,7 @@ from .types.chat_request import (
     ThinkingPreference,
 )
 from .types.exception import ErrorKind, VvLlmError, classify_exception
-from .types.response import CompletionResult, ResponseMetadata
+from .types.response import CompletionResult, FinishReason, ResponseMetadata
 from .utilities.retry_executor import (
     RetryPolicy,
     execute_with_retry,
@@ -83,6 +84,9 @@ __all__ = [
     "classify_exception",
     "CompletionResult",
     "ResponseMetadata",
+    "CompletionStream",
+    "AsyncCompletionStream",
+    "FinishReason",
     "RetryPolicy",
     "execute_with_retry",
     "execute_with_retry_async",

@@ -7,7 +7,8 @@ from typing import Any
 
 from .types.chat_request import CapabilityPolicy, ChatRequest, ModelCapabilities
 from .types.exception import ErrorKind, VvLlmError, classify_exception
-from .types.response import CompletionResult, ResponseMetadata
+from .chat_clients.finish_evidence import CompletionStream, AsyncCompletionStream
+from .types.response import CompletionResult, ResponseMetadata, response_metadata
 
 
 @dataclass(frozen=True)
@@ -145,12 +146,12 @@ class FallbackChatClient:
                         # A route may legitimately finish with only usage,
                         # done, or empty deltas.  They are buffered until the
                         # route is known to be usable, then emitted once.
-                        return _prepend(prelude, _empty_generator()), index
+                        return _preserve_stream_metadata(_prepend(prelude, _empty_generator()), iterator), index
                     if isinstance(chunk, BaseException):
                         raise chunk
                     prelude.append(chunk)
                     if _is_visible_chunk(chunk):
-                        return _prepend(prelude, iterator), index
+                        return _preserve_stream_metadata(_prepend(prelude, iterator), iterator), index
             except Exception as exception:
                 error = classify_exception(
                     exception,
@@ -253,12 +254,12 @@ class AsyncFallbackChatClient:
                     except StopAsyncIteration:
                         # Match the synchronous path and preserve a valid
                         # usage/done-only stream after route establishment.
-                        return _prepend_async(prelude, _empty_async_generator()), index
+                        return _preserve_stream_metadata(_prepend_async(prelude, _empty_async_generator()), iterator, is_async=True), index
                     if isinstance(chunk, BaseException):
                         raise chunk
                     prelude.append(chunk)
                     if _is_visible_chunk(chunk):
-                        return _prepend_async(prelude, iterator), index
+                        return _preserve_stream_metadata(_prepend_async(prelude, iterator), iterator, is_async=True), index
             except Exception as exception:
                 error = classify_exception(
                     exception,
@@ -304,12 +305,12 @@ def _metadata(
     index: int,
     started: float,
 ) -> ResponseMetadata:
-    return ResponseMetadata(
+    return response_metadata(
+        response,
         provider=route.provider,
         model=route.model,
         response_id=getattr(response, "id", None),
         request_id=getattr(response, "request_id", None),
-        finish_reason=getattr(response, "finish_reason", None),
         latency_ms=(perf_counter() - started) * 1000,
         fallback_index=index,
     )
@@ -344,6 +345,14 @@ def _is_visible_chunk(chunk: Any) -> bool:
     return bool(getattr(chunk, "content", None) or getattr(chunk, "reasoning_content", None) or getattr(chunk, "tool_calls", None))
 
 
+def _preserve_stream_metadata(stream: Any, source: Any, *, is_async: bool = False) -> Any:
+    metadata = getattr(source, "metadata", None)
+    if not isinstance(metadata, ResponseMetadata):
+        return stream
+    metadata.stream_exhausted = False
+    return AsyncCompletionStream(stream, metadata) if is_async else CompletionStream(stream, metadata)
+
+
 def _prepend(prelude: list[Any], iterator: Any) -> Generator[Any, None, None]:
     yield from prelude
     yield from iterator
@@ -355,10 +364,15 @@ def _empty_generator() -> Generator[Any, None, None]:
 
 
 async def _prepend_async(prelude: list[Any], iterator: Any) -> AsyncGenerator[Any, None]:
-    for chunk in prelude:
-        yield chunk
-    async for item in iterator:
-        yield item
+    try:
+        for chunk in prelude:
+            yield chunk
+        async for item in iterator:
+            yield item
+    finally:
+        close = getattr(iterator, "aclose", None)
+        if close is not None:
+            await close()
 
 
 async def _empty_async_generator() -> AsyncGenerator[Any, None]:

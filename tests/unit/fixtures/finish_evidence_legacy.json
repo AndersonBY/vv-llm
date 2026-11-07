@@ -1,0 +1,1796 @@
+{
+  "openai/stop/False/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "openai/stop/False/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "openai/length/False/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "openai/length/False/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "openai/tool_calls/False/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "openai/tool_calls/False/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "openai/content_filter/False/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "openai/content_filter/False/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "openai/refusal/False/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "openai/refusal/False/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "openai/unknown/False/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "openai/unknown/False/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "openai/stop/True/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/stop/True/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/length/True/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/length/True/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/tool_calls/True/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/tool_calls/True/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/content_filter/True/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/content_filter/True/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/refusal/True/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/refusal/True/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/done_only/True/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/done_only/True/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/eof/True/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/eof/True/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/empty_done/True/False": [],
+  "openai/empty_done/True/True": [],
+  "openai/empty_eof/True/False": [],
+  "openai/empty_eof/True/True": [],
+  "openai/unknown/True/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/unknown/True/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "anthropic/end_turn/False/False": [
+    {
+      "content": "answer",
+      "reasoning_content": "",
+      "raw_content": [
+        {
+          "citations": null,
+          "text": "answer",
+          "type": "text"
+        }
+      ],
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": 0,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "anthropic/end_turn/False/True": [
+    {
+      "content": "answer",
+      "reasoning_content": "",
+      "raw_content": [
+        {
+          "citations": null,
+          "text": "answer",
+          "type": "text"
+        }
+      ],
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": 0,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "anthropic/max_tokens/False/False": [
+    {
+      "content": "answer",
+      "reasoning_content": "",
+      "raw_content": [
+        {
+          "citations": null,
+          "text": "answer",
+          "type": "text"
+        }
+      ],
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": 0,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "anthropic/max_tokens/False/True": [
+    {
+      "content": "answer",
+      "reasoning_content": "",
+      "raw_content": [
+        {
+          "citations": null,
+          "text": "answer",
+          "type": "text"
+        }
+      ],
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": 0,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "anthropic/tool_use/False/False": [
+    {
+      "content": "answer",
+      "reasoning_content": "",
+      "raw_content": [
+        {
+          "citations": null,
+          "text": "answer",
+          "type": "text"
+        }
+      ],
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": 0,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "anthropic/tool_use/False/True": [
+    {
+      "content": "answer",
+      "reasoning_content": "",
+      "raw_content": [
+        {
+          "citations": null,
+          "text": "answer",
+          "type": "text"
+        }
+      ],
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": 0,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "anthropic/refusal/False/False": [
+    {
+      "content": "answer",
+      "reasoning_content": "",
+      "raw_content": [
+        {
+          "citations": null,
+          "text": "answer",
+          "type": "text"
+        }
+      ],
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": 0,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "anthropic/refusal/False/True": [
+    {
+      "content": "answer",
+      "reasoning_content": "",
+      "raw_content": [
+        {
+          "citations": null,
+          "text": "answer",
+          "type": "text"
+        }
+      ],
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": 0,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "anthropic/unknown/False/False": [
+    {
+      "content": "answer",
+      "reasoning_content": "",
+      "raw_content": [
+        {
+          "citations": null,
+          "text": "answer",
+          "type": "text"
+        }
+      ],
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": 0,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "anthropic/unknown/False/True": [
+    {
+      "content": "answer",
+      "reasoning_content": "",
+      "raw_content": [
+        {
+          "citations": null,
+          "text": "answer",
+          "type": "text"
+        }
+      ],
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": 0,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "anthropic/end_turn/True/False": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "anthropic/end_turn/True/True": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "anthropic/max_tokens/True/False": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "anthropic/max_tokens/True/True": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "anthropic/tool_use/True/False": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "anthropic/tool_use/True/True": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "anthropic/refusal/True/False": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "anthropic/refusal/True/True": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "anthropic/stop_only/True/False": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "anthropic/stop_only/True/True": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "anthropic/reason_only/True/False": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "anthropic/reason_only/True/True": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "anthropic/eof/True/False": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "anthropic/eof/True/True": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "anthropic/empty_stop/True/False": [],
+  "anthropic/empty_stop/True/True": [],
+  "anthropic/empty_eof/True/False": [],
+  "anthropic/empty_eof/True/True": [],
+  "anthropic/unknown/True/False": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "anthropic/unknown/True/True": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": {
+        "citations": null,
+        "text": "",
+        "type": "text"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": {
+        "text": "answer",
+        "type": "text_delta"
+      },
+      "tool_calls": [],
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  ],
+  "responses/completed/False/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "responses/completed/False/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "responses/max_output_tokens/False/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "responses/max_output_tokens/False/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "responses/content_filter/False/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "responses/content_filter/False/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "responses/refusal/False/False": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "responses/refusal/False/True": [
+    {
+      "content": "",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "responses/failed/False/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "responses/failed/False/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "responses/completed/True/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "responses/completed/True/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "responses/max_output_tokens/True/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "responses/max_output_tokens/True/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "responses/content_filter/True/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "responses/content_filter/True/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "responses/refusal/True/False": [
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "responses/refusal/True/True": [
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "cache_creation_tokens": null,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        }
+      }
+    }
+  ],
+  "responses/failed/True/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "responses/failed/True/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "responses/eof/True/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "responses/eof/True/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "responses/empty_eof/True/False": [],
+  "responses/empty_eof/True/True": [],
+  "openai/reason_only/True/False": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ],
+  "openai/reason_only/True/True": [
+    {
+      "content": "answer",
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    },
+    {
+      "content": null,
+      "reasoning_content": null,
+      "raw_content": null,
+      "tool_calls": null,
+      "function_call_arguments": null,
+      "usage": null
+    }
+  ]
+}

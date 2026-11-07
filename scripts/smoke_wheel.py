@@ -34,10 +34,26 @@ def main() -> int:
         environment = os.environ.copy()
         environment["PYTHONPATH"] = str(target)
         smoke = """
+import asyncio
 from pathlib import Path
 import vv_llm
+from vv_llm import CompletionStream, AsyncCompletionStream, FinishReason, ResponseMetadata
+from vv_llm.types import FinishReason as TypesFinishReason, ChatCompletionDeltaMessage
 from vv_llm.contract import CONTRACT_VERSION, CONSUMER_LOCK_SHA256, load_catalog, verify_contract
 from vv_llm.types import defaults
+
+assert all(name in vv_llm.__all__ for name in ("CompletionStream", "AsyncCompletionStream", "FinishReason"))
+assert TypesFinishReason is FinishReason
+stream = CompletionStream((chunk for chunk in [ChatCompletionDeltaMessage(content="sync")]), ResponseMetadata())
+assert [chunk.content for chunk in stream] == ["sync"]
+assert stream.metadata.stream_exhausted is True
+async def chunks():
+    yield ChatCompletionDeltaMessage(content="async")
+async def consume():
+    stream = AsyncCompletionStream(chunks(), ResponseMetadata())
+    assert [chunk.content async for chunk in stream] == ["async"]
+    assert stream.metadata.stream_exhausted is True
+asyncio.run(consume())
 
 result = verify_contract()
 assert result.ok and result.artifact_count == 18
