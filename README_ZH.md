@@ -381,7 +381,7 @@ catalog = load_catalog()
 维护者可用 `pdm run contract-check` 校验包内副本，并用
 `pdm run contract-sync --source PATH` 从已校验的 release 目录更新。
 
-## 结束和拒绝证据（0.10.0）
+## 结束和拒绝证据（0.10.1）
 
 Anthropic 原生路径和全部 OpenAI 兼容 chat client（包括 Gemini、Local）新增可选的
 `response.metadata`、`chunk.metadata`，复用 `ResponseMetadata`。同步和异步字段相同：
@@ -391,7 +391,7 @@ Anthropic 原生路径和全部 OpenAI 兼容 chat client（包括 Gemini、Loca
 | `finish_reason` | provider 原始 finish/stop reason；Responses 优先保留 `incomplete_details.reason`，缺失时保留 `status` |
 | `finish_reason_normalized` | `stop`、`length`、`tool_calls`、`content_filter`、`refusal`、`other`；没有原值时为 `None` |
 | `refusal` | provider 明确给出的拒绝文字；流中按顺序拼接，不根据结束原因或普通正文编造文字 |
-| `stream_terminated` | 是否观察到上游终结信号；非流式或没有此证据能力时为 `None` |
+| `stream_terminated` | 观察到终结信号为 `True`；观测可用但未见信号为 `False`；非流式、观测降级或不可用且未见其他终结信号为 `None` |
 | `stream_exhausted` | 正常迭代耗尽后为 True；迭代中、提前关闭、流异常时为 False；非流式为 `None` |
 | `termination_signals` | 实际观察到的信号，如 `finish_reason`、`[DONE]`、`message_delta.stop_reason`、`message_stop`、`response.completed` / `response.incomplete` / `response.failed` |
 
@@ -413,7 +413,11 @@ fallback 预读后的回放从未耗尽开始计数，调用方完整消费回�
 异步适配器在关闭、抛入异常、取消及异步生成器回收时等待其所属 SDK 流关闭；
 GC 清理依赖仍在运行的事件循环。
 
-`stream_exhausted=True` 且 `stream_terminated=False` 表示 EOF 前没有观察到终结信号。
+`stream_terminated` 初始为 `False`。迭代中一旦观测降级，若此前没有终结信号，立即改为
+`None`；任何已观察到的终结信号都会将其设为 `True`，包括降级后到达的信号。
+后续降级不会清除已有的 `True`。读完之前，这些共享中间值仍可能变化，应完整消费后再判断。
+`stream_exhausted=True` 且 `stream_terminated=False` 表示观测未降级、EOF 前未见终结信号；
+若 `stream_terminated=None`，则终结情况不知道。
 终结不等于成功：长度限制、过滤、拒绝和 Responses 失败也能终结流。未知 reason 原样保留、
 归一为 `other`；原值缺失保持 `None`。Anthropic 的 `stop_reason="refusal"` 归一为
 `refusal`，不会虚构拒绝文字。`model_context_window_exceeded` 归为 `length`，
@@ -424,9 +428,10 @@ GC 清理依赖仍在运行的事件循环。
 OpenAI 的 `[DONE]` 只在识别 SDK 内部 SSE decoder 接口后观察。不认识的接口保持原样，
 写一条 warning，并在 `metadata.attributes["openai_done_observer"]` 留下诊断值：
 `unsupported_stream`、`unsupported_decoder` 或 `observation_failed`。
-降级后仅依据 finish_reason 等仍可观察的信号；只有 DONE 的流可能无法观察到终结。
+0.10.1 中，降级后即使正常读完，`stream_terminated` 也保持 `None`，除非观察到
+finish_reason 等其他终结信号将其设为 `True`。只有 DONE 的流因此可能读完但终结证据未知。
 observer 自身异常不中断 SDK 消费，SDK 原有网络、解析异常继续抛出，不重发请求。
-本地 HTTP 回归包含同步、异步接口缺失和签名变化。
+MockTransport 与本地 HTTP 回归包含同步、异步接口缺失和签名变化。
 
 这些是 Python 运行时 metadata，与 vendored 1.3.4 的 canonical response JSON 分开。
 `model_dump()` 不是 canonical response 编码器。需要跨语言传递时，调用方可显式使用现有
