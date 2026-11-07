@@ -70,7 +70,9 @@ def test_decoder_interface_drift(monkeypatch, caplog, is_async, mode, case):
     monkeypatch.setattr(cls, "_iter_events", aevents if is_async else events)
     result, chunks = f.run_case("openai", case, True, is_async)
     assert len(chunks) == (1 if case == "done_only" else 2)
-    assert result.metadata.stream_terminated is (case == "stop")
+    # Previously False guarded against inventing DONE; None keeps that guard
+    # while distinguishing reduced observation from a fully observed EOF.
+    assert result.metadata.stream_terminated is (True if case == "stop" else None)
     assert result.metadata.termination_signals == (["finish_reason"] if case == "stop" else [])
     assert result.metadata.attributes["openai_done_observer"] == "unsupported_decoder"
     assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 1
@@ -85,7 +87,8 @@ def test_observer_failure_does_not_break_sdk(monkeypatch, caplog, is_async):
     result, chunks = f.run_case("openai", "done_only", True, is_async)
     assert len(chunks) == 1
     assert result.metadata.stream_exhausted is True
-    assert result.metadata.stream_terminated is False
+    # Keep failure visible via the diagnostic/warning, without claiming no DONE.
+    assert result.metadata.stream_terminated is None
     assert result.metadata.attributes["openai_done_observer"] == "observation_failed"
     assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 1
 

@@ -123,6 +123,8 @@ def observe_response_event(metadata: ResponseMetadata, event: Any, refusals: dic
 
 
 def _done_observer_unavailable(metadata: ResponseMetadata, reason: str) -> None:
+    if metadata.stream_terminated is not True:
+        metadata.stream_terminated = None
     if "openai_done_observer" not in metadata.attributes:
         metadata.attributes["openai_done_observer"] = reason
         _LOGGER.warning("OpenAI [DONE] observer disabled (%s); retaining other observable termination signals", reason)

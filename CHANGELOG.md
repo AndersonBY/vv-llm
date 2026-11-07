@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.1 - 2026-11-07
+
+- Report `stream_terminated=None` when OpenAI `[DONE]` observation degrades and no other terminal signal is observed, including after normal exhaustion. Reduced observation cannot establish the absence of a terminal signal.
+- Preserve `True` for observed terminal signals and `False` for fully observed streams without terminal signals. Keep observer diagnostics and warnings unchanged across sync/async clients, middleware metadata, and fallback replay.
+- Document live intermediate evidence and verify degraded observation with real OpenAI SDK SSE parsing over MockTransport.
+
 ## 0.10.0 - 2026-11-07
 
 - Preserve raw and normalized provider finish reasons and explicit refusal text in optional response/chunk metadata across sync/async chat clients.

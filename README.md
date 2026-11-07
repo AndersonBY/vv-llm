@@ -407,7 +407,7 @@ Maintainers can validate the packaged copy with `pdm run contract-check` and
 update it from a verified release directory with
 `pdm run contract-sync --source PATH`.
 
-## Finish and refusal evidence (0.10.0)
+## Finish and refusal evidence (0.10.1)
 
 Native Anthropic and all OpenAI-compatible chat clients (including Gemini and
 Local) expose optional `response.metadata` and `chunk.metadata`, reusing
@@ -418,7 +418,7 @@ Local) expose optional `response.metadata` and `chunk.metadata`, reusing
 | `finish_reason` | Original provider finish/stop reason; for Responses, `incomplete_details.reason` when present, otherwise `status` |
 | `finish_reason_normalized` | `stop`, `length`, `tool_calls`, `content_filter`, `refusal`, `other`, or `None` when absent |
 | `refusal` | Explicit provider refusal text, concatenated in stream order; no text is inferred from a reason or ordinary answer |
-| `stream_terminated` | Whether an upstream terminal signal was observed; `None` for non-streaming/unavailable evidence |
+| `stream_terminated` | `True` for an observed terminal signal; `False` when none was observed with observation available; `None` for non-streaming or degraded/unavailable observation without another terminal signal |
 | `stream_exhausted` | True after normal iterator exhaustion; false during iteration, early close, or a stream error; `None` for non-streaming |
 | `termination_signals` | Observed signals such as `finish_reason`, `[DONE]`, `message_delta.stop_reason`, `message_stop`, or `response.completed` / `response.incomplete` / `response.failed` |
 
@@ -442,8 +442,14 @@ starts unexhausted and becomes exhausted only when the caller finishes replay.
 Async adapters await closure of their owned SDK stream on close, throw,
 cancellation, and async-generator finalization (GC requires a running event loop).
 
-`stream_exhausted=True` with `stream_terminated=False` records EOF without a
-terminal signal. A terminal signal alone says nothing about successful output:
+`stream_terminated` starts at `False`. During iteration, degradation immediately
+changes it to `None` unless a terminal signal was already observed. Any observed
+terminal signal sets it to `True`, including signals arriving after degradation;
+later degradation never clears `True`. These live values are provisional until
+the stream is fully consumed. `stream_exhausted=True` with
+`stream_terminated=False` records EOF without a terminal signal and without
+observation degradation; with `stream_terminated=None`, termination is unknown.
+A terminal signal alone says nothing about successful output:
 length limits, filtering, refusal, and Responses failure can also terminate a
 stream. Unknown reasons remain unmodified and normalize to `other`; missing
 reasons stay `None`. Anthropic `stop_reason="refusal"` normalizes to `refusal`
@@ -458,10 +464,12 @@ OpenAI `[DONE]` observation taps the SDK's internal SSE decoder only when its
 interface is recognized. Unknown interfaces remain untouched; a warning and
 `metadata.attributes["openai_done_observer"]` diagnostic (`unsupported_stream`,
 `unsupported_decoder`, or `observation_failed`) report reduced observation.
-Then termination relies on remaining observable signals such as finish_reason:
-a DONE-only stream may be unobservably terminated. Observer failures do not
-interrupt SDK consumption; SDK network/parse errors still propagate, without
-replaying the request. Loopback tests cover sync/async interface drift.
+In 0.10.1, after degradation, `stream_terminated` remains `None` even after normal
+exhaustion unless another signal such as `finish_reason` establishes `True`.
+A DONE-only stream can therefore finish with unknown termination evidence.
+Observer failures do not interrupt SDK consumption; SDK network/parse errors
+still propagate, without
+replaying the request. MockTransport and loopback tests cover sync/async interface drift.
 
 This is Python runtime metadata, separate from the vendored 1.3.4 canonical
 response JSON. `model_dump()` is not a canonical response encoder. Portable
