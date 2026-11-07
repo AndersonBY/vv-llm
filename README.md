@@ -407,6 +407,68 @@ Maintainers can validate the packaged copy with `pdm run contract-check` and
 update it from a verified release directory with
 `pdm run contract-sync --source PATH`.
 
+## Finish and refusal evidence (0.10.0)
+
+Native Anthropic and all OpenAI-compatible chat clients (including Gemini and
+Local) expose optional `response.metadata` and `chunk.metadata`, reusing
+`ResponseMetadata`. Sync and async calls use the same fields:
+
+| Field | Meaning |
+| --- | --- |
+| `finish_reason` | Original provider finish/stop reason; for Responses, `incomplete_details.reason` when present, otherwise `status` |
+| `finish_reason_normalized` | `stop`, `length`, `tool_calls`, `content_filter`, `refusal`, `other`, or `None` when absent |
+| `refusal` | Explicit provider refusal text, concatenated in stream order; no text is inferred from a reason or ordinary answer |
+| `stream_terminated` | Whether an upstream terminal signal was observed; `None` for non-streaming/unavailable evidence |
+| `stream_exhausted` | True after normal iterator exhaustion; false during iteration, early close, or a stream error; `None` for non-streaming |
+| `termination_signals` | Observed signals such as `finish_reason`, `[DONE]`, `message_delta.stop_reason`, `message_stop`, or `response.completed` / `response.incomplete` / `response.failed` |
+
+```python
+stream = client.create_stream(messages=[{"role": "user", "content": "Hello"}])
+for chunk in stream:
+    print(chunk.content or "", end="")
+evidence = stream.metadata  # available even when no chunks were emitted
+print(evidence.finish_reason, evidence.refusal, evidence.stream_terminated)
+```
+
+Async callers use `stream = await client.create_stream(...)` and `async for`.
+The return object retains the generator protocol (`send`/`throw`/`close`, or
+`asend`/`athrow`/`aclose`) and adds `metadata`; it is no longer a native Python
+generator object. Each chunk references the stream's **live, shared metadata**.
+Read or serialize `stream.metadata` after fully consuming the iterator: a dump
+made inside the loop cannot include later signals. No terminal chunk is added
+and no content is buffered to wait for one. Middleware and fallback
+`create_with_metadata()` retain this same evidence object. Buffered fallback replay
+starts unexhausted and becomes exhausted only when the caller finishes replay.
+Async adapters await closure of their owned SDK stream on close, throw,
+cancellation, and async-generator finalization (GC requires a running event loop).
+
+`stream_exhausted=True` with `stream_terminated=False` records EOF without a
+terminal signal. A terminal signal alone says nothing about successful output:
+length limits, filtering, refusal, and Responses failure can also terminate a
+stream. Unknown reasons remain unmodified and normalize to `other`; missing
+reasons stay `None`. Anthropic `stop_reason="refusal"` normalizes to `refusal`
+without inventing refusal text. `model_context_window_exceeded` normalizes to
+`length`; `pause_turn` stays `other`. Responses also retain `status`,
+`incomplete_details`, and `error` in `metadata.attributes`. Chat Completions
+finish/refusal evidence selects choice **index 0**, regardless of array position.
+If a provider omits all choice indices, evidence falls back to the first array
+item. The existing content adapter still reads the first array item; this does
+not add multi-choice content aggregation.
+OpenAI `[DONE]` observation taps the SDK's internal SSE decoder only when its
+interface is recognized. Unknown interfaces remain untouched; a warning and
+`metadata.attributes["openai_done_observer"]` diagnostic (`unsupported_stream`,
+`unsupported_decoder`, or `observation_failed`) report reduced observation.
+Then termination relies on remaining observable signals such as finish_reason:
+a DONE-only stream may be unobservably terminated. Observer failures do not
+interrupt SDK consumption; SDK network/parse errors still propagate, without
+replaying the request. Loopback tests cover sync/async interface drift.
+
+This is Python runtime metadata, separate from the vendored 1.3.4 canonical
+response JSON. `model_dump()` is not a canonical response encoder. Portable
+integrations can explicitly put a metadata dump in an existing `x_*` extension
+(for example `x_response_metadata`); no schema, fixture, catalog, lock, or
+contract revision is changed.
+
 ## Python Capability Matrix
 
 | Surface | Python support | Boundary |

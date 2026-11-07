@@ -6,7 +6,7 @@ from typing import Any
 
 from .types.chat_request import CapabilityPolicy, ChatRequest, ChatRequestOptions
 from .types.exception import VvLlmError, classify_exception
-from .types.response import CompletionResult, ResponseMetadata
+from .types.response import CompletionResult, response_metadata
 from .utilities.retry_executor import RetryPolicy, execute_with_retry, execute_with_retry_async
 
 
@@ -63,12 +63,12 @@ class MiddlewareChatClient:
         response, context = self._execute(request, capability_policy=capability_policy)
         return CompletionResult(
             response=response,
-            metadata=ResponseMetadata(
+            metadata=response_metadata(
+                response,
                 provider=context.provider,
                 model=context.model,
                 response_id=getattr(response, "id", None),
                 request_id=getattr(response, "request_id", None),
-                finish_reason=getattr(response, "finish_reason", None),
                 attempts=max(1, context.attempt),
                 latency_ms=(perf_counter() - started) * 1000,
                 attributes=dict(context.attributes),
@@ -167,12 +167,12 @@ class AsyncMiddlewareChatClient:
         )
         return CompletionResult(
             response=response,
-            metadata=ResponseMetadata(
+            metadata=response_metadata(
+                response,
                 provider=context.provider,
                 model=context.model,
                 response_id=getattr(response, "id", None),
                 request_id=getattr(response, "request_id", None),
-                finish_reason=getattr(response, "finish_reason", None),
                 attempts=max(1, context.attempt),
                 latency_ms=(perf_counter() - started) * 1000,
                 attributes=dict(context.attributes),

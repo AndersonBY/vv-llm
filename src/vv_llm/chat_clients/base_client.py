@@ -2,7 +2,7 @@ import time
 import asyncio
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from collections.abc import Iterable, Generator, AsyncGenerator
+from collections.abc import Iterable
 from functools import cached_property
 from typing import Any, overload, Literal, cast
 
@@ -26,6 +26,7 @@ from anthropic import (
 )
 from anthropic.types.thinking_config_param import ThinkingConfigParam
 
+from .finish_evidence import CompletionStream, AsyncCompletionStream
 from ..settings import Settings, normalize_settings, order_endpoints
 from ..types import defaults as defs
 from ..types.settings import EndpointOptionDict, SettingsDict
@@ -39,7 +40,6 @@ from ..types.llm_parameters import (
     OpenAINotGiven,
     EndpointSetting,
     ChatCompletionMessage,
-    ChatCompletionDeltaMessage,
 )
 from ..utilities.rate_limiter import SyncMemoryRateLimiter, SyncRedisRateLimiter, SyncDiskCacheRateLimiter
 from ..utilities.rate_limiter import AsyncMemoryRateLimiter, AsyncRedisRateLimiter, AsyncDiskCacheRateLimiter
@@ -399,7 +399,7 @@ class BaseChatClient(ABC):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
-    ) -> Generator[ChatCompletionDeltaMessage, Any, None]:
+    ) -> CompletionStream:
         pass
 
     @overload
@@ -442,7 +442,7 @@ class BaseChatClient(ABC):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
-    ) -> ChatCompletionMessage | Generator[ChatCompletionDeltaMessage, Any, None]:
+    ) -> ChatCompletionMessage | CompletionStream:
         pass
 
     @abstractmethod
@@ -484,7 +484,7 @@ class BaseChatClient(ABC):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
-    ) -> ChatCompletionMessage | Generator[ChatCompletionDeltaMessage, Any, None]:
+    ) -> ChatCompletionMessage | CompletionStream:
         pass
 
     def create_stream(
@@ -525,10 +525,10 @@ class BaseChatClient(ABC):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
-    ) -> Generator[ChatCompletionDeltaMessage, Any, None]:
+    ) -> CompletionStream:
         create_completion = cast(Any, self.create_completion)
         return cast(
-            Generator[ChatCompletionDeltaMessage, Any, None],
+            CompletionStream,
             create_completion(
                 messages=messages,
                 model=model,
@@ -578,13 +578,13 @@ class BaseChatClient(ABC):
         request: ChatRequest,
         *,
         capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
-    ) -> ChatCompletionMessage | Generator[ChatCompletionDeltaMessage, Any, None]:
+    ) -> ChatCompletionMessage | CompletionStream:
         _prepare_model(self, request.model)
         capabilities = self.capabilities
         request.validate_capabilities(capabilities, capability_policy, backend_name=self.backend_name.value)
         create_completion = cast(Any, self.create_completion)
         return cast(
-            ChatCompletionMessage | Generator[ChatCompletionDeltaMessage, Any, None],
+            ChatCompletionMessage | CompletionStream,
             create_completion(**request.to_completion_kwargs(self.backend_name.value), capability_policy=CapabilityPolicy.PASSTHROUGH),
         )
 
@@ -893,7 +893,7 @@ class BaseAsyncChatClient(ABC):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
-    ) -> AsyncGenerator[ChatCompletionDeltaMessage, Any]:
+    ) -> AsyncCompletionStream:
         pass
 
     @overload
@@ -936,7 +936,7 @@ class BaseAsyncChatClient(ABC):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
-    ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
+    ) -> ChatCompletionMessage | AsyncCompletionStream:
         pass
 
     @abstractmethod
@@ -978,7 +978,7 @@ class BaseAsyncChatClient(ABC):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
-    ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
+    ) -> ChatCompletionMessage | AsyncCompletionStream:
         pass
 
     async def create_stream(
@@ -1019,10 +1019,10 @@ class BaseAsyncChatClient(ABC):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
-    ) -> AsyncGenerator[ChatCompletionDeltaMessage, Any]:
+    ) -> AsyncCompletionStream:
         create_completion = cast(Any, self.create_completion)
         return cast(
-            AsyncGenerator[ChatCompletionDeltaMessage, Any],
+            AsyncCompletionStream,
             await create_completion(
                 messages=messages,
                 model=model,
@@ -1072,13 +1072,13 @@ class BaseAsyncChatClient(ABC):
         request: ChatRequest,
         *,
         capability_policy: CapabilityPolicy = CapabilityPolicy.WARN,
-    ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
+    ) -> ChatCompletionMessage | AsyncCompletionStream:
         _prepare_model(self, request.model)
         capabilities = self.capabilities
         request.validate_capabilities(capabilities, capability_policy, backend_name=self.backend_name.value)
         create_completion = cast(Any, self.create_completion)
         return cast(
-            ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any],
+            ChatCompletionMessage | AsyncCompletionStream,
             await create_completion(**request.to_completion_kwargs(self.backend_name.value), capability_policy=CapabilityPolicy.PASSTHROUGH),
         )
 

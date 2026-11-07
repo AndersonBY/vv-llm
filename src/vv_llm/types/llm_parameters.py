@@ -28,6 +28,7 @@ from openai.types.completion_usage import CompletionTokensDetails, PromptTokensD
 from . import defaults as defs
 from .chat_request import Modality, ModelCapabilities, StructuredOutputCapability
 from .settings import EndpointOptionDict
+from .response import ResponseMetadata
 
 
 class VectorVeinTextMessage(TypedDict):
@@ -282,6 +283,8 @@ class Usage(BaseModel):
 
 
 class ChatCompletionMessage(BaseModel):
+    metadata: ResponseMetadata | None = None
+
     content: str | None = None
 
     reasoning_content: str | None = None
@@ -297,6 +300,8 @@ class ChatCompletionMessage(BaseModel):
 
 
 class ChatCompletionDeltaMessage(BaseModel):
+    metadata: ResponseMetadata | None = None
+
     content: str | None = None
 
     reasoning_content: str | None = None

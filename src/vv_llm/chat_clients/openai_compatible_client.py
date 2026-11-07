@@ -1,9 +1,10 @@
 # @Author: Bi Ying
 # @Date:   2024-07-26 14:48:55
 import json
+from asyncio import CancelledError
 import re
 from functools import cached_property
-from collections.abc import Generator, AsyncGenerator, Iterable, Mapping
+from collections.abc import Iterable, Mapping
 from typing import Any, TYPE_CHECKING, overload, Literal, cast
 
 import httpx2
@@ -35,6 +36,17 @@ from .message_normalizer import (
     process_reasoning_content,
     process_thinking_content,
     strip_reasoning_tags,
+)
+from ..types.response import ResponseMetadata
+from .finish_evidence import (
+    CompletionStream,
+    AsyncCompletionStream,
+    stream_metadata,
+    observe_chat_chunk,
+    observe_chat_response,
+    observe_openai_done,
+    observe_response,
+    observe_response_event,
 )
 from .stream_event_adapter import adapt_response_api_stream_event, normalize_response_api_usage
 from .tool_call_parser import tool_schema_for_response_api
@@ -329,7 +341,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
-    ) -> Generator[ChatCompletionDeltaMessage, Any, None]:
+    ) -> CompletionStream:
         pass
 
     @overload
@@ -372,7 +384,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
-    ) -> ChatCompletionMessage | Generator[ChatCompletionDeltaMessage, Any, None]:
+    ) -> ChatCompletionMessage | CompletionStream:
         pass
 
     def create_completion(
@@ -502,6 +514,8 @@ class OpenAICompatibleChatClient(BaseChatClient):
         self._acquire_rate_limit(endpoint, self.model, messages)
 
         # When endpoint is configured to use the new Responses API
+        evidence = stream_metadata(self.backend_name.value, model_id) if self.stream else ResponseMetadata(provider=self.backend_name.value, model=model_id)
+
         if endpoint.response_api:
             response_input = messages_for_response_api(messages)
             # Compute max_output_tokens for Responses API
@@ -529,8 +543,10 @@ class OpenAICompatibleChatClient(BaseChatClient):
 
                     usage = None
                     final_tool_calls: dict[int, dict] = {}
+                    refusals: dict[tuple[int, int], str] = {}
                     with stream_ctx as stream_response:
                         for event in stream_response:
+                            observe_response_event(evidence, event, refusals)
                             messages_to_yield, usage_from_event = adapt_response_api_stream_event(
                                 event=event,
                                 final_tool_calls=final_tool_calls,
@@ -543,7 +559,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                         if usage:
                             yield ChatCompletionDeltaMessage(usage=usage)
 
-                return generator()
+                return CompletionStream(generator(), evidence)
             else:
                 # Non-streaming via Responses API
                 response = raw_client.responses.create(
@@ -557,6 +573,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                 )
 
                 # Build ChatCompletion-like message
+                observe_response(evidence, response)
                 content_text = response.output_text
                 tool_calls = []
                 for item in response.output or []:
@@ -579,7 +596,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                     "tool_calls": tool_calls or None,
                     "usage": usage,
                 }
-                return ChatCompletionMessage(**cast(dict[str, Any], result))
+                return ChatCompletionMessage(**cast(dict[str, Any], result), metadata=evidence)
 
         if self.stream:
             stream_response = raw_client.chat.completions.create(
@@ -616,6 +633,8 @@ class OpenAICompatibleChatClient(BaseChatClient):
                 **tools_params,
             )
 
+            observe_openai_done(stream_response, evidence)
+
             def generator():
                 full_content = ""
                 result = {}
@@ -626,6 +645,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                 accumulated_content = []
 
                 for chunk in stream_response:
+                    observe_chat_chunk(evidence, chunk)
                     if chunk.usage is not None:
                         usage = _normalize_openai_compatible_usage(chunk.usage, self.backend_name)
 
@@ -794,7 +814,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                     else:
                         accumulated_content.append(buffer)
 
-                    final_message = {}
+                    final_message: dict[str, Any] = {}
                     if accumulated_content:
                         final_content = "".join(accumulated_content)
                         if final_content.strip():  # 只有当内容非空时才输出
@@ -811,7 +831,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                 if result:
                     yield ChatCompletionDeltaMessage(**result, usage=usage)
 
-            return generator()
+            return CompletionStream(generator(), evidence)
         else:
             response = raw_client.chat.completions.create(
                 model=model_id,
@@ -850,6 +870,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
             if not response.choices:
                 raise ValueError(f"No response choices: {response}")
 
+            observe_chat_response(evidence, response)
             message_obj = response.choices[0].message
             reasoning_content = getattr(message_obj, "reasoning_content", None)
             if reasoning_content is None:
@@ -887,7 +908,7 @@ class OpenAICompatibleChatClient(BaseChatClient):
                 if google_extras:
                     result["raw_content"] = [{"google": google_extras}]
 
-            return ChatCompletionMessage(**cast(dict[str, Any], result))
+            return ChatCompletionMessage(**cast(dict[str, Any], result), metadata=evidence)
 
 
 class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
@@ -1044,7 +1065,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
-    ) -> AsyncGenerator[ChatCompletionDeltaMessage, Any]:
+    ) -> AsyncCompletionStream:
         pass
 
     @overload
@@ -1087,7 +1108,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
-    ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
+    ) -> ChatCompletionMessage | AsyncCompletionStream:
         pass
 
     async def create_completion(
@@ -1129,7 +1150,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = NOT_GIVEN,
-    ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
+    ) -> ChatCompletionMessage | AsyncCompletionStream:
         _prepare_model(self, model)
         if stream is not None:
             self.stream = stream
@@ -1217,6 +1238,8 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
         await self._acquire_rate_limit(endpoint, self.model, messages)
 
         # When endpoint is configured to use the new Responses API
+        evidence = stream_metadata(self.backend_name.value, model_id) if self.stream else ResponseMetadata(provider=self.backend_name.value, model=model_id)
+
         if endpoint.response_api:
             response_input = messages_for_response_api(messages)
             req_max_output_tokens = None
@@ -1236,6 +1259,8 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                 async def _generator():
                     usage = None
                     final_tool_calls: dict[int, dict] = {}
+                    refusals: dict[tuple[int, int], str] = {}
+                    closing = False
                     try:
                         # Async streaming via Responses API
                         async with raw_client.responses.stream(
@@ -1248,6 +1273,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                             **tools_params,
                         ) as stream_response:
                             async for event in stream_response:
+                                observe_response_event(evidence, event, refusals)
                                 messages_to_yield, usage_from_event = adapt_response_api_stream_event(
                                     event=event,
                                     final_tool_calls=final_tool_calls,
@@ -1258,11 +1284,14 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                                 for message in messages_to_yield:
                                     yield message
 
+                    except (GeneratorExit, CancelledError):
+                        closing = True
+                        raise
                     finally:
-                        if usage:
+                        if usage and not closing:
                             yield ChatCompletionDeltaMessage(usage=usage)
 
-                return _generator()
+                return AsyncCompletionStream(_generator(), evidence)
             else:
                 response = await raw_client.responses.create(
                     model=model_id,
@@ -1274,6 +1303,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                     **tools_params,
                 )
 
+                observe_response(evidence, response)
                 content_text = response.output_text
                 tool_calls = []
                 for item in response.output or []:
@@ -1296,7 +1326,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                     "tool_calls": tool_calls or None,
                     "usage": usage,
                 }
-                return ChatCompletionMessage(**cast(dict[str, Any], result))
+                return ChatCompletionMessage(**cast(dict[str, Any], result), metadata=evidence)
 
         if self.stream:
             stream_response = await raw_client.chat.completions.create(
@@ -1333,6 +1363,8 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                 **tools_params,
             )
 
+            observe_openai_done(stream_response, evidence)
+
             async def _generator():
                 full_content = ""
                 result = {}
@@ -1342,193 +1374,199 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                 accumulated_reasoning = []
                 accumulated_content = []
 
-                async for chunk in stream_response:
-                    if chunk.usage is not None:
-                        usage = _normalize_openai_compatible_usage(chunk.usage, self.backend_name)
+                try:
+                    async for chunk in stream_response:
+                        observe_chat_chunk(evidence, chunk)
+                        if chunk.usage is not None:
+                            usage = _normalize_openai_compatible_usage(chunk.usage, self.backend_name)
 
-                    if not chunk.choices or len(chunk.choices) == 0 or not chunk.choices[0].delta:
-                        if usage is not None:
-                            yield ChatCompletionDeltaMessage(usage=usage)
-                        continue
+                        if not chunk.choices or len(chunk.choices) == 0 or not chunk.choices[0].delta:
+                            if usage is not None:
+                                yield ChatCompletionDeltaMessage(usage=usage)
+                            continue
 
-                    if self.model_setting.function_call_available:
-                        if chunk.choices[0].delta.tool_calls:
-                            for index, tool_call in enumerate(chunk.choices[0].delta.tool_calls):
-                                # Provider indices identify calls across chunks, not positions in this chunk.
-                                if tool_call.index is None:
-                                    tool_call.index = index
-                                tool_call.type = "function"
+                        if self.model_setting.function_call_available:
+                            if chunk.choices[0].delta.tool_calls:
+                                for index, tool_call in enumerate(chunk.choices[0].delta.tool_calls):
+                                    # Provider indices identify calls across chunks, not positions in this chunk.
+                                    if tool_call.index is None:
+                                        tool_call.index = index
+                                    tool_call.type = "function"
 
-                        # 即使支持 function call，也要处理思考标签
-                        message = chunk.choices[0].delta.model_dump()
-                        if "reasoning" in message and not message.get("reasoning_content"):
-                            message["reasoning_content"] = message["reasoning"]
-                        if is_gemini3 and chunk.choices[0].delta.tool_calls:
-                            google_extras: list[dict] = []
-                            for tool_call in chunk.choices[0].delta.tool_calls:
-                                extra_content = getattr(tool_call, "extra_content", None)
-                                if isinstance(extra_content, dict) and extra_content.get("google"):
-                                    google_extras.append(extra_content["google"])
-                            if google_extras:
-                                message["raw_content"] = {"google": google_extras}
+                            # 即使支持 function call，也要处理思考标签
+                            message = chunk.choices[0].delta.model_dump()
+                            if "reasoning" in message and not message.get("reasoning_content"):
+                                message["reasoning_content"] = message["reasoning"]
+                            if is_gemini3 and chunk.choices[0].delta.tool_calls:
+                                google_extras: list[dict] = []
+                                for tool_call in chunk.choices[0].delta.tool_calls:
+                                    extra_content = getattr(tool_call, "extra_content", None)
+                                    if isinstance(extra_content, dict) and extra_content.get("google"):
+                                        google_extras.append(extra_content["google"])
+                                if google_extras:
+                                    message["raw_content"] = {"google": google_extras}
 
-                        # Check for Gemini-3 thought content via extra_content
-                        delta_extra_content = getattr(chunk.choices[0].delta, "extra_content", None)
-                        is_thought_chunk = is_gemini3 and isinstance(delta_extra_content, dict) and delta_extra_content.get("google", {}).get("thought") is True
+                            # Check for Gemini-3 thought content via extra_content
+                            delta_extra_content = getattr(chunk.choices[0].delta, "extra_content", None)
+                            is_thought_chunk = is_gemini3 and isinstance(delta_extra_content, dict) and delta_extra_content.get("google", {}).get("thought") is True
 
-                        delta_content = message.get("content", "")
-                        delta_reasoning_raw = cast(str | None, message.get("reasoning_content")) or ""
-                        _, delta_reasoning, in_reasoning = process_reasoning_content(delta_reasoning_raw, in_reasoning, start_tag, end_tag)
-                        has_reasoning_output = False
-                        if delta_reasoning:
-                            accumulated_reasoning.append(delta_reasoning)
-                            message["reasoning_content"] = delta_reasoning
-                            if not delta_content:
-                                message["content"] = ""
-                            has_reasoning_output = True
-
-                        if delta_content:
-                            if is_thought_chunk:
-                                # Gemini-3 thought content via extra_content, treat as reasoning directly
-                                _, current_reasoning_content, in_reasoning = process_reasoning_content(delta_content, in_reasoning, start_tag, end_tag)
-                                if current_reasoning_content:
-                                    accumulated_reasoning.append(current_reasoning_content)
-                                    message["reasoning_content"] = current_reasoning_content
-                                    has_reasoning_output = True
-                                else:
-                                    message["reasoning_content"] = ""
-                                message["content"] = ""
-                            else:
-                                buffer += delta_content
-
-                                # 处理缓冲区中的内容，提取思考标签
-                                buffer, current_output_content, current_reasoning_content, in_reasoning = process_thinking_content(buffer, in_reasoning, start_tag, end_tag)
-
-                                # 累积内容
-                                if current_output_content:
-                                    accumulated_content.append(current_output_content)
-                                if current_reasoning_content:
-                                    accumulated_reasoning.append(current_reasoning_content)
-
-                                # 只要有内容变化就产生 delta
-                                if current_output_content or current_reasoning_content:
-                                    if current_output_content:
-                                        message["content"] = current_output_content
-                                    elif current_reasoning_content:
-                                        message["reasoning_content"] = current_reasoning_content
-                                        message["content"] = ""  # 推理时不输出普通内容
-                                        has_reasoning_output = True
-                                else:
-                                    # 处理后没有产生任何内容（如仅包含 </thought> 标签）
-                                    # 清空 content 避免标签泄露到输出
+                            delta_content = message.get("content", "")
+                            delta_reasoning_raw = cast(str | None, message.get("reasoning_content")) or ""
+                            _, delta_reasoning, in_reasoning = process_reasoning_content(delta_reasoning_raw, in_reasoning, start_tag, end_tag)
+                            has_reasoning_output = False
+                            if delta_reasoning:
+                                accumulated_reasoning.append(delta_reasoning)
+                                message["reasoning_content"] = delta_reasoning
+                                if not delta_content:
                                     message["content"] = ""
-                                    if not message.get("tool_calls") and not has_reasoning_output:
-                                        # 如果没有任何内容且没有 tool_calls，则跳过这个消息
-                                        continue
+                                has_reasoning_output = True
 
-                        yield ChatCompletionDeltaMessage(**message, usage=usage)
-                    else:
-                        message = chunk.choices[0].delta.model_dump()
-                        if "reasoning" in message and not message.get("reasoning_content"):
-                            message["reasoning_content"] = message["reasoning"]
-
-                        # Check for Gemini-3 thought content via extra_content
-                        delta_extra_content = getattr(chunk.choices[0].delta, "extra_content", None)
-                        is_thought_chunk = is_gemini3 and isinstance(delta_extra_content, dict) and delta_extra_content.get("google", {}).get("thought") is True
-
-                        delta_content = message.get("content", "")
-                        delta_reasoning_raw = cast(str | None, message.get("reasoning_content")) or ""
-                        _, delta_reasoning, in_reasoning = process_reasoning_content(delta_reasoning_raw, in_reasoning, start_tag, end_tag)
-                        has_reasoning_output = False
-                        yielded = False
-                        if delta_reasoning:
-                            accumulated_reasoning.append(delta_reasoning)
-                            message["reasoning_content"] = delta_reasoning
-                            if not delta_content:
-                                message["content"] = ""
-                                yield ChatCompletionDeltaMessage(**message, usage=usage)
-                                continue
-                            has_reasoning_output = True
-
-                        if delta_content:
-                            if is_thought_chunk:
-                                # Gemini-3 thought content via extra_content, treat as reasoning directly
-                                _, current_reasoning_content, in_reasoning = process_reasoning_content(delta_content, in_reasoning, start_tag, end_tag)
-                                if current_reasoning_content:
-                                    accumulated_reasoning.append(current_reasoning_content)
-                                    message["reasoning_content"] = current_reasoning_content
-                                    has_reasoning_output = True
-                                else:
-                                    message["reasoning_content"] = ""
-                                message["content"] = ""
-                                yield ChatCompletionDeltaMessage(**message, usage=usage)
-                            else:
-                                buffer += delta_content
-
-                                # 处理缓冲区中的内容，提取思考标签
-                                buffer, current_output_content, current_reasoning_content, in_reasoning = process_thinking_content(buffer, in_reasoning, start_tag, end_tag)
-
-                                # 累积内容
-                                if current_output_content:
-                                    accumulated_content.append(current_output_content)
-                                if current_reasoning_content:
-                                    accumulated_reasoning.append(current_reasoning_content)
-                                    has_reasoning_output = True
-
-                                # 只要有内容变化就产生 delta
-                                if current_output_content or current_reasoning_content:
-                                    if current_output_content:
-                                        message["content"] = current_output_content
-                                    elif current_reasoning_content:
+                            if delta_content:
+                                if is_thought_chunk:
+                                    # Gemini-3 thought content via extra_content, treat as reasoning directly
+                                    _, current_reasoning_content, in_reasoning = process_reasoning_content(delta_content, in_reasoning, start_tag, end_tag)
+                                    if current_reasoning_content:
+                                        accumulated_reasoning.append(current_reasoning_content)
                                         message["reasoning_content"] = current_reasoning_content
-                                        message["content"] = ""  # 推理时不输出普通内容
+                                        has_reasoning_output = True
+                                    else:
+                                        message["reasoning_content"] = ""
+                                    message["content"] = ""
+                                else:
+                                    buffer += delta_content
 
-                                    if tools:
-                                        full_content += current_output_content
-                                        tool_call_data = ToolCallContentProcessor(full_content).tool_calls
-                                        if tool_call_data:
-                                            message["tool_calls"] = tool_call_data["tool_calls"]
+                                    # 处理缓冲区中的内容，提取思考标签
+                                    buffer, current_output_content, current_reasoning_content, in_reasoning = process_thinking_content(buffer, in_reasoning, start_tag, end_tag)
 
-                                    if full_content in ("<", "<|", "<|▶", "<|▶|") or full_content.startswith("<|▶|>"):
+                                    # 累积内容
+                                    if current_output_content:
+                                        accumulated_content.append(current_output_content)
+                                    if current_reasoning_content:
+                                        accumulated_reasoning.append(current_reasoning_content)
+
+                                    # 只要有内容变化就产生 delta
+                                    if current_output_content or current_reasoning_content:
+                                        if current_output_content:
+                                            message["content"] = current_output_content
+                                        elif current_reasoning_content:
+                                            message["reasoning_content"] = current_reasoning_content
+                                            message["content"] = ""  # 推理时不输出普通内容
+                                            has_reasoning_output = True
+                                    else:
+                                        # 处理后没有产生任何内容（如仅包含 </thought> 标签）
+                                        # 清空 content 避免标签泄露到输出
                                         message["content"] = ""
-                                        result = message
-                                        continue
+                                        if not message.get("tool_calls") and not has_reasoning_output:
+                                            # 如果没有任何内容且没有 tool_calls，则跳过这个消息
+                                            continue
 
+                            yield ChatCompletionDeltaMessage(**message, usage=usage)
+                        else:
+                            message = chunk.choices[0].delta.model_dump()
+                            if "reasoning" in message and not message.get("reasoning_content"):
+                                message["reasoning_content"] = message["reasoning"]
+
+                            # Check for Gemini-3 thought content via extra_content
+                            delta_extra_content = getattr(chunk.choices[0].delta, "extra_content", None)
+                            is_thought_chunk = is_gemini3 and isinstance(delta_extra_content, dict) and delta_extra_content.get("google", {}).get("thought") is True
+
+                            delta_content = message.get("content", "")
+                            delta_reasoning_raw = cast(str | None, message.get("reasoning_content")) or ""
+                            _, delta_reasoning, in_reasoning = process_reasoning_content(delta_reasoning_raw, in_reasoning, start_tag, end_tag)
+                            has_reasoning_output = False
+                            yielded = False
+                            if delta_reasoning:
+                                accumulated_reasoning.append(delta_reasoning)
+                                message["reasoning_content"] = delta_reasoning
+                                if not delta_content:
+                                    message["content"] = ""
                                     yield ChatCompletionDeltaMessage(**message, usage=usage)
-                                    yielded = True
-                                elif delta_content and not has_reasoning_output:
-                                    # 有原始内容但处理后没有产生任何内容（如仅包含 </thought> 标签）
-                                    # 清空并跳过，避免标签泄露到输出
-                                    pass
-                                elif delta_reasoning and not yielded:
-                                    # 有 reasoning_content，但内容处理后没有产生输出（如仅包含结束标签）
+                                    continue
+                                has_reasoning_output = True
+
+                            if delta_content:
+                                if is_thought_chunk:
+                                    # Gemini-3 thought content via extra_content, treat as reasoning directly
+                                    _, current_reasoning_content, in_reasoning = process_reasoning_content(delta_content, in_reasoning, start_tag, end_tag)
+                                    if current_reasoning_content:
+                                        accumulated_reasoning.append(current_reasoning_content)
+                                        message["reasoning_content"] = current_reasoning_content
+                                        has_reasoning_output = True
+                                    else:
+                                        message["reasoning_content"] = ""
+                                    message["content"] = ""
                                     yield ChatCompletionDeltaMessage(**message, usage=usage)
+                                else:
+                                    buffer += delta_content
 
-                # 处理最后剩余的缓冲区内容
-                if buffer:
-                    if in_reasoning:
-                        accumulated_reasoning.append(buffer)
-                    else:
-                        accumulated_content.append(buffer)
+                                    # 处理缓冲区中的内容，提取思考标签
+                                    buffer, current_output_content, current_reasoning_content, in_reasoning = process_thinking_content(buffer, in_reasoning, start_tag, end_tag)
 
-                    final_message = {}
-                    if accumulated_content:
-                        final_content = "".join(accumulated_content)
-                        if final_content.strip():  # 只有当内容非空时才输出
-                            final_message["content"] = final_content
+                                    # 累积内容
+                                    if current_output_content:
+                                        accumulated_content.append(current_output_content)
+                                    if current_reasoning_content:
+                                        accumulated_reasoning.append(current_reasoning_content)
+                                        has_reasoning_output = True
 
-                    if accumulated_reasoning:
-                        final_reasoning = "".join(accumulated_reasoning)
-                        if final_reasoning.strip():  # 只有当推理内容非空时才输出
-                            final_message["reasoning_content"] = final_reasoning
+                                    # 只要有内容变化就产生 delta
+                                    if current_output_content or current_reasoning_content:
+                                        if current_output_content:
+                                            message["content"] = current_output_content
+                                        elif current_reasoning_content:
+                                            message["reasoning_content"] = current_reasoning_content
+                                            message["content"] = ""  # 推理时不输出普通内容
 
-                    if final_message:
-                        yield ChatCompletionDeltaMessage(**final_message, usage=usage)
+                                        if tools:
+                                            full_content += current_output_content
+                                            tool_call_data = ToolCallContentProcessor(full_content).tool_calls
+                                            if tool_call_data:
+                                                message["tool_calls"] = tool_call_data["tool_calls"]
 
-                if result:
-                    yield ChatCompletionDeltaMessage(**result, usage=usage)
+                                        if full_content in ("<", "<|", "<|▶", "<|▶|") or full_content.startswith("<|▶|>"):
+                                            message["content"] = ""
+                                            result = message
+                                            continue
 
-            return _generator()
+                                        yield ChatCompletionDeltaMessage(**message, usage=usage)
+                                        yielded = True
+                                    elif delta_content and not has_reasoning_output:
+                                        # 有原始内容但处理后没有产生任何内容（如仅包含 </thought> 标签）
+                                        # 清空并跳过，避免标签泄露到输出
+                                        pass
+                                    elif delta_reasoning and not yielded:
+                                        # 有 reasoning_content，但内容处理后没有产生输出（如仅包含结束标签）
+                                        yield ChatCompletionDeltaMessage(**message, usage=usage)
+
+                    # 处理最后剩余的缓冲区内容
+                    if buffer:
+                        if in_reasoning:
+                            accumulated_reasoning.append(buffer)
+                        else:
+                            accumulated_content.append(buffer)
+
+                        final_message: dict[str, Any] = {}
+                        if accumulated_content:
+                            final_content = "".join(accumulated_content)
+                            if final_content.strip():  # 只有当内容非空时才输出
+                                final_message["content"] = final_content
+
+                        if accumulated_reasoning:
+                            final_reasoning = "".join(accumulated_reasoning)
+                            if final_reasoning.strip():  # 只有当推理内容非空时才输出
+                                final_message["reasoning_content"] = final_reasoning
+
+                        if final_message:
+                            yield ChatCompletionDeltaMessage(**final_message, usage=usage)
+
+                    if result:
+                        yield ChatCompletionDeltaMessage(**result, usage=usage)
+                finally:
+                    close = getattr(stream_response, "close", None) or getattr(stream_response, "aclose", None)
+                    if close is not None:
+                        await close()
+
+            return AsyncCompletionStream(_generator(), evidence)
         else:
             response = await raw_client.chat.completions.create(
                 model=model_id,
@@ -1567,6 +1605,7 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
             if not response.choices:
                 raise ValueError(f"No response choices: {response}")
 
+            observe_chat_response(evidence, response)
             message_obj = response.choices[0].message
             reasoning_content = getattr(message_obj, "reasoning_content", None)
             if reasoning_content is None:
@@ -1604,4 +1643,4 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                 if google_extras:
                     result["raw_content"] = [{"google": google_extras}]
 
-            return ChatCompletionMessage(**cast(dict[str, Any], result))
+            return ChatCompletionMessage(**cast(dict[str, Any], result), metadata=evidence)

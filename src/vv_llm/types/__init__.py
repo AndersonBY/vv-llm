@@ -78,7 +78,7 @@ from .retrieval_parameters import (
     RerankUsage,
     RerankResponse,
 )
-from .response import CompletionResult, ResponseMetadata
+from .response import CompletionResult, FinishReason, ResponseMetadata
 from .settings import (
     RedisConfigDict,
     DiskCacheConfigDict,
@@ -175,6 +175,7 @@ __all__ = [
     "RerankResponse",
     "CompletionResult",
     "ResponseMetadata",
+    "FinishReason",
     "ChatCompletionMessage",
     "ChatCompletionDeltaMessage",
     "ChatCompletionStreamOptionsParam",

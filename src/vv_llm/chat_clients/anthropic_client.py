@@ -1,6 +1,6 @@
 # @Author: Bi Ying
 # @Date:   2024-07-26 14:48:55
-from collections.abc import Generator, AsyncGenerator, Iterable, Mapping
+from collections.abc import Iterable, Mapping
 from typing import Any, TYPE_CHECKING, overload, Literal, cast
 
 import httpx2
@@ -37,6 +37,8 @@ from .reasoning import merge_reasoning_body, resolve_reasoning_effort
 from .base_client import _prepare_model, BaseChatClient, BaseAsyncChatClient
 from .message_normalizer import format_messages_alternate, refactor_into_openai_messages
 from .openai_compatible_client import OpenAICompatibleChatClient, AsyncOpenAICompatibleChatClient
+from ..types.response import ResponseMetadata
+from .finish_evidence import CompletionStream, AsyncCompletionStream, stream_metadata, set_finish_reason, observe_anthropic_event
 from .stream_event_adapter import (
     adapt_anthropic_stream_event,
     build_anthropic_completion_message,
@@ -46,7 +48,7 @@ from .tool_call_parser import refactor_tool_choice, refactor_tool_use_params
 from ..types.exception import APIStatusError, APIConnectionError
 from ..types.enums import ContextLengthControlType, BackendType
 from ..utilities.gcp_token import get_token_with_cache
-from ..types.llm_parameters import NotGiven, ToolParam, ToolChoice, AnthropicToolParam, ChatCompletionMessage, ChatCompletionDeltaMessage
+from ..types.llm_parameters import NotGiven, ToolParam, ToolChoice, AnthropicToolParam, ChatCompletionMessage
 
 if TYPE_CHECKING:
     from ..settings import Settings
@@ -268,7 +270,7 @@ class AnthropicChatClient(BaseChatClient):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
-    ) -> Generator[ChatCompletionDeltaMessage, None, None]:
+    ) -> CompletionStream:
         pass
 
     @overload
@@ -311,7 +313,7 @@ class AnthropicChatClient(BaseChatClient):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
-    ) -> ChatCompletionMessage | Generator[ChatCompletionDeltaMessage, Any, None]:
+    ) -> ChatCompletionMessage | CompletionStream:
         pass
 
     def create_completion(
@@ -379,6 +381,7 @@ class AnthropicChatClient(BaseChatClient):
             formatted_messages = refactor_into_openai_messages(messages)
 
             if self.stream:
+                evidence = stream_metadata(self.backend_name.value, self.model_id)
 
                 def _generator():
                     openai_client = cast(
@@ -433,9 +436,9 @@ class AnthropicChatClient(BaseChatClient):
                         extra_body=extra_body,
                         timeout=timeout,
                     )
-                    yield from response
+                    yield from CompletionStream(response, evidence)
 
-                return _generator()
+                return CompletionStream(_generator(), evidence)
             else:
                 openai_client = cast(
                     Any,
@@ -549,6 +552,8 @@ class AnthropicChatClient(BaseChatClient):
             timeout=timeout,
         )
 
+        evidence = stream_metadata(self.backend_name.value, self.model_id) if self.stream else ResponseMetadata(provider=self.backend_name.value, model=self.model_id)
+
         if self.stream:
             try:
                 stream_response = raw_client.messages.create(
@@ -570,11 +575,12 @@ class AnthropicChatClient(BaseChatClient):
             def generator():
                 stream_state = init_anthropic_stream_state()
                 for chunk in stream_response:
+                    observe_anthropic_event(evidence, chunk)
                     message = adapt_anthropic_stream_event(chunk, stream_state)
                     if message is not None:
                         yield message
 
-            return generator()
+            return CompletionStream(generator(), evidence)
         else:
             try:
                 response = raw_client.messages.create(
@@ -593,7 +599,10 @@ class AnthropicChatClient(BaseChatClient):
             except AnthropicAPIConnectionError as e:
                 raise APIConnectionError(message=e.message, request=e.request) from e
 
-            return build_anthropic_completion_message(list(response.content), response.usage)
+            set_finish_reason(evidence, getattr(response, "stop_reason", None))
+            result = build_anthropic_completion_message(list(response.content), response.usage)
+            result.metadata = evidence
+            return result
 
 
 class AsyncAnthropicChatClient(BaseAsyncChatClient):
@@ -778,7 +787,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
-    ) -> AsyncGenerator[ChatCompletionDeltaMessage, Any]:
+    ) -> AsyncCompletionStream:
         pass
 
     @overload
@@ -821,7 +830,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
-    ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
+    ) -> ChatCompletionMessage | AsyncCompletionStream:
         pass
 
     async def create_completion(
@@ -863,7 +872,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx2.Timeout | None | OpenAINotGiven = OPENAI_NOT_GIVEN,
-    ) -> ChatCompletionMessage | AsyncGenerator[ChatCompletionDeltaMessage, Any]:
+    ) -> ChatCompletionMessage | AsyncCompletionStream:
         _prepare_model(self, model)
         if stream is not None:
             self.stream = stream
@@ -889,6 +898,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
             formatted_messages = refactor_into_openai_messages(messages)
 
             if self.stream:
+                evidence = stream_metadata(self.backend_name.value, self.model_id)
 
                 async def _generator():
                     client = cast(
@@ -943,10 +953,14 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
                         extra_body=extra_body,
                         timeout=timeout,
                     )
-                    async for chunk in response:
-                        yield chunk
+                    delegated = AsyncCompletionStream(response, evidence)
+                    try:
+                        async for chunk in delegated:
+                            yield chunk
+                    finally:
+                        await delegated.aclose()
 
-                return _generator()
+                return AsyncCompletionStream(_generator(), evidence)
             else:
                 client = cast(
                     Any,
@@ -1060,6 +1074,8 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
             timeout=timeout,
         )
 
+        evidence = stream_metadata(self.backend_name.value, self.model_id) if self.stream else ResponseMetadata(provider=self.backend_name.value, model=self.model_id)
+
         if self.stream:
             try:
                 stream_response = await raw_client.messages.create(
@@ -1080,12 +1096,18 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
 
             async def generator():
                 stream_state = init_anthropic_stream_state()
-                async for chunk in stream_response:
-                    message = adapt_anthropic_stream_event(chunk, stream_state)
-                    if message is not None:
-                        yield message
+                try:
+                    async for chunk in stream_response:
+                        observe_anthropic_event(evidence, chunk)
+                        message = adapt_anthropic_stream_event(chunk, stream_state)
+                        if message is not None:
+                            yield message
+                finally:
+                    close = getattr(stream_response, "close", None) or getattr(stream_response, "aclose", None)
+                    if close is not None:
+                        await close()
 
-            return generator()
+            return AsyncCompletionStream(generator(), evidence)
         else:
             try:
                 response = await raw_client.messages.create(
@@ -1104,4 +1126,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
             except AnthropicAPIConnectionError as e:
                 raise APIConnectionError(message=e.message, request=e.request) from e
 
-            return build_anthropic_completion_message(list(response.content), response.usage)
+            set_finish_reason(evidence, getattr(response, "stop_reason", None))
+            result = build_anthropic_completion_message(list(response.content), response.usage)
+            result.metadata = evidence
+            return result
