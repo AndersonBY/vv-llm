@@ -391,14 +391,14 @@ Model endpoint bindings accept an optional `priority` integer of at least 1
 `order_endpoints(endpoints, preferred_endpoint_id=None)` returns a new list.
 A preferred endpoint moves ahead only within its priority tier.
 
-This working tree includes the locally validated, unpublished `vv-llm-contract` 1.3.4 candidate. Read contract metadata, the model
+This working tree includes the locally validated, unpublished `vv-llm-contract` 1.3.5 candidate. Read contract metadata, the model
 catalog, and integrity status through `vv_llm.contract`:
 
 ```python
 from vv_llm.contract import contract_info, load_catalog, verify_contract
 
 info = contract_info()
-assert info.contract_version == "1.3.4"
+assert info.contract_version == "1.3.5"
 assert verify_contract().ok
 catalog = load_catalog()
 ```
@@ -471,7 +471,7 @@ Observer failures do not interrupt SDK consumption; SDK network/parse errors
 still propagate, without
 replaying the request. MockTransport and loopback tests cover sync/async interface drift.
 
-This is Python runtime metadata, separate from the vendored 1.3.4 canonical
+This is Python runtime metadata, separate from the vendored 1.3.5 canonical
 response JSON. `model_dump()` is not a canonical response encoder. Portable
 integrations can explicitly put a metadata dump in an existing `x_*` extension
 (for example `x_response_metadata`); no schema, fixture, catalog, lock, or

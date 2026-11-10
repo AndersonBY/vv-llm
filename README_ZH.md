@@ -367,13 +367,13 @@ none/minimal 仍返回推理内容，而显式 disabled 没有返回推理内容
 `order_endpoints(endpoints, preferred_endpoint_id=None)` 返回新列表，
 偏好端点仅在同优先级内提前。
 
-当前工作树包含本地验证、尚未发布的 `vv-llm-contract` 1.3.4 候选版。通过 `vv_llm.contract` 读取 contract
+当前工作树包含本地验证、尚未发布的 `vv-llm-contract` 1.3.5 候选版。通过 `vv_llm.contract` 读取 contract
 metadata、模型目录和完整性状态：
 
 ```python
 from vv_llm.contract import contract_info, load_catalog, verify_contract
 
-assert contract_info().contract_version == "1.3.4"
+assert contract_info().contract_version == "1.3.5"
 assert verify_contract().ok
 catalog = load_catalog()
 ```
@@ -433,7 +433,7 @@ finish_reason 等其他终结信号将其设为 `True`。只有 DONE 的流因�
 observer 自身异常不中断 SDK 消费，SDK 原有网络、解析异常继续抛出，不重发请求。
 MockTransport 与本地 HTTP 回归包含同步、异步接口缺失和签名变化。
 
-这些是 Python 运行时 metadata，与 vendored 1.3.4 的 canonical response JSON 分开。
+这些是 Python 运行时 metadata，与 vendored 1.3.5 的 canonical response JSON 分开。
 `model_dump()` 不是 canonical response 编码器。需要跨语言传递时，调用方可显式使用现有
 `x_*` 扩展（例如 `x_response_metadata`）保存 metadata dump；本次不改 schema、fixture、
 catalog、lock 或 contract 版本。

@@ -14,12 +14,12 @@ from dataclasses import dataclass
 from importlib.resources import files
 from typing import Any, Final
 
-_PACKAGE = "vv_llm._contract.v1_3_4"
+_PACKAGE = "vv_llm._contract.v1_3_5"
 _LOCK_NAME = "consumer-lock.v1.json"
 _MANIFEST_NAME = "manifest.json"
 _CHECKSUMS_NAME = "checksums.sha256"
 _DEFAULT_CATALOG = "default-chat-catalog.json"
-CONSUMER_LOCK_SHA256: Final[str] = "13db5e2b078041e24842162a483603df97324e9b6db0a62163adbbdbf332c755"
+CONSUMER_LOCK_SHA256: Final[str] = "fdd36544c81d835b1928d387997344a33caa140491098b8580a7cf73566e0000"
 
 
 class ContractIntegrityError(RuntimeError):
@@ -64,10 +64,10 @@ class ContractVerification:
         return self.ok
 
 
-CONTRACT_VERSION: Final[str] = "1.3.4"
+CONTRACT_VERSION: Final[str] = "1.3.5"
 SCHEMA_VERSION: Final[int] = 2
 FIXTURE_VERSION: Final[int] = 2
-CATALOG_REVISION: Final[int] = 22
+CATALOG_REVISION: Final[int] = 23
 
 
 def _resource(name: str):

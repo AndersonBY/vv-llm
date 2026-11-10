@@ -37,10 +37,10 @@ def test_vendored_contract_matches_consumer_lock():
 
     assert result.ok, result.mismatches
     assert result.artifact_count == 18
-    assert info.contract_version == "1.3.4"
+    assert info.contract_version == "1.3.5"
     assert info.schema_version == 2
     assert info.fixture_version == 2
-    assert info.catalog_revision == 22
+    assert info.catalog_revision == 23
     assert contract_api.CATALOG_REVISION == info.catalog_revision
     assert info.consumer_lock_sha256 == CONSUMER_LOCK_SHA256
 
@@ -82,6 +82,7 @@ def test_runtime_defaults_are_exactly_the_locked_catalog():
         },
     }
     anthropic_models = catalog["backends"]["anthropic"]["models"]
+    assert openai_models["gpt-6.1-terra"] == {**openai_models["gpt-6-sol"], "id": "gpt-6.1-terra"}
     assert anthropic_models["claude-sonnet-5-5"] == {**anthropic_models["claude-sonnet-5"], "id": "claude-sonnet-5-5"}
     assert catalog["backends"]["openai"]["models"]["gpt-6-astra"] == {
         "id": "gpt-6-astra",
@@ -146,7 +147,7 @@ def test_runtime_rejects_tampered_consumer_lock(monkeypatch):
 def test_sync_checker_rejects_tampered_consumer_lock(tmp_path):
     repository_root = Path(__file__).parents[2]
     source = tmp_path / "vv-llm-contract"
-    shutil.copytree(repository_root / "src" / "vv_llm" / "_contract" / "v1_3_4", source)
+    shutil.copytree(repository_root / "src" / "vv_llm" / "_contract" / "v1_3_5", source)
     lock = source / "consumer-lock.v1.json"
     lock.write_bytes(lock.read_bytes() + b"tampered")
 
@@ -176,7 +177,7 @@ def test_sync_checker_rejects_unsafe_artifact_paths(relative):
 def test_sync_checker_rejects_unlocked_vendor_files(tmp_path):
     repository_root = Path(__file__).parents[2]
     source = tmp_path / "contract"
-    shutil.copytree(repository_root / "src" / "vv_llm" / "_contract" / "v1_3_4", source)
+    shutil.copytree(repository_root / "src" / "vv_llm" / "_contract" / "v1_3_5", source)
     (source / "unexpected.json").write_text("{}", encoding="utf-8")
     sync_contract = runpy.run_path(str(repository_root / "scripts" / "sync_contract.py"))
     lock = sync_contract["_lock_at"](source)
@@ -188,7 +189,7 @@ def test_sync_checker_rejects_unlocked_vendor_files(tmp_path):
 
 def test_check_with_source_compares_vendor_and_source(tmp_path):
     repository_root = Path(__file__).parents[2]
-    vendor = repository_root / "src" / "vv_llm" / "_contract" / "v1_3_4"
+    vendor = repository_root / "src" / "vv_llm" / "_contract" / "v1_3_5"
     source = tmp_path / "contract"
     shutil.copytree(vendor, source)
     sync_contract = runpy.run_path(str(repository_root / "scripts" / "sync_contract.py"))
