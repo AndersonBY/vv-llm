@@ -254,12 +254,13 @@ def test_gemini_38_flash_matches_37_flash():
     assert GEMINI_MODELS["gemini-3.8-flash"] == {**GEMINI_MODELS["gemini-3.7-flash"], "id": "gemini-3.8-flash"}
 
 
-def test_gemini_4_argon_matches_documented_limits_and_capabilities():
+@pytest.mark.parametrize("model_id", ["gemini-4-argon", "gemini-4-carbon"])
+def test_gemini_4_models_match_documented_limits_and_capabilities(model_id: str):
     from vv_llm.settings import Settings
     from vv_llm.types.chat_request import CapabilityPolicy
 
-    model = Settings().backends.gemini.models["gemini-4-argon"]
-    assert model.id == "gemini-4-argon"
+    model = Settings().backends.gemini.models[model_id]
+    assert model.id == model_id
     assert model.context_length == 1_048_576
     assert model.max_output_tokens == 65_536
     assert model.function_call_available and model.response_format_available and model.native_multimodal
