@@ -57,7 +57,7 @@ asyncio.run(consume())
 
 result = verify_contract()
 assert result.ok and result.artifact_count == 18
-assert CONTRACT_VERSION == "1.3.6"
+assert CONTRACT_VERSION == "1.3.7"
 assert len(CONSUMER_LOCK_SHA256) == 64
 catalog = load_catalog()
 for backend, backend_data in catalog["backends"].items():

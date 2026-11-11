@@ -109,6 +109,24 @@ def test_anthropic_claude_opus_5_5_matches_opus_5():
     assert ANTHROPIC_MODELS["claude-opus-5-5"] == {**ANTHROPIC_MODELS["claude-opus-5"], "id": "claude-opus-5-5"}
 
 
+def test_anthropic_fable_5_2_has_always_on_thinking_and_verified_efforts():
+    from vv_llm.settings import Settings
+    from vv_llm.types.chat_request import CapabilityPolicy
+
+    assert ANTHROPIC_MODELS["claude-fable-5-2"] == {
+        **ANTHROPIC_MODELS["claude-haiku-5-5"],
+        "id": "claude-fable-5-2",
+        "capabilities": {**ANTHROPIC_MODELS["claude-haiku-5-5"]["capabilities"], "thinking": "always_enabled"},
+    }
+    model = Settings().backends.anthropic.models["claude-fable-5-2"]
+    assert model.capabilities.thinking == "always_enabled"
+    for effort in ("low", "medium", "high", "xhigh", "max"):
+        model.capabilities.validate_reasoning_effort(effort, model.id, CapabilityPolicy.STRICT)
+    for effort in ("none", "minimal", "ultra"):
+        with pytest.raises(ValueError, match="does not support"):
+            model.capabilities.validate_reasoning_effort(effort, model.id, CapabilityPolicy.STRICT)
+
+
 def test_deepseek_flash_models_match_vision_parameters():
     vision = DEEPSEEK_MODELS["deepseek-v4-flash-vision-exp"]
     for model_name in ("deepseek-v4.1-flash", "deepseek-flash"):
