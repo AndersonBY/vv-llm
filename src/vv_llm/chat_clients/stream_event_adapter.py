@@ -18,6 +18,21 @@ from ..types.llm_parameters import ChatCompletionDeltaMessage, ChatCompletionMes
 from .tool_call_parser import refactor_tool_calls
 
 
+class ResponseStreamError(RuntimeError):
+    """A provider error event, preserving its code for caller retry policy."""
+
+    def __init__(self, event: Any):
+        payload = getattr(event, "error", None) or event
+        if isinstance(payload, dict):
+            self.code = payload.get("code")
+            message = payload.get("message")
+        else:
+            self.code = getattr(payload, "code", None)
+            message = getattr(payload, "message", None)
+        self.body = {"code": self.code, "message": message}
+        super().__init__(f"Responses stream error: {self.code}: {message}")
+
+
 def _response_tool_call_id(item: Any) -> str | None:
     """Prefer the provider ``call_id`` so tool results can be correlated."""
 
@@ -180,7 +195,7 @@ def adapt_response_api_stream_event(event: Any, final_tool_calls: dict[int, dict
         return [], normalize_response_api_usage(final_resp.usage if final_resp else None)
 
     if event_type in ("response.error", "error"):
-        raise RuntimeError(f"Responses stream error: {event.error}")
+        raise ResponseStreamError(event)
 
     return [], None
 

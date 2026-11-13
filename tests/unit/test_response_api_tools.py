@@ -450,3 +450,31 @@ def test_async_responses_stream_accumulates_interleaved_tool_calls() -> None:
         1: {"id": "call_b", "name": "get_time", "arguments": '{"tz":"UTC"}'},
     }
     assert usage_seen
+
+
+@pytest.mark.parametrize(
+    "event",
+    [
+        SimpleNamespace(type="error", code="upstream_stream_read_error", message="Upstream response stream was interrupted"),
+        SimpleNamespace(type="response.error", error={"code": "upstream_stream_read_error", "message": "Upstream response stream was interrupted"}),
+        SimpleNamespace(type="response.error", error=SimpleNamespace(code="upstream_stream_read_error", message="Upstream response stream was interrupted")),
+    ],
+)
+def test_response_stream_error_preserves_provider_code(event):
+    from vv_llm.chat_clients.stream_event_adapter import ResponseStreamError
+
+    with pytest.raises(ResponseStreamError) as raised:
+        adapt_response_api_stream_event(event, {}, is_gemini3=False)
+    assert raised.value.code == "upstream_stream_read_error"
+    assert raised.value.body["message"] == "Upstream response stream was interrupted"
+    assert "Upstream response stream was interrupted" in str(raised.value)
+
+
+def test_response_stream_error_accepts_real_openai_error_event():
+    from openai.types.responses import ResponseErrorEvent
+    from vv_llm.chat_clients.stream_event_adapter import ResponseStreamError
+
+    event = ResponseErrorEvent(type="error", code="upstream_stream_read_error", message="interrupted", param=None, sequence_number=1)
+    with pytest.raises(ResponseStreamError) as raised:
+        adapt_response_api_stream_event(event, {}, is_gemini3=False)
+    assert raised.value.code == "upstream_stream_read_error"
