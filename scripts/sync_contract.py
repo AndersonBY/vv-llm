@@ -20,10 +20,10 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-VENDOR_ROOT = ROOT / "src" / "vv_llm" / "_contract" / "v1_3_9"
+VENDOR_ROOT = ROOT / "src" / "vv_llm" / "_contract" / "v1_3_10"
 META_FILES = ("manifest.json", "checksums.sha256", "consumer-lock.v1.json")
-CONTRACT_VERSION = "1.3.9"
-CONSUMER_LOCK_SHA256 = "3c53070186c4146f55dc1e8311be7ece44fd5c327cef649b696eae0f7e87380a"
+CONTRACT_VERSION = "1.3.10"
+CONSUMER_LOCK_SHA256 = "8a5dcf6fb8377f7790a0084fd64686f288f35ff2061533793d84fce31519bad4"
 ARTIFACT_ROOTS = frozenset({"catalog", "fixtures", "schemas"})
 ALLOWED_EXTRA_FILES = frozenset({"__init__.py"})
 
