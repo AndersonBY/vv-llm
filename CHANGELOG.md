@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.7 - 2026-11-19
+
+- Normalize Gemini migration controls by mapping legacy thinking budgets to
+  `thinking_level` and removing unsupported generation fields.
+
 ## 0.10.6 - 2026-11-18
 
 - Adopt shared contract 1.3.8 and catalog revision 26 with `gpt-6.2-astra`
