@@ -61,7 +61,32 @@ def uses_gemini_thinking_levels(model: str | None) -> bool:
 def normalize_gemini_body(body: Mapping[str, Any] | None) -> dict[str, Any]:
     """Use Gemini 3+ defaults instead of deprecated sampling and token budgets."""
     result = dict(body or {})
-    for key in ("temperature", "top_p", "top_k", "topP", "topK", "thinking_budget", "thinkingBudget"):
+    budget = result.get("thinking_budget", result.get("thinkingBudget"))
+    if isinstance(budget, int) and not isinstance(budget, bool):
+        if "thinking_level" not in result and "thinkingLevel" not in result:
+            if budget < 0:
+                level = "high"
+            elif budget <= 1024:
+                level = "minimal"
+            elif budget <= 4096:
+                level = "low"
+            elif budget <= 8192:
+                level = "medium"
+            else:
+                level = "high"
+            result["thinking_level"] = level
+    for key in (
+        "temperature",
+        "top_p",
+        "top_k",
+        "topP",
+        "topK",
+        "thinking_budget",
+        "thinkingBudget",
+        "turn",
+        "candidate_count",
+        "candidateCount",
+    ):
         result.pop(key, None)
     if "thinkingLevel" in result:
         level = result.pop("thinkingLevel")

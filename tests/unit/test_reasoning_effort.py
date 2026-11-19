@@ -388,9 +388,27 @@ def test_gemini_wire_parameters(model, asynchronous, stream, nested):
     bind(client, "chat", asynchronous, captured)
     google = {"google": {"thinking_config": {"thinkingBudget": 1024, "thinkingLevel": "high", "include_thoughts": True}}}
     body = {"extra_body": google} if nested else google
-    body.update({"temperature": 0.4, "top_p": 0.8, "top_k": 20, "topP": 0.8, "topK": 20})
+    body.update(
+        {
+            "temperature": 0.4,
+            "top_p": 0.8,
+            "top_k": 20,
+            "topP": 0.8,
+            "topK": 20,
+            "turn": 2,
+            "candidate_count": 2,
+        }
+    )
     original = deepcopy(body)
-    kwargs = dict(messages=[{"role": "user", "content": "hello"}], temperature=0.3, top_p=0.7, extra_body=body, stream=stream, skip_cutoff=True, max_tokens=64)
+    kwargs = {
+        "messages": [{"role": "user", "content": "hello"}],
+        "temperature": 0.3,
+        "top_p": 0.7,
+        "extra_body": body,
+        "stream": stream,
+        "skip_cutoff": True,
+        "max_tokens": 64,
+    }
 
     async def run():
         result = await client.create_completion(**kwargs)
@@ -408,7 +426,7 @@ def test_gemini_wire_parameters(model, asynchronous, stream, nested):
     assert captured["temperature"] == (NOT_GIVEN if modern else 0.3)
     assert captured["top_p"] == (NOT_GIVEN if modern else 0.7)
     sent = captured["extra_body"]
-    for key in ("temperature", "top_p", "top_k", "topP", "topK"):
+    for key in ("temperature", "top_p", "top_k", "topP", "topK", "turn", "candidate_count"):
         assert (key in sent) is (not modern)
     thinking = (sent["extra_body"] if nested else sent)["google"]["thinking_config"]
     assert thinking == ({"thinking_level": "high", "include_thoughts": True} if modern else original.get("extra_body", original)["google"]["thinking_config"])
@@ -416,10 +434,10 @@ def test_gemini_wire_parameters(model, asynchronous, stream, nested):
     assert client.temperature == 0.3
 
 
-def test_gemini_budget_uses_default_and_level_alias_conflicts_are_rejected():
+def test_gemini_budget_maps_to_level_and_level_alias_conflicts_are_rejected():
     from vv_llm.chat_clients.reasoning import normalize_gemini_body
 
-    assert normalize_gemini_body({"google": {"thinking_config": {"thinking_budget": 0, "include_thoughts": True}}}) == {"google": {"thinking_config": {"include_thoughts": True}}}
+    assert normalize_gemini_body({"google": {"thinking_config": {"thinking_budget": 0, "include_thoughts": True}}}) == {"google": {"thinking_config": {"include_thoughts": True, "thinking_level": "minimal"}}}
     with pytest.raises(ValueError, match="Conflicting Gemini"):
         normalize_gemini_body({"google": {"thinking_config": {"thinking_level": "low", "thinkingLevel": "high"}}})
     for field in ("thinkingLevel", "thinkingBudget"):
